@@ -1,7 +1,7 @@
 Attribute VB_Name = "FixtureDrawings"
 Option Explicit
 ' SolidWorks 2018+. Tools > Macro > New, import this .bas, run main. Optional second macro: it draws the parts an earlier Fixture Builder run left in a folder.
-' Fixture Drawings version 2026.11.27.1 (the drawings package). It opens the parts read-only and never writes into that folder.
+' Fixture Drawings version 2026.11.27.2 (the drawings package). It opens the parts read-only and never writes into that folder.
 ' Privacy: the drawings go into a new folder in the builder's neutral output root (Public, Documents, FixtureBuilder), never beside a run in a personal
 ' folder, and the run folder it reads must itself be neutral, because a part keeps its own save path and a drawing keeps the part's. Same checks,
 ' notice, neutral summary fields, scrub and sweep as the builder (one text: PersonalPathReason, NoticeStep, PrivacyScrub, PrivacySweep).
@@ -32,8 +32,8 @@ Private Const swNumberingType_Detailed As Long = 1
 Private Const swDetailingDimensionStandard As Long = 13
 Private Const swUnitsLinear As Long = 47
 ' SolidWorks 2018+. Tools > Macro > New, import this .bas, run main.
-' Fixture Builder version 2026.11.27.1 (sheet metal, expect.json checks, round 5).
-Private Const BUILDER_VERSION As String = "2026.11.27.1"
+' Fixture Builder version 2026.11.27.2 (sheet metal, expect.json checks, round 5).
+Private Const BUILDER_VERSION As String = "2026.11.27.2"
 ' The neutral value written into the summary fields SolidWorks lets a macro set (author, saved-by) before each save.
 Private Const NEUTRAL_VALUE As String = "Fixture Builder"
 ' Requires Windows PowerShell for zip.
