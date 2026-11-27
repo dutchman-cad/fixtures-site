@@ -24,7 +24,14 @@
   "explain": "SolidCraft could not rebuild a feature because its STEP import produced no bodies.",
   "text": null
  },
- "others": [],
+ "others": [
+  {
+   "app": "inventor-dev-49fedc57",
+   "status": "Failing",
+   "rebuilt": 0,
+   "total": 2
+  }
+ ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-X10d-inventor",
  "downloads": []
 }

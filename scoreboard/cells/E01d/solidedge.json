@@ -3,14 +3,14 @@
  "recipe": "E01d",
  "program": "solidedge",
  "program_name": "Solid Edge",
- "app": "solidedge-dev-2f8263ad",
- "status": "Geometry only",
+ "app": "solidedge-dev-49fedc57",
+ "status": "Failing",
  "numbers_only": true,
  "features": {
   "rebuilt": 0,
   "total": 0
  },
- "matches": true,
+ "matches": null,
  "wrong_bodies": null,
  "stopped": true,
  "first_stop": {

@@ -17,6 +17,12 @@
  "reason": null,
  "others": [
   {
+   "app": "inventor-dev-49fedc57",
+   "status": "Full history",
+   "rebuilt": 4,
+   "total": 4
+  },
+  {
    "app": "inventor-2025",
    "status": "Failing",
    "rebuilt": 0,

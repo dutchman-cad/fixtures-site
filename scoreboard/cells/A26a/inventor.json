@@ -24,7 +24,14 @@
   "explain": "The assembly has no placed parts, so there is nothing to rebuild.",
   "text": null
  },
- "others": [],
+ "others": [
+  {
+   "app": "inventor-dev-49fedc57",
+   "status": "Failing",
+   "rebuilt": 0,
+   "total": 0
+  }
+ ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A26a-inventor",
  "downloads": []
 }

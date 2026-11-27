@@ -15,7 +15,14 @@
  "stopped": false,
  "first_stop": null,
  "reason": null,
- "others": [],
+ "others": [
+  {
+   "app": "inventor-dev-49fedc57",
+   "status": "Full history",
+   "rebuilt": 6,
+   "total": 6
+  }
+ ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A20c-inventor",
  "downloads": []
 }

@@ -276,8 +276,8 @@
   "inventor": {
    "name": "Inventor",
    "cells": 208,
-   "full": 128,
-   "stopped": 80,
+   "full": 130,
+   "stopped": 78,
    "blockers": [
     {
      "rank": 1,
@@ -346,36 +346,6 @@
     },
     {
      "rank": 3,
-     "code": "parts-missing",
-     "owner": "builder",
-     "title": "Assembly parts not found",
-     "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
-     "cells": 4,
-     "examples": [
-      {
-       "recipe": "A21b",
-       "cell": "cells/A21b/inventor.json",
-       "page": "#c-A21b-inventor"
-      },
-      {
-       "recipe": "A21c",
-       "cell": "cells/A21c/inventor.json",
-       "page": "#c-A21c-inventor"
-      },
-      {
-       "recipe": "A22a",
-       "cell": "cells/A22a/inventor.json",
-       "page": "#c-A22a-inventor"
-      },
-      {
-       "recipe": "A22b",
-       "cell": "cells/A22b/inventor.json",
-       "page": "#c-A22b-inventor"
-      }
-     ]
-    },
-    {
-     "rank": 4,
      "code": "sc-step-import-empty",
      "owner": "SolidCraft",
      "title": "SolidCraft imported no body",
@@ -405,7 +375,7 @@
      ]
     },
     {
-     "rank": 5,
+     "rank": 4,
      "code": "body-reference-missing",
      "owner": "Dutchman mapping",
      "title": "Body or topology reference missing",
@@ -426,6 +396,31 @@
        "recipe": "E03a",
        "cell": "cells/E03a/inventor.json",
        "page": "#c-E03a-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 5,
+     "code": "parts-missing",
+     "owner": "builder",
+     "title": "Assembly parts not found",
+     "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "A21c",
+       "cell": "cells/A21c/inventor.json",
+       "page": "#c-A21c-inventor"
+      },
+      {
+       "recipe": "A22a",
+       "cell": "cells/A22a/inventor.json",
+       "page": "#c-A22a-inventor"
+      },
+      {
+       "recipe": "A22b",
+       "cell": "cells/A22b/inventor.json",
+       "page": "#c-A22b-inventor"
       }
      ]
     },
@@ -491,21 +486,6 @@
        "recipe": "P11b",
        "cell": "cells/P11b/inventor.json",
        "page": "#c-P11b-inventor"
-      }
-     ]
-    },
-    {
-     "rank": 9,
-     "code": "face-edge-ref",
-     "owner": "cadmpeg decode",
-     "title": "Face or edge reference not resolved",
-     "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
-     "cells": 1,
-     "examples": [
-      {
-       "recipe": "S07c",
-       "cell": "cells/S07c/inventor.json",
-       "page": "#c-S07c-inventor"
       }
      ]
     }
@@ -1833,7 +1813,7 @@
      "owner": "unclassified",
      "title": "Not classified yet",
      "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
-     "cells": 217,
+     "cells": 235,
      "examples": [
       {
        "recipe": "P01a",
@@ -1859,41 +1839,6 @@
        "recipe": "P03a",
        "cell": "cells/P03a/solidedge.json",
        "page": "#c-P03a-solidedge"
-      }
-     ]
-    },
-    {
-     "rank": 2,
-     "code": "no-reader",
-     "owner": "cadmpeg decode",
-     "title": "No reader for this file type",
-     "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
-     "cells": 18,
-     "examples": [
-      {
-       "recipe": "D01a",
-       "cell": "cells/D01a/solidedge.json",
-       "page": "#c-D01a-solidedge"
-      },
-      {
-       "recipe": "D01b",
-       "cell": "cells/D01b/solidedge.json",
-       "page": "#c-D01b-solidedge"
-      },
-      {
-       "recipe": "D01c",
-       "cell": "cells/D01c/solidedge.json",
-       "page": "#c-D01c-solidedge"
-      },
-      {
-       "recipe": "D01d",
-       "cell": "cells/D01d/solidedge.json",
-       "page": "#c-D01d-solidedge"
-      },
-      {
-       "recipe": "D01e",
-       "cell": "cells/D01e/solidedge.json",
-       "page": "#c-D01e-solidedge"
       }
      ]
     }
@@ -1995,24 +1940,24 @@
  },
  "overall": [
   {
+   "code": "unclassified",
+   "owner": "unclassified",
+   "cells": 235
+  },
+  {
    "code": "native-not-mapped",
    "owner": "cadmpeg decode",
    "cells": 234
   },
   {
-   "code": "unclassified",
-   "owner": "unclassified",
-   "cells": 217
+   "code": "sc-replay-bodies",
+   "owner": "SolidCraft",
+   "cells": 49
   },
   {
    "code": "no-reader",
    "owner": "cadmpeg decode",
-   "cells": 65
-  },
-  {
-   "code": "sc-replay-bodies",
-   "owner": "SolidCraft",
-   "cells": 49
+   "cells": 47
   },
   {
    "code": "no-geometry-yet",
@@ -2035,13 +1980,13 @@
    "cells": 15
   },
   {
-   "code": "face-edge-ref",
-   "owner": "cadmpeg decode",
-   "cells": 12
-  },
-  {
    "code": "edge-identity",
    "owner": "Dutchman mapping",
+   "cells": 11
+  },
+  {
+   "code": "face-edge-ref",
+   "owner": "cadmpeg decode",
    "cells": 11
   },
   {
@@ -2095,11 +2040,6 @@
    "cells": 4
   },
   {
-   "code": "parts-missing",
-   "owner": "builder",
-   "cells": 4
-  },
-  {
    "code": "pattern-unsupported",
    "owner": "Dutchman mapping",
    "cells": 4
@@ -2118,6 +2058,11 @@
    "code": "sweep-path",
    "owner": "Dutchman mapping",
    "cells": 4
+  },
+  {
+   "code": "parts-missing",
+   "owner": "builder",
+   "cells": 3
   },
   {
    "code": "chamfer-unresolved",

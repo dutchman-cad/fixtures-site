@@ -24,7 +24,14 @@
   "explain": "The feature depends on an earlier body, edge or face that Dutchman cannot name yet.",
   "text": null
  },
- "others": [],
+ "others": [
+  {
+   "app": "inventor-dev-49fedc57",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-E03a-inventor",
  "downloads": []
 }

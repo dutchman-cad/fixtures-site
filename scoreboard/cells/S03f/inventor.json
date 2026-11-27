@@ -24,7 +24,14 @@
   "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
   "text": null
  },
- "others": [],
+ "others": [
+  {
+   "app": "inventor-dev-49fedc57",
+   "status": "Partial history",
+   "rebuilt": 3,
+   "total": 6
+  }
+ ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-S03f-inventor",
  "downloads": []
 }

@@ -24,7 +24,14 @@
   "explain": "The chamfer's dimensions cannot be resolved against the model yet.",
   "text": null
  },
- "others": [],
+ "others": [
+  {
+   "app": "inventor-dev-49fedc57",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P05f-inventor",
  "downloads": []
 }
