@@ -24,9 +24,9 @@
   },
   {
    "app": "solidworks-2026",
-   "status": "Full history",
-   "rebuilt": 2,
-   "total": 2
+   "status": "Partial history",
+   "rebuilt": 3,
+   "total": 4
   }
  ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A23c-solidworks",
