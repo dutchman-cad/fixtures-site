@@ -24,14 +24,7 @@
   "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
   "text": null
  },
- "others": [
-  {
-   "app": "inventor-dev-49fedc57",
-   "status": "Failing",
-   "rebuilt": 0,
-   "total": 0
-  }
- ],
+ "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A22b-inventor",
  "downloads": []
 }

@@ -61,6 +61,48 @@
    "title": "Chamfer not resolved",
    "explain": "The chamfer's dimensions cannot be resolved against the model yet."
   },
+  "decode-extent": {
+   "code": "decode-extent",
+   "owner": "cadmpeg decode",
+   "title": "Feature extent not read",
+   "explain": "cadmpeg cannot read how far the feature extends, so the feature stays unresolved."
+  },
+  "decode-feature-order": {
+   "code": "decode-feature-order",
+   "owner": "cadmpeg decode",
+   "title": "Feature order not read",
+   "explain": "The file has feature objects but no readable feature list, so their order is not known."
+  },
+  "decode-no-operation": {
+   "code": "decode-no-operation",
+   "owner": "cadmpeg decode",
+   "title": "Feature kind without an operation",
+   "explain": "cadmpeg found a feature object of a kind it has no operation family for, and keeps it as a native one."
+  },
+  "decode-occurrences": {
+   "code": "decode-occurrences",
+   "owner": "cadmpeg decode",
+   "title": "Occurrence list not read",
+   "explain": "cadmpeg does not read the assembly's occurrence list, so suppression and visibility are unknown."
+  },
+  "decode-profile-curves": {
+   "code": "decode-profile-curves",
+   "owner": "cadmpeg decode",
+   "title": "Profile curves not read",
+   "explain": "Some curves of a profile do not read, so the profile is not fully stated."
+  },
+  "decode-sketch-members": {
+   "code": "decode-sketch-members",
+   "owner": "cadmpeg decode",
+   "title": "Sketch members not read",
+   "explain": "cadmpeg reads the sketch curves but not its constraints, dimensions or other members yet."
+  },
+  "decode-suppression": {
+   "code": "decode-suppression",
+   "owner": "cadmpeg decode",
+   "title": "Suppressed state not read",
+   "explain": "cadmpeg does not read which features are suppressed yet."
+  },
   "edge-identity": {
    "code": "edge-identity",
    "owner": "Dutchman mapping",
@@ -259,12 +301,6 @@
    "title": "Modeled thread not supported",
    "explain": "Modeled (not cosmetic) threads are not mapped yet."
   },
-  "unclassified": {
-   "code": "unclassified",
-   "owner": "unclassified",
-   "title": "Not classified yet",
-   "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one."
-  },
   "undecoded-pattern": {
    "code": "undecoded-pattern",
    "owner": "cadmpeg decode",
@@ -276,8 +312,8 @@
   "inventor": {
    "name": "Inventor",
    "cells": 208,
-   "full": 130,
-   "stopped": 78,
+   "full": 128,
+   "stopped": 80,
    "blockers": [
     {
      "rank": 1,
@@ -346,6 +382,36 @@
     },
     {
      "rank": 3,
+     "code": "parts-missing",
+     "owner": "builder",
+     "title": "Assembly parts not found",
+     "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "A21b",
+       "cell": "cells/A21b/inventor.json",
+       "page": "#c-A21b-inventor"
+      },
+      {
+       "recipe": "A21c",
+       "cell": "cells/A21c/inventor.json",
+       "page": "#c-A21c-inventor"
+      },
+      {
+       "recipe": "A22a",
+       "cell": "cells/A22a/inventor.json",
+       "page": "#c-A22a-inventor"
+      },
+      {
+       "recipe": "A22b",
+       "cell": "cells/A22b/inventor.json",
+       "page": "#c-A22b-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 4,
      "code": "sc-step-import-empty",
      "owner": "SolidCraft",
      "title": "SolidCraft imported no body",
@@ -375,7 +441,7 @@
      ]
     },
     {
-     "rank": 4,
+     "rank": 5,
      "code": "body-reference-missing",
      "owner": "Dutchman mapping",
      "title": "Body or topology reference missing",
@@ -396,31 +462,6 @@
        "recipe": "E03a",
        "cell": "cells/E03a/inventor.json",
        "page": "#c-E03a-inventor"
-      }
-     ]
-    },
-    {
-     "rank": 5,
-     "code": "parts-missing",
-     "owner": "builder",
-     "title": "Assembly parts not found",
-     "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
-     "cells": 3,
-     "examples": [
-      {
-       "recipe": "A21c",
-       "cell": "cells/A21c/inventor.json",
-       "page": "#c-A21c-inventor"
-      },
-      {
-       "recipe": "A22a",
-       "cell": "cells/A22a/inventor.json",
-       "page": "#c-A22a-inventor"
-      },
-      {
-       "recipe": "A22b",
-       "cell": "cells/A22b/inventor.json",
-       "page": "#c-A22b-inventor"
       }
      ]
     },
@@ -486,6 +527,21 @@
        "recipe": "P11b",
        "cell": "cells/P11b/inventor.json",
        "page": "#c-P11b-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 9,
+     "code": "face-edge-ref",
+     "owner": "cadmpeg decode",
+     "title": "Face or edge reference not resolved",
+     "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "S07c",
+       "cell": "cells/S07c/inventor.json",
+       "page": "#c-S07c-inventor"
       }
      ]
     }
@@ -1809,11 +1865,11 @@
    "blockers": [
     {
      "rank": 1,
-     "code": "unclassified",
-     "owner": "unclassified",
-     "title": "Not classified yet",
-     "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
-     "cells": 235,
+     "code": "decode-sketch-members",
+     "owner": "cadmpeg decode",
+     "title": "Sketch members not read",
+     "explain": "cadmpeg reads the sketch curves but not its constraints, dimensions or other members yet.",
+     "cells": 83,
      "examples": [
       {
        "recipe": "P01a",
@@ -1839,6 +1895,286 @@
        "recipe": "P03a",
        "cell": "cells/P03a/solidedge.json",
        "page": "#c-P03a-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 2,
+     "code": "decode-feature-order",
+     "owner": "cadmpeg decode",
+     "title": "Feature order not read",
+     "explain": "The file has feature objects but no readable feature list, so their order is not known.",
+     "cells": 59,
+     "examples": [
+      {
+       "recipe": "S05a",
+       "cell": "cells/S05a/solidedge.json",
+       "page": "#c-S05a-solidedge"
+      },
+      {
+       "recipe": "S13d",
+       "cell": "cells/S13d/solidedge.json",
+       "page": "#c-S13d-solidedge"
+      },
+      {
+       "recipe": "A01a",
+       "cell": "cells/A01a/solidedge.json",
+       "page": "#c-A01a-solidedge"
+      },
+      {
+       "recipe": "A01b",
+       "cell": "cells/A01b/solidedge.json",
+       "page": "#c-A01b-solidedge"
+      },
+      {
+       "recipe": "A01c",
+       "cell": "cells/A01c/solidedge.json",
+       "page": "#c-A01c-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 3,
+     "code": "decode-no-operation",
+     "owner": "cadmpeg decode",
+     "title": "Feature kind without an operation",
+     "explain": "cadmpeg found a feature object of a kind it has no operation family for, and keeps it as a native one.",
+     "cells": 41,
+     "examples": [
+      {
+       "recipe": "P14a",
+       "cell": "cells/P14a/solidedge.json",
+       "page": "#c-P14a-solidedge"
+      },
+      {
+       "recipe": "P14b",
+       "cell": "cells/P14b/solidedge.json",
+       "page": "#c-P14b-solidedge"
+      },
+      {
+       "recipe": "X10a",
+       "cell": "cells/X10a/solidedge.json",
+       "page": "#c-X10a-solidedge"
+      },
+      {
+       "recipe": "X10b",
+       "cell": "cells/X10b/solidedge.json",
+       "page": "#c-X10b-solidedge"
+      },
+      {
+       "recipe": "X10c",
+       "cell": "cells/X10c/solidedge.json",
+       "page": "#c-X10c-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 4,
+     "code": "no-reader",
+     "owner": "cadmpeg decode",
+     "title": "No reader for this file type",
+     "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
+     "cells": 18,
+     "examples": [
+      {
+       "recipe": "D01a",
+       "cell": "cells/D01a/solidedge.json",
+       "page": "#c-D01a-solidedge"
+      },
+      {
+       "recipe": "D01b",
+       "cell": "cells/D01b/solidedge.json",
+       "page": "#c-D01b-solidedge"
+      },
+      {
+       "recipe": "D01c",
+       "cell": "cells/D01c/solidedge.json",
+       "page": "#c-D01c-solidedge"
+      },
+      {
+       "recipe": "D01d",
+       "cell": "cells/D01d/solidedge.json",
+       "page": "#c-D01d-solidedge"
+      },
+      {
+       "recipe": "D01e",
+       "cell": "cells/D01e/solidedge.json",
+       "page": "#c-D01e-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 5,
+     "code": "decode-suppression",
+     "owner": "cadmpeg decode",
+     "title": "Suppressed state not read",
+     "explain": "cadmpeg does not read which features are suppressed yet.",
+     "cells": 13,
+     "examples": [
+      {
+       "recipe": "P07a",
+       "cell": "cells/P07a/solidedge.json",
+       "page": "#c-P07a-solidedge"
+      },
+      {
+       "recipe": "P07b",
+       "cell": "cells/P07b/solidedge.json",
+       "page": "#c-P07b-solidedge"
+      },
+      {
+       "recipe": "P08a",
+       "cell": "cells/P08a/solidedge.json",
+       "page": "#c-P08a-solidedge"
+      },
+      {
+       "recipe": "P08b",
+       "cell": "cells/P08b/solidedge.json",
+       "page": "#c-P08b-solidedge"
+      },
+      {
+       "recipe": "P09a",
+       "cell": "cells/P09a/solidedge.json",
+       "page": "#c-P09a-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 6,
+     "code": "decode-occurrences",
+     "owner": "cadmpeg decode",
+     "title": "Occurrence list not read",
+     "explain": "cadmpeg does not read the assembly's occurrence list, so suppression and visibility are unknown.",
+     "cells": 8,
+     "examples": [
+      {
+       "recipe": "A08a",
+       "cell": "cells/A08a/solidedge.json",
+       "page": "#c-A08a-solidedge"
+      },
+      {
+       "recipe": "A08b",
+       "cell": "cells/A08b/solidedge.json",
+       "page": "#c-A08b-solidedge"
+      },
+      {
+       "recipe": "A12a",
+       "cell": "cells/A12a/solidedge.json",
+       "page": "#c-A12a-solidedge"
+      },
+      {
+       "recipe": "A12b",
+       "cell": "cells/A12b/solidedge.json",
+       "page": "#c-A12b-solidedge"
+      },
+      {
+       "recipe": "A12c",
+       "cell": "cells/A12c/solidedge.json",
+       "page": "#c-A12c-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 7,
+     "code": "assembly-no-parts",
+     "owner": "Dutchman mapping",
+     "title": "Assembly places no parts",
+     "explain": "The assembly has no placed parts, so there is nothing to rebuild.",
+     "cells": 7,
+     "examples": [
+      {
+       "recipe": "A20a",
+       "cell": "cells/A20a/solidedge.json",
+       "page": "#c-A20a-solidedge"
+      },
+      {
+       "recipe": "A20b",
+       "cell": "cells/A20b/solidedge.json",
+       "page": "#c-A20b-solidedge"
+      },
+      {
+       "recipe": "A21a",
+       "cell": "cells/A21a/solidedge.json",
+       "page": "#c-A21a-solidedge"
+      },
+      {
+       "recipe": "A21b",
+       "cell": "cells/A21b/solidedge.json",
+       "page": "#c-A21b-solidedge"
+      },
+      {
+       "recipe": "A21c",
+       "cell": "cells/A21c/solidedge.json",
+       "page": "#c-A21c-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 8,
+     "code": "decode-extent",
+     "owner": "cadmpeg decode",
+     "title": "Feature extent not read",
+     "explain": "cadmpeg cannot read how far the feature extends, so the feature stays unresolved.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "X01a",
+       "cell": "cells/X01a/solidedge.json",
+       "page": "#c-X01a-solidedge"
+      },
+      {
+       "recipe": "X01b",
+       "cell": "cells/X01b/solidedge.json",
+       "page": "#c-X01b-solidedge"
+      },
+      {
+       "recipe": "X02a",
+       "cell": "cells/X02a/solidedge.json",
+       "page": "#c-X02a-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 9,
+     "code": "decode-profile-curves",
+     "owner": "cadmpeg decode",
+     "title": "Profile curves not read",
+     "explain": "Some curves of a profile do not read, so the profile is not fully stated.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "X07a",
+       "cell": "cells/X07a/solidedge.json",
+       "page": "#c-X07a-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 10,
+     "code": "no-solids",
+     "owner": "cadmpeg decode",
+     "title": "No solids or surfaces read",
+     "explain": "cadmpeg found no solid bodies or surfaces in this file that SolidCraft can import.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "E03e",
+       "cell": "cells/E03e/solidedge.json",
+       "page": "#c-E03e-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 11,
+     "code": "parts-missing",
+     "owner": "builder",
+     "title": "Assembly parts not found",
+     "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "A13b",
+       "cell": "cells/A13b/solidedge.json",
+       "page": "#c-A13b-solidedge"
       }
      ]
     }
@@ -1940,14 +2276,24 @@
  },
  "overall": [
   {
-   "code": "unclassified",
-   "owner": "unclassified",
-   "cells": 235
-  },
-  {
    "code": "native-not-mapped",
    "owner": "cadmpeg decode",
    "cells": 234
+  },
+  {
+   "code": "decode-sketch-members",
+   "owner": "cadmpeg decode",
+   "cells": 83
+  },
+  {
+   "code": "no-reader",
+   "owner": "cadmpeg decode",
+   "cells": 65
+  },
+  {
+   "code": "decode-feature-order",
+   "owner": "cadmpeg decode",
+   "cells": 59
   },
   {
    "code": "sc-replay-bodies",
@@ -1955,14 +2301,14 @@
    "cells": 49
   },
   {
-   "code": "no-reader",
-   "owner": "cadmpeg decode",
-   "cells": 47
-  },
-  {
    "code": "no-geometry-yet",
    "owner": "cadmpeg decode",
    "cells": 46
+  },
+  {
+   "code": "decode-no-operation",
+   "owner": "cadmpeg decode",
+   "cells": 41
   },
   {
    "code": "parts-placed-only",
@@ -1980,13 +2326,23 @@
    "cells": 15
   },
   {
-   "code": "edge-identity",
-   "owner": "Dutchman mapping",
-   "cells": 11
+   "code": "decode-suppression",
+   "owner": "cadmpeg decode",
+   "cells": 13
   },
   {
    "code": "face-edge-ref",
    "owner": "cadmpeg decode",
+   "cells": 12
+  },
+  {
+   "code": "assembly-no-parts",
+   "owner": "Dutchman mapping",
+   "cells": 11
+  },
+  {
+   "code": "edge-identity",
+   "owner": "Dutchman mapping",
    "cells": 11
   },
   {
@@ -1997,7 +2353,7 @@
   {
    "code": "no-solids",
    "owner": "cadmpeg decode",
-   "cells": 10
+   "cells": 11
   },
   {
    "code": "base-feature-empty",
@@ -2007,6 +2363,11 @@
   {
    "code": "body-reference-missing",
    "owner": "Dutchman mapping",
+   "cells": 8
+  },
+  {
+   "code": "decode-occurrences",
+   "owner": "cadmpeg decode",
    "cells": 8
   },
   {
@@ -2030,9 +2391,9 @@
    "cells": 5
   },
   {
-   "code": "assembly-no-parts",
-   "owner": "Dutchman mapping",
-   "cells": 4
+   "code": "parts-missing",
+   "owner": "builder",
+   "cells": 5
   },
   {
    "code": "face-unresolved",
@@ -2060,8 +2421,8 @@
    "cells": 4
   },
   {
-   "code": "parts-missing",
-   "owner": "builder",
+   "code": "decode-extent",
+   "owner": "cadmpeg decode",
    "cells": 3
   },
   {
@@ -2103,6 +2464,11 @@
    "code": "sheet-metal-unsupported",
    "owner": "Dutchman mapping",
    "cells": 2
+  },
+  {
+   "code": "decode-profile-curves",
+   "owner": "cadmpeg decode",
+   "cells": 1
   },
   {
    "code": "primitive-unplaced",

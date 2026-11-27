@@ -3,14 +3,14 @@
  "recipe": "X04b",
  "program": "solidedge",
  "program_name": "Solid Edge",
- "app": "solidedge-dev-49fedc57",
- "status": "Failing",
+ "app": "solidedge-dev-2f8263ad",
+ "status": "Geometry only",
  "numbers_only": true,
  "features": {
   "rebuilt": 0,
   "total": 0
  },
- "matches": null,
+ "matches": true,
  "wrong_bodies": null,
  "stopped": true,
  "first_stop": {
@@ -18,10 +18,10 @@
   "index": null
  },
  "reason": {
-  "code": "unclassified",
-  "owner": "unclassified",
-  "title": "Not classified yet",
-  "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
+  "code": "decode-sketch-members",
+  "owner": "cadmpeg decode",
+  "title": "Sketch members not read",
+  "explain": "cadmpeg reads the sketch curves but not its constraints, dimensions or other members yet.",
   "text": null
  },
  "others": [

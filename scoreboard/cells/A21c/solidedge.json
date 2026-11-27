@@ -3,7 +3,7 @@
  "recipe": "A21c",
  "program": "solidedge",
  "program_name": "Solid Edge",
- "app": "solidedge-dev-49fedc57",
+ "app": "solidedge-dev-2f8263ad",
  "status": "Failing",
  "numbers_only": true,
  "features": {
@@ -18,10 +18,10 @@
   "index": null
  },
  "reason": {
-  "code": "unclassified",
-  "owner": "unclassified",
-  "title": "Not classified yet",
-  "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
+  "code": "assembly-no-parts",
+  "owner": "Dutchman mapping",
+  "title": "Assembly places no parts",
+  "explain": "The assembly has no placed parts, so there is nothing to rebuild.",
   "text": null
  },
  "others": [

@@ -3,7 +3,7 @@
  "recipe": "A13b",
  "program": "solidedge",
  "program_name": "Solid Edge",
- "app": "solidedge-dev-49fedc57",
+ "app": "solidedge-dev-2f8263ad",
  "status": "Failing",
  "numbers_only": true,
  "features": {
@@ -18,10 +18,10 @@
   "index": null
  },
  "reason": {
-  "code": "unclassified",
-  "owner": "unclassified",
-  "title": "Not classified yet",
-  "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
+  "code": "parts-missing",
+  "owner": "builder",
+  "title": "Assembly parts not found",
+  "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
   "text": null
  },
  "others": [

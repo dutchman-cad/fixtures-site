@@ -3,26 +3,28 @@
  "recipe": "S07c",
  "program": "inventor",
  "program_name": "Inventor",
- "app": "inventor-dev-49fedc57",
- "status": "Full history",
+ "app": "inventor-2016",
+ "status": "Partial history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 3,
+  "rebuilt": 2,
   "total": 3
  },
- "matches": true,
+ "matches": null,
  "wrong_bodies": null,
- "stopped": false,
- "first_stop": null,
- "reason": null,
- "others": [
-  {
-   "app": "inventor-2016",
-   "status": "Partial history",
-   "rebuilt": 2,
-   "total": 3
-  }
- ],
+ "stopped": true,
+ "first_stop": {
+  "kind": "fillet, radius group",
+  "index": 3
+ },
+ "reason": {
+  "code": "face-edge-ref",
+  "owner": "cadmpeg decode",
+  "title": "Face or edge reference not resolved",
+  "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
+  "text": null
+ },
+ "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-S07c-inventor",
  "downloads": []
 }
