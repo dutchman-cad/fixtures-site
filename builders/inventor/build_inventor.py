@@ -16,7 +16,7 @@ import zlib
 # Every run writes to a NEW folder <script name>-Inventor-<builder version> (then -2, -3, ...) inside the
 # output folder. An existing folder is never reused, cleared or overwritten.
 SCRIPT_NAME = "build_inventor"
-BUILDER_VERSION = "2026.11.26.1"
+BUILDER_VERSION = "2026.11.27.2"
 RECIPE_SECONDS = 240
 # HeightDatumTypeEnum kHeightDatumInner and BendTransitionEnum kArcBendTransition / kStraightLineBendTransition.
 HEIGHT_DATUM_INNER = 75522
@@ -1125,7 +1125,7 @@ class Builder:
         return found
 
     def new_document(self, kind):
-        return typed_document(self.app.Documents.Add(kind, metric_template(self.app, kind), True), kind == 12291)
+        return typed_document(add_template_document(self.app, kind, True, self.notes), kind == 12291)
 
     def save_new(self, doc, target, assembly=False):
         """Update, blank the personal properties, save as target and close without a save prompt."""
@@ -2042,15 +2042,81 @@ def min_distance(app, entity, point):
     return result[0] if isinstance(result, tuple) else result
 
 
+FALLBACK_NOTE = "used the default template (no standard metric template found); units set to millimeters"
+
+
 def metric_template(app, doc_type):
+    """The metric template of that document type, or "" when this install has none (inch-only or custom company templates)."""
     # Autodesk SystemOfMeasureEnum: default 8961, metric 8962, English 8963.
     try:
         template = app.FileManager.GetTemplateFile(doc_type, 8962)
-        if not template or not Path(template).is_file():
-            raise RuntimeError("template file missing")
-        return template
+        return str(template) if template and Path(str(template)).is_file() else ""
+    except Exception:
+        return ""
+
+
+def default_template(app, doc_type):
+    """Inventor's own default template of that document type (default system of measure), or "" (Documents.Add then takes its built-in default)."""
+    try:
+        template = app.FileManager.GetTemplateFile(doc_type)
+        if not template or not Path(str(template)).is_file():
+            return ""
+        if doc_type == 12292 and not str(template).lower().endswith(".idw"):
+            return ""   # Inventor 2016's default drawing template is a .dwg: a document made from it cannot be saved as .idw (measured), so Documents.Add gets an empty name
+        return str(template)
+    except Exception:
+        return ""
+
+
+UNITS_TYPE_ENUM = {"kMillimeterLengthUnits": 11269, "kDegreeAngleUnits": 11279, "kKilogramMassUnits": 11283}   # UnitsTypeEnum, Inventor API reference
+
+
+def units_const(name):
+    """The type library's value, else the documented one (a library the late-bound COM client did not generate)."""
+    try:
+        return api_const(name)
+    except RuntimeError:
+        return UNITS_TYPE_ENUM[name]
+
+
+def set_millimeters(doc):
+    """Length mm, angle degrees, mass kilograms (the metric template's own baseline) on a document made from a template that is not metric.
+    Parameter expressions in the builder name their unit (AddByExpression "20 mm") and every geometry call is in Inventor's database cm,
+    so only displayed values depend on these."""
+    units = doc.UnitsOfMeasure
+    wanted = (("LengthUnits", "kMillimeterLengthUnits"), ("AngleUnits", "kDegreeAngleUnits"), ("MassUnits", "kKilogramMassUnits"))
+    for name, const in wanted:
+        setattr(units, name, units_const(const))
+    for name, const in wanted:
+        if int(getattr(units, name)) != units_const(const):
+            raise RuntimeError("%s did not read back as %s" % (name, const))
+
+
+def add_template_document(app, doc_type, visible, notes, template=None, fallback=None):
+    """Documents.Add from the metric template when it exists, else from Inventor's default template set to millimeters (noted in the row).
+    template: an already chosen metric template of a document type GetTemplateFile cannot name (drawings), "" when there is none;
+    fallback: the template to set to millimeters instead of Inventor's default one."""
+    if template is None:
+        template = metric_template(app, doc_type)
+    if template:
+        return app.Documents.Add(doc_type, template, visible)
+    try:
+        doc = app.Documents.Add(doc_type, fallback or default_template(app, doc_type), visible)
     except Exception as exc:
-        raise RuntimeError("Metric template unavailable for document type %s; install metric part/assembly templates" % doc_type) from exc
+        raise RuntimeError("No template available for document type %s: this Inventor has no metric template and its default template could not make a document (%s)"
+                           % (doc_type, str(exc) or type(exc).__name__)) from exc
+    try:
+        set_millimeters(doc)
+    except Exception as exc:
+        try:
+            doc.Close(True)
+        except Exception:
+            pass
+        raise RuntimeError("Could not set millimeters on the document made from Inventor's default template for document type %s (%s)"
+                           % (doc_type, str(exc) or type(exc).__name__)) from exc
+    if FALLBACK_NOTE not in notes:
+        notes.append(FALLBACK_NOTE)
+    return doc
 
 
 def new_output_folder(parent, base):
@@ -2186,15 +2252,28 @@ def set_option(options, name, value):
 
 
 def drawing_template(app):
-    """The metric ISO drawing template of the active project's templates folder. FileManager.GetTemplateFile cannot say it: on Inventor
+    """The metric ISO drawing template of the active project's templates folder, or "" when it has none. FileManager.GetTemplateFile cannot say it: on Inventor
     2016 it answers Standard.dwg for a drawing and an empty name when asked for the metric system of measure (measured)."""
-    root = Path(str(app.DesignProjectManager.ActiveDesignProject.TemplatesPath or ""))
-    if not str(root).strip() or str(root) == "." or not root.is_dir():
-        raise RuntimeError("the active project has no templates folder; install the metric drawing templates")
-    found = sorted(root.rglob("ISO.idw"), key=lambda path: (path.parent.name.lower() != "metric", str(path)))
-    if not found:
-        raise RuntimeError("drawing template ISO.idw is not in the templates folder; install the metric drawing templates")
-    return str(found[0])
+    try:
+        root = Path(str(app.DesignProjectManager.ActiveDesignProject.TemplatesPath or ""))
+        if not str(root).strip() or str(root) == "." or not root.is_dir():
+            return ""
+        found = sorted(root.rglob("ISO.idw"), key=lambda path: (path.parent.name.lower() != "metric", str(path)))
+    except Exception:
+        return ""
+    return str(found[0]) if found else ""
+
+
+def any_idw_template(app):
+    """Any .idw of the active project's templates folder (Standard.idw first), or "": the drawing template to set to millimeters when there is no ISO.idw."""
+    try:
+        root = Path(str(app.DesignProjectManager.ActiveDesignProject.TemplatesPath or ""))
+        if not str(root).strip() or str(root) == "." or not root.is_dir():
+            return ""
+        found = sorted(root.rglob("*.idw"), key=lambda path: (path.name.lower() != "standard.idw", str(path)))
+    except Exception:
+        return ""
+    return str(found[0]) if found else ""
 
 
 def cm_point(app, x, y):
@@ -2238,7 +2317,7 @@ class DrawingBuilder:
 
     def new_drawing(self):
         kind = api_const("kDrawingDocumentObject")
-        self.doc = typed_object(self.app.Documents.Add(kind, drawing_template(self.app), False), "DrawingDocument")
+        self.doc = typed_object(add_template_document(self.app, kind, False, self.notes, drawing_template(self.app), any_idw_template(self.app)), "DrawingDocument")
         return self.doc
 
     def close(self):
@@ -2911,6 +2990,14 @@ def build_drawing(app, design, root):
     try:
         builder.build(op, root)
         names = builder.save(Path(root))
+    except NotScripted:
+        raise
+    except Exception as exc:
+        if FALLBACK_NOTE in builder.notes:
+            args = getattr(exc, "args", ())
+            code = ("0x%08X" % (args[0] & 0xFFFFFFFF)) if args and isinstance(args[0], int) else (str(exc).strip()[:120] or type(exc).__name__)
+            raise RuntimeError("drawing not built: no usable metric drawing template (%s)" % code) from exc
+        raise
     finally:
         builder.close()
     for name in names:
@@ -3394,12 +3481,14 @@ def run_recipes_inner(app, output, designs, only, shared, state):
             else:
                 is_assembly = any(op["type"] == "assembly" for op in design["ops"])
                 doc_type = 12291 if is_assembly else 12290
-                doc = typed_document(app.Documents.Add(doc_type, metric_template(app, doc_type), True), is_assembly)
+                template_notes = []
+                doc = typed_document(add_template_document(app, doc_type, True, template_notes), is_assembly)
                 if any(op["type"] == "sheetmetal" for op in design["ops"]):
                     doc.SubType = "{9C464203-9BAE-11D3-8BAD-0060B0CE6BB4}"
                 if is_assembly:
                     activate_master_lod(doc, major)
                 builder = Builder(app, doc, root)
+                builder.notes += template_notes
                 builder.open_path_sketches = design.get("open_path_sketches", [])
                 builder.surfaces = {op["name"] for op in design["ops"] if op["type"] == "extrude" and op.get("surface")}
                 for position, op in enumerate(design["ops"], 1):

@@ -6,12 +6,8 @@
   "/agents.txt": {
    "content-type": "text/plain; charset=utf-8"
   },
-  "/apple-touch-icon.png": {
-   "cache-control": "public, max-age=86400",
-   "content-type": "image/png"
-  },
   "/booklet.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-disposition": "attachment; filename=\"cad-fixture-recipes-v1.83.pdf\"",
    "content-type": "application/pdf"
   },
@@ -100,7 +96,7 @@
    "x-content-type-options": "nosniff"
   },
   "/builders/fusion/FixtureBuilder.zip": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-disposition": "attachment; filename=\"FixtureBuilder.zip\"",
    "content-type": "application/zip",
    "x-content-type-options": "nosniff"
@@ -117,7 +113,7 @@
    "x-content-type-options": "nosniff"
   },
   "/builders/inventor/Inventor-builder-latest.zip": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-disposition": "attachment; filename=\"Inventor-builder-latest.zip\"",
    "content-type": "application/zip",
    "x-content-type-options": "nosniff"
@@ -200,1026 +196,1014 @@
    "content-type": "application/json"
   },
   "/drawings/A01a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A01a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A02a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A02a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A03a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A03a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A04a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A04a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A05a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A05a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A06a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A06a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A10a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/A10a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F01a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F01a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F02a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F02a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F03a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F03a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F04a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F04a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F05a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F05a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F06a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F06a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F11a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F11a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F13a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F13a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F14a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F14a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F15a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F15a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F16a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F16a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F18a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F18a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F20a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F20a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F21a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F21a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F24a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/F24a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/M01a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/M01a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/M07a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/M07a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N01a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N01a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N02a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N02a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N03a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N03a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N04a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N04a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N05a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N05a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N06a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N06a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N07a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N07a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N08a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N08a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N09a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N09a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N10a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N10a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N11a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N11a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N12a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N12a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N13a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N13a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N14a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N14a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N15a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N15a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N16a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N16a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N17a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N17a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N18a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N18a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N30a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N30a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N31a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N31a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N32a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N32a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N33a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N33a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N34a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N34a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N35a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N35a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N36a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N36a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N37a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N37a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N38a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N38a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N39a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N39a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N40a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/N40a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P01a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P01a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P02a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P02a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P03a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P03a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P04a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P04a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P05a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P05a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P06a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P06a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P07a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P07a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P08a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P08a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P09a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P09a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P10a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P10a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P11a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P11a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P12a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P12a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P13a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P13a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P15a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P15a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P16a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/P16a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S01a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S01a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S01b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S01b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02c.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02c.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02d.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02d.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02e.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02e.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02f.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02f.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02g.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S02g.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03d.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03d.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03e.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S03e.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S05a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S05a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S06a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S06a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S06b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S06b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S07a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S07a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S07b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S07b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S07c.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S07c.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S08a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S08a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S08b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S08b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S09a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S09a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S09b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S09b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S11a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S11a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S11b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S11b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S12a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S12a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13a.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13a.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13b.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13b.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13c.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13c.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13d.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/S13d.png": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "image/png",
    "x-content-type-options": "nosniff"
   },
   "/drawings/volunteer/P01a-cvl.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/volunteer/P01b-cvl.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/volunteer/P02a-cvl.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/volunteer/P02b-cvl.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/volunteer/P03a-cvl.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
   },
   "/drawings/volunteer/P03b-cvl.pdf": {
-   "cache-control": "max-age=14400",
+   "cache-control": "no-cache",
    "content-type": "application/pdf",
    "x-content-type-options": "nosniff"
-  },
-  "/favicon-32.png": {
-   "cache-control": "public, max-age=86400",
-   "content-type": "image/png"
-  },
-  "/favicon.ico": {
-   "cache-control": "public, max-age=86400",
-   "content-type": "image/x-icon"
-  },
-  "/favicon.svg": {
-   "cache-control": "public, max-age=86400",
-   "content-type": "image/svg+xml"
   },
   "/og.png": {
    "cache-control": "public, max-age=86400",

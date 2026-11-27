@@ -24,7 +24,7 @@ Private outputRoot As String
 ' Every run writes to a NEW folder <script name>-Inventor-<builder version> (then -2, -3, ...) inside the
 ' output folder. An existing folder is never reused, cleared or overwritten.
 Private Const ScriptName As String = "build_inventor"
-Private Const BuilderVersion As String = "2026.11.26.1"
+Private Const BuilderVersion As String = "2026.11.27.2"
 Private planes As Dictionary(Of String, Object)
 ' Sketch points created so far in the current sketch, and projected lines (2016-2021 connect new geometry to them).
 Private joints As New List(Of Object)()
@@ -315,7 +315,8 @@ Sub RunRecipes(major As Integer, output As String)
                     docType = 12291
                 End If
             Next
-            doc = app.Documents.Add(docType, MetricTemplate(docType), True)
+            Dim templateNotes As New List(Of String)()
+            doc = AddTemplateDocument(docType, templateNotes)
             If docType = 12291 Then
                 ActivateMasterLod(doc, major)
             End If
@@ -371,6 +372,9 @@ Sub RunRecipes(major As Integer, output As String)
             archiveFiles.Add(native)
             archiveFiles.Add(stepFile)
             row("status") = "ok"
+            If templateNotes.Count > 0 Then
+                row("notes") = templateNotes.ToArray()
+            End If
         Catch ex As NotSupportedException
             row("status") = "not_scripted"
             row("error") = SafeError(ex.Message, root)
@@ -1043,16 +1047,79 @@ End Sub
 
 Function MetricTemplate(docType As Integer) As String
     ' https://help.autodesk.com/cloudhelp/2026/ENU/Inventor-API/files/SystemOfMeasureEnum.htm
+    ' "" when this install has no metric template (inch-only or custom company templates).
     Const kMetricSystemOfMeasure As Integer = 8962
     Try
         Dim template As String = CStr(app.FileManager.GetTemplateFile(docType, kMetricSystemOfMeasure))
         If String.IsNullOrEmpty(template) OrElse Not File.Exists(template) Then
-            Throw New Exception("template file missing")
+            Return ""
         End If
         Return template
     Catch ex As Exception
-        Throw New Exception("Metric template unavailable for document type " & CStr(docType) & "; install metric part/assembly templates", ex)
+        Return ""
     End Try
+End Function
+
+Function DefaultTemplate(docType As Integer) As String
+    Try
+        Dim template As String = CStr(app.FileManager.GetTemplateFile(docType))
+        If String.IsNullOrEmpty(template) OrElse Not File.Exists(template) Then
+            Return ""
+        End If
+        Return template
+    Catch ex As Exception
+        Return ""
+    End Try
+End Function
+
+Function UnitsEnum(name As String) As Integer
+    For Each loaded As System.Reflection.Assembly In AppDomain.CurrentDomain.GetAssemblies()
+        Dim enumType As Type = loaded.GetType("Inventor.UnitsTypeEnum", False)
+        If enumType IsNot Nothing Then
+            Return CInt([Enum].Parse(enumType, name))
+        End If
+    Next
+    ' Interop not loaded: UnitsTypeEnum values from https://help.autodesk.com/cloudhelp/2026/ENU/Inventor-API/files/UnitsTypeEnum.htm
+    Select Case name
+        Case "kMillimeterLengthUnits"
+            Return 11269
+        Case "kDegreeAngleUnits"
+            Return 11279
+        Case "kKilogramMassUnits"
+            Return 11283
+    End Select
+    Throw New Exception("Unknown units constant " & name)
+End Function
+
+' The metric template when it exists, else Inventor's default template set to millimeters, degrees and kilograms (noted in the row).
+Function AddTemplateDocument(docType As Integer, notes As List(Of String)) As Object
+    Dim template As String = MetricTemplate(docType)
+    If template <> "" Then
+        Return app.Documents.Add(docType, template, True)
+    End If
+    Dim made As Object = Nothing
+    Try
+        made = app.Documents.Add(docType, DefaultTemplate(docType), True)
+    Catch ex As Exception
+        Throw New Exception("No template available for document type " & CStr(docType) & ": this Inventor has no metric template and its default template could not make a document (" & ex.Message & ")", ex)
+    End Try
+    Try
+        Dim units As Object = made.UnitsOfMeasure
+        units.LengthUnits = UnitsEnum("kMillimeterLengthUnits")
+        units.AngleUnits = UnitsEnum("kDegreeAngleUnits")
+        units.MassUnits = UnitsEnum("kKilogramMassUnits")
+        If CInt(units.LengthUnits) <> UnitsEnum("kMillimeterLengthUnits") OrElse CInt(units.AngleUnits) <> UnitsEnum("kDegreeAngleUnits") Then
+            Throw New Exception("the units did not read back as millimeters and degrees")
+        End If
+    Catch ex As Exception
+        Try
+            made.Close(True)
+        Catch
+        End Try
+        Throw New Exception("Could not set millimeters on the document made from Inventor's default template for document type " & CStr(docType) & " (" & ex.Message & ")", ex)
+    End Try
+    notes.Add("used the default template (no standard metric template found); units set to millimeters")
+    Return made
 End Function
 
 
