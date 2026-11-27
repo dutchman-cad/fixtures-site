@@ -107,7 +107,7 @@ current_identity = 'setup'
 LAST_ZIP = []
 LAST_FINISH = []
 LAST_FOLDER = []
-BUILDER_VERSION = '2026.11.27.2'
+BUILDER_VERSION = '2026.11.27.3'
 sw_major = 26
 BASEFLANGE_INITIALIZE_FROM = 30
 api_inputs = ''
@@ -873,7 +873,7 @@ def make_zip(app, folder, results, archive):
     before every attempt, so it never counts and is never shown; an attempt that fails part way deletes its partial zip. A second try after closing
     every document (zip-verify-retry, its error text kept in <folder>-zip-error.txt), then a stored (uncompressed) zip (zip-shell-application, the
     macro's Shell.Application route). Counted in a `mitigations:` line of its own (the recipes' lines are written before the zip). Never raises."""
-    names = list(dict.fromkeys(['results.json'] + [n for r in results for n in r['files']]))
+    names = list(dict.fromkeys(['results.json'] + [n for r in results if not r.get('private') for n in r['files']]))
     if (folder / 'FixtureBuilder.log').exists():
         names.append('FixtureBuilder.log')
     error_file = folder.parent / (folder.name + '-zip-error.txt')
@@ -1685,7 +1685,17 @@ def view_edge_records(entities):
                 found.append(dict(kind='circle', entity=entity, points=[tuple(parameters[0:3])], radius=parameters[6], axis=tuple(parameters[3:6]), raw=parameters))
     return found
 
-def assembly_view_edges(view, components):
+def view_component_label(name2, assembly=''):
+    """The component name a drawing view's IComponent2.Name2 stands for: a prefix that is exactly the assembly's own name (F10a/block-1) and any
+    "@..." suffix (block-1@F10a) removed, then the trailing -<digits> (the instance number). Compared without regard to case. A component under any
+    other prefix (sub-1/pin-1) is not top-level: its label keeps the "/", so it never matches a top-level name."""
+    text = str(name2).split('@')[0]
+    head, slash, tail = text.partition('/')
+    if slash and assembly and (head.lower() == str(assembly).lower()) and ('/' not in tail):
+        text = tail
+    return re.sub('-\\d+$', '', text)
+
+def assembly_view_edges(view, components, assembly=''):
     """The edge records of the drawing view of an assembly (D19a): IView.GetVisibleEntities2 takes the component whose edges are wanted (Nothing
     gives a part's), so each component the view shows is asked in turn (IView.GetVisibleComponents). `components` is the plan's list of
     {name, low, high, shift}: the box of the component in the assembly (meters) and where its own origin stands in the assembly. The points
@@ -1693,17 +1703,22 @@ def assembly_view_edges(view, components):
     moved by `shift` (mitigation drawing-assembly-edges-part-space); when neither fits, the recipe fails naming the component. Returns (records, total)."""
     set_step('GetName2', 'assembly_view_edges')
     name = view.GetName2()
-    wanted = {c['name']: c for c in components}
+    wanted = {c['name'].lower(): c for c in components}
     set_step('GetVisibleComponents', 'assembly_view_edges')
     shown = list(view.GetVisibleComponents() or ())
     if not shown:
         raise RuntimeError('%s: GetVisibleComponents returned no components' % name)
+    set_step('Name2', 'assembly_view_edges')
+    names = [str(component.Name2) for component in shown]
+    if run_folder:
+        log_line(run_folder[0], 'option', 'drawing: view %s shows %d component%s: %s' % (name, len(names), '' if len(names) == 1 else 's', ', '.join(names)))
     records, seen = ([], set())
     for component in shown:
         set_step('Name2', 'assembly_view_edges')
-        label = re.sub('-\\d+$', '', str(component.Name2))
-        if label not in wanted:
+        key = view_component_label(component.Name2, assembly).lower()
+        if key not in wanted:
             continue
+        label = wanted[key]['name']
         seen.add(label)
         set_step('GetVisibleEntities2', 'assembly_view_edges')
         found = view_edge_records(list(view.GetVisibleEntities2(component, swViewEntityType_Edge) or ()))
@@ -1727,12 +1742,12 @@ def assembly_view_edges(view, components):
                 record['raw'] = tuple(record['points'][0]) + tuple(record['raw'][3:])
             record['component'] = label
         records += found
-    missing = sorted(set(wanted) - seen)
+    missing = sorted((c['name'] for c in components if c['name'] not in seen))
     if missing:
-        raise RuntimeError('%s: the view shows no edges of the component %s' % (name, ', '.join(missing)))
+        raise RuntimeError('%s: the view shows no edges of the component %s; the view showed: %s' % (name, ', '.join(missing), ', '.join(names)))
     return records
 
-def drawing_edges(view, bbox, components=None):
+def drawing_edges(view, bbox, components=None, assembly=''):
     """The visible line and circle edges of a drawing view, in model meters, flattened along the
     view's axis. Entity coordinates are taken as model coordinates; when they do not all lie inside
     the model's box they are tried as view coordinates (undoing the view transform), and when that
@@ -1744,7 +1759,7 @@ def drawing_edges(view, bbox, components=None):
     matrix = tuple((float(v) for v in view.ModelToViewTransform.ArrayData))
     drop = drawing_axis(matrix)
     if components:
-        found = assembly_view_edges(view, components)
+        found = assembly_view_edges(view, components, assembly)
     else:
         set_step('GetVisibleEntities2', 'drawing_edges')
         raw = view.GetVisibleEntities2(None, swViewEntityType_Edge)
@@ -6711,6 +6726,9 @@ def export_guard(path):
     except Exception:
         problem = 'could not be checked'
     if problem:
+        if private_run and suffix == '.pdf' and (problem == 'carried a personal name'):
+            private_kept.append(path.name)
+            return
         if not sweep_try(sweep_delete, path):
             sweep_try(sweep_truncate, path)
         raise RuntimeError('privacy: %s %s' % (suffix[1:], problem))
@@ -6745,7 +6763,8 @@ def release_documents(app, folder, row, results, doc, old_feature_errors, early,
 
     def failed(exc):
         log_error(folder, exc)
-        row.update(status='failed', error=diagnostic_error(exc), files=[])
+        reason = diagnostic_error(exc)
+        row.update(status='failed', error=row['error'] + '; then closing failed: ' + reason if row.get('error') else reason, files=[])
         write_results(folder, results)
     if doc is not None:
         try:
@@ -6768,6 +6787,9 @@ def release_documents(app, folder, row, results, doc, old_feature_errors, early,
 class UserCancelled(RuntimeError):
     """Cancel at the up-front notice: nothing is built."""
 notices = []
+private_run = []
+private_kept = []
+private_stuck = []
 
 class PersonalPathError(RuntimeError):
     """The output folder or a template would put a personal path inside every assembly and drawing; nothing is built."""
@@ -7119,6 +7141,8 @@ def privacy_sweep(folder, expected=None):
         note = sweep_file(path, expected)
         if note:
             notes.append(note)
+            if note.endswith(('could not be cleaned or removed', 'could not be removed')):
+                sweep_failed.append(True)
     if ansi_skipped:
         notes.append('privacy sweep: ansi form not applicable (a name has characters the ANSI codepage cannot hold); UTF-8 and UTF-16 searched')
         ansi_skipped.clear()

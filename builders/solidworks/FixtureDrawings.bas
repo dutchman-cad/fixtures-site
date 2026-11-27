@@ -1,7 +1,7 @@
 Attribute VB_Name = "FixtureDrawings"
 Option Explicit
 ' SolidWorks 2018+. Tools > Macro > New, import this .bas, run main. Optional second macro: it draws the parts an earlier Fixture Builder run left in a folder.
-' Fixture Drawings version 2026.11.27.2 (the drawings package). It opens the parts read-only and never writes into that folder.
+' Fixture Drawings version 2026.11.27.3 (the drawings package). It opens the parts read-only and never writes into that folder.
 ' Privacy: the drawings go into a new folder in the builder's neutral output root (Public, Documents, FixtureBuilder), never beside a run in a personal
 ' folder, and the run folder it reads must itself be neutral, because a part keeps its own save path and a drawing keeps the part's. Same checks,
 ' notice, neutral summary fields, scrub and sweep as the builder (one text: PersonalPathReason, NoticeStep, PrivacyScrub, PrivacySweep).
@@ -32,8 +32,8 @@ Private Const swNumberingType_Detailed As Long = 1
 Private Const swDetailingDimensionStandard As Long = 13
 Private Const swUnitsLinear As Long = 47
 ' SolidWorks 2018+. Tools > Macro > New, import this .bas, run main.
-' Fixture Builder version 2026.11.27.2 (sheet metal, expect.json checks, round 5).
-Private Const BUILDER_VERSION As String = "2026.11.27.2"
+' Fixture Builder version 2026.11.27.3 (sheet metal, expect.json checks, round 5).
+Private Const BUILDER_VERSION As String = "2026.11.27.3"
 ' The neutral value written into the summary fields SolidWorks lets a macro set (author, saved-by) before each save.
 Private Const NEUTRAL_VALUE As String = "Fixture Builder"
 ' Requires Windows PowerShell for zip.
@@ -52,6 +52,11 @@ Private sweepListFailed As Boolean
 Private sweepAnsiSkipped As Boolean
 Private sweepEmptied As String
 Private sweepEmptiedCount As Long
+Private privateRun As Boolean
+Private privateKept As Boolean
+Private privateCount As Long
+Private privateIds As String
+Private privateStuck As String
 Private root As String
 Private currentFolder As String
 Private components As Object
@@ -110,175 +115,200 @@ Public Sub main()
     Dim finalMessage As String, fatalDescription As String, fatalStep As String
     Dim fatalNumber As Long, fatalLine As Long
     Dim finishText As String, zipMade As Boolean
-    Dim noticeNote As String, sweepNotes As String, zipError As String, swept As Boolean
-114     On Error GoTo Fatal
-115     currentIdentity = "setup"
+    Dim noticeNote As String, sweepNotes As String, zipError As String, swept As Boolean, descendNote As String, personalNote As String, chosenFolder As String, hideNames As Boolean
+119     On Error GoTo Fatal
+120     currentIdentity = "setup"
     ' First of all, before SolidWorks is touched or a folder made: the output root (the builder's, in Public\Documents unless the settings say
     ' otherwise) must carry no personal path; the run folder is checked next, then the drawing template.
-118     target = PackageOutputRoot()
-119     finalMessage = PersonalPathReason(target)
-120     If Len(finalMessage) > 0 Then GoTo Cleanup
+123     target = PackageOutputRoot()
+124     finalMessage = PersonalPathReason(target)
+125     If Len(finalMessage) > 0 Then GoTo Cleanup
     stepLabel = currentIdentity & ": main SldWorks"
-122     Set app = Application.SldWorks
-123     Set fs = CreateObject("Scripting.FileSystemObject")
-124     runFolder = PackageNewestRun(target)
-125     If Not IsUnattended() Then
-126         runFolder = InputBox("Folder of an earlier Fixture Builder run (the one that holds the .sldprt files; it must be in a neutral folder, as the builder 2026.11.25.3 or later makes). The drawings go into a new folder in the builder's output folder; nothing in the run folder is changed.", "Dutchman Fixtures", runFolder)
+127     Set app = Application.SldWorks
+128     Set fs = CreateObject("Scripting.FileSystemObject")
+129     runFolder = PackageNewestRun(target)
+130     If Not IsUnattended() Then
+131         runFolder = InputBox("Folder of an earlier Fixture Builder run (the one that holds the .sldprt files; it must be in a neutral folder, as the builder 2026.11.25.3 or later makes). The drawings go into a new folder in the builder's output folder; nothing in the run folder is changed.", "Dutchman Fixtures", runFolder)
     End If
-128     runFolder = Trim$(runFolder)
-129     Do While Len(runFolder) > 3 And Right$(runFolder, 1) = "\"
-130         runFolder = Left$(runFolder, Len(runFolder) - 1)
+133     runFolder = Trim$(runFolder)
+134     Do While Len(runFolder) > 3 And Right$(runFolder, 1) = "\"
+135         runFolder = Left$(runFolder, Len(runFolder) - 1)
     Loop
-132     If Len(runFolder) = 0 Then
-133         If Not IsUnattended() Then MsgBox "No folder was chosen, so nothing was drawn.", vbInformation, "SolidWorks fixtures"
-134         Exit Sub
+137     If Len(runFolder) = 0 Then
+138         If Not IsUnattended() Then MsgBox "No folder was chosen, so nothing was drawn.", vbInformation, "SolidWorks fixtures"
+139         Exit Sub
     End If
-    ' A part keeps its own save path and a drawing keeps the part's: a run made in a personal folder would put that path into every drawing.
-137     finalMessage = PackageRunFolderReason(runFolder)
-138     If Len(finalMessage) > 0 Then GoTo Cleanup
+    ' Only a folder that is not a full path with a drive letter is refused here; a personal one is asked about below, once the folder to draw from is known.
+142     finalMessage = PackageRunFolderReason(runFolder)
+143     If Len(finalMessage) > 0 Then GoTo Cleanup
     stepLabel = currentIdentity & ": main FolderExists"
-140     If Not fs.FolderExists(runFolder) Then
-141         finalMessage = "That folder was not found, so nothing was drawn: " & runFolder
-142         GoTo Cleanup
+145     If Not fs.FolderExists(runFolder) Then
+146         finalMessage = "That folder was not found, so nothing was drawn: " & runFolder
+147         GoTo Cleanup
     End If
-144     finalMessage = PackageTemplateRefusal()
-145     If Len(finalMessage) > 0 Then GoTo Cleanup
+    ' A zip extracted inside a folder of its own name leaves the parts one folder down: use that folder, and check it exactly as the chosen one.
+150     chosenFolder = runFolder
+151     hideNames = (Len(PersonalWhy(chosenFolder, True)) > 0)
+152     runFolder = PackageDescend(chosenFolder, descendNote, hideNames)
+153     If Len(descendNote) > 0 Then
+154         finalMessage = PackageRunFolderReason(runFolder)
+155         If Len(finalMessage) > 0 Then GoTo Cleanup
+        ' A personal run: no folder name in the log.
+157         If Not hideNames Then
+158             If Len(PersonalWhy(runFolder, True)) > 0 Then runFolder = PackageDescend(chosenFolder, descendNote, True)
+        End If
+    End If
+    ' A part keeps its own save path and a drawing keeps the part's: a run in a personal folder puts that path into every drawing. One OK/Cancel box
+    ' says which rule fired; OK draws (the output stays in the neutral root and private), Cancel draws nothing.
+163     finalMessage = PackageRunFolderNotice(runFolder, personalNote)
+164     If Len(finalMessage) > 0 Then GoTo Cleanup
+165     finalMessage = PackageTemplateRefusal()
+166     If Len(finalMessage) > 0 Then GoTo Cleanup
     ' The up-front notice, once per run: Cancel draws nothing.
-147     noticeNote = NoticeStep(False)
-148     If Len(noticeNote) = 0 Then
-149         finalMessage = "Canceled at the user name notice. Nothing was drawn."
-150         GoTo Cleanup
+168     noticeNote = NoticeStep(False)
+169     If Len(noticeNote) = 0 Then
+170         finalMessage = "Canceled at the user name notice. Nothing was drawn."
+171         GoTo Cleanup
     End If
-152     For i = 2 To 5
-153         rbStatus(i) = ""
+173     For i = 2 To 5
+174         rbStatus(i) = ""
     Next i
-155     sweepEmptied = ""
-156     sweepEmptiedCount = 0
-157     sweepListFailed = False
-158     sweepAnsiSkipped = False
-159     packageFolder = runFolder
+176     sweepEmptied = ""
+177     privateRun = (InStr(personalNote, "drawing anyway on OK") > 0)
+178     privateKept = False
+179     privateCount = 0
+180     privateIds = ""
+181     privateStuck = ""
+182     sweepEmptiedCount = 0
+183     sweepListFailed = False
+184     sweepAnsiSkipped = False
+185     packageFolder = runFolder
     stepLabel = currentIdentity & ": main GetUserPreferenceToggle"
-161     oldInput = app.GetUserPreferenceToggle(swInputDimValOnCreate)
-162     inputSaved = True
+187     oldInput = app.GetUserPreferenceToggle(swInputDimValOnCreate)
+188     inputSaved = True
     stepLabel = currentIdentity & ": main SetUserPreferenceToggle"
-164     app.SetUserPreferenceToggle swInputDimValOnCreate, False
+190     app.SetUserPreferenceToggle swInputDimValOnCreate, False
     stepLabel = currentIdentity & ": main GetUserPreferenceToggle"
-166     oldRebuild = app.GetUserPreferenceToggle(swShowErrorsEveryRebuild)
-167     rebuildSaved = True
+192     oldRebuild = app.GetUserPreferenceToggle(swShowErrorsEveryRebuild)
+193     rebuildSaved = True
     stepLabel = currentIdentity & ": main SetUserPreferenceToggle"
-169     app.SetUserPreferenceToggle swShowErrorsEveryRebuild, False
+195     app.SetUserPreferenceToggle swShowErrorsEveryRebuild, False
     stepLabel = currentIdentity & ": main GetUserPreferenceToggle"
-171     oldWarn = app.GetUserPreferenceToggle(swWarnSaveUpdateErrors)
-172     warnSaved = True
+197     oldWarn = app.GetUserPreferenceToggle(swWarnSaveUpdateErrors)
+198     warnSaved = True
     stepLabel = currentIdentity & ": main SetUserPreferenceToggle"
-174     app.SetUserPreferenceToggle swWarnSaveUpdateErrors, False
+200     app.SetUserPreferenceToggle swWarnSaveUpdateErrors, False
     stepLabel = currentIdentity & ": main GetUserPreferenceIntegerValue"
-176     oldAction = app.GetUserPreferenceIntegerValue(swRebuildErrorAction)
-177     actionSaved = True
+202     oldAction = app.GetUserPreferenceIntegerValue(swRebuildErrorAction)
+203     actionSaved = True
     stepLabel = currentIdentity & ": main SetUserPreferenceIntegerValue"
-179     If Not app.SetUserPreferenceIntegerValue(swRebuildErrorAction, swContinueResponse_Stop) Then Err.Raise 5, , "Cannot disable rebuild prompt"
+205     If Not app.SetUserPreferenceIntegerValue(swRebuildErrorAction, swContinueResponse_Stop) Then Err.Raise 5, , "Cannot disable rebuild prompt"
     stepLabel = currentIdentity & ": main RevisionNumber"
-181     revision = app.RevisionNumber()
-182     pieces = Split(revision, ".")
-183     swMajor = CLng(pieces(0))
-184     version = CStr(CLng(pieces(0)) + 1992)
-185     build = "0"
-186     If UBound(pieces) > 0 Then
-187         build = pieces(1)
-188         For i = 2 To UBound(pieces)
-189             build = build & "-" & pieces(i)
+207     revision = app.RevisionNumber()
+208     pieces = Split(revision, ".")
+209     swMajor = CLng(pieces(0))
+210     version = CStr(CLng(pieces(0)) + 1992)
+211     build = "0"
+212     If UBound(pieces) > 0 Then
+213         build = pieces(1)
+214         For i = 2 To UBound(pieces)
+215             build = build & "-" & pieces(i)
         Next i
     End If
     ' Always a NEW folder in the output root: FixtureDrawings-SolidWorks-<version>, then -2, -3 ... Never deleted or reused.
-193     EnsureFolder fs, target
-194     outName = "FixtureDrawings-SolidWorks-" & BUILDER_VERSION
+219     EnsureFolder fs, target
+220     outName = "FixtureDrawings-SolidWorks-" & BUILDER_VERSION
     stepLabel = currentIdentity & ": main BuildPath"
-196     folder = fs.BuildPath(target, outName)
-197     attempt = 1
+222     folder = fs.BuildPath(target, outName)
+223     attempt = 1
     stepLabel = currentIdentity & ": main FolderExists"
-199     Do While fs.FolderExists(folder) Or fs.FileExists(folder & ".zip")
-200         attempt = attempt + 1
-201         outName = "FixtureDrawings-SolidWorks-" & BUILDER_VERSION & "-" & CStr(attempt)
+225     Do While fs.FolderExists(folder) Or fs.FileExists(folder & ".zip")
+226         attempt = attempt + 1
+227         outName = "FixtureDrawings-SolidWorks-" & BUILDER_VERSION & "-" & CStr(attempt)
     stepLabel = currentIdentity & ": main BuildPath"
-203         folder = fs.BuildPath(target, outName)
+229         folder = fs.BuildPath(target, outName)
     Loop
     stepLabel = currentIdentity & ": main CreateFolder" & " " & apiInputs & " " & callInputs
-206     fs.CreateFolder folder
-207     resultRows = ""
+232     fs.CreateFolder folder
+233     resultRows = ""
     stepLabel = currentIdentity & ": main BuildPath"
-209     WriteUtf8 fs.BuildPath(folder, "results.json"), "[]"
+235     WriteUtf8 fs.BuildPath(folder, "results.json"), "[]"
     stepLabel = currentIdentity & ": main GetFileName"
-211     AppendLog folder, "setup", "Fixture Drawings " & BUILDER_VERSION, 0, 0, "SolidWorks revision " & revision & "; run folder " & fs.GetFileName(runFolder) & "; output folder " & outName & "; personal-path check: passed (output folder and run folder)"
-212     AppendLog folder, "setup", "template path", 0, 0, "template path: neutral"
-213     AppendLog folder, "setup", "user name notice", 0, 0, noticeNote
-214     For i = 0 To PackageCount() - 1
-215         RunPackage i, folder, version, build, CLng(pieces(0))
+237     AppendLog folder, "setup", "Fixture Drawings " & BUILDER_VERSION, 0, 0, "SolidWorks revision " & revision & "; run folder " & IIf(Len(personalNote) > 0, "(personal, name not logged)", fs.GetFileName(runFolder)) & "; output folder " & outName & "; personal-path check: passed (" & PackageCheckScope(personalNote) & ")"
+238     AppendLog folder, "setup", "template path", 0, 0, "template path: neutral"
+239     If Len(descendNote) > 0 Then AppendLog folder, "setup", "option", 0, 0, descendNote
+240     If Len(personalNote) > 0 Then AppendLog folder, "setup", "option", 0, 0, personalNote
+241     AppendLog folder, "setup", "user name notice", 0, 0, noticeNote
+242     For i = 0 To PackageCount() - 1
+243         RunPackage i, folder, version, build, CLng(pieces(0))
     Next i
-217     AppendLog folder, "setup", "summary", 0, 0, "summary: ok=" & CStr(CountStatus("ok")) & " failed=" & CStr(CountStatus("failed")) & _
+    ' Once per run: what the folder holds (counts and file names only), so a wrong folder shows.
+246     If CountStatus("skipped") > 0 Then AppendLog folder, "setup", "option", 0, 0, PackageHoldsText(runFolder)
+247     AppendLog folder, "setup", "summary", 0, 0, "summary: ok=" & CStr(CountStatus("ok")) & " failed=" & CStr(CountStatus("failed")) & _
         " not_scripted=" & CStr(CountStatus("not_scripted")) & " skipped=" & CStr(CountStatus("skipped"))
-219     AppendLog folder, "setup", "summary info", 0, 0, ReadbackText()
-220     AppendLog folder, "setup", "summary info", 0, 0, "SolidWorks stamps the saving user in each file: not removable by the API"
-221     AppendLog folder, "setup", "summary info", 0, 0, "SolidWorks also records its Windows temp folder (under your user profile) in each native file; we keep native files private and publish only STEP and files we've checked clean."
+249     AppendLog folder, "setup", "summary info", 0, 0, ReadbackText()
+250     AppendLog folder, "setup", "summary info", 0, 0, "SolidWorks stamps the saving user in each file: not removable by the API"
+251     AppendLog folder, "setup", "summary info", 0, 0, "SolidWorks also records its Windows temp folder (under your user profile) in each native file; we keep native files private and publish only STEP and files we've checked clean."
     ' Before the zip: every file in the output folder, listed or not, is scrubbed (see PrivacySweep).
-223     swept = True
-224     sweepNotes = PrivacySweep(folder)
-225     If Len(sweepNotes) > 0 Then AppendLog folder, "setup", "privacy sweep", 0, 0, sweepNotes
-226     zipMade = False
-227     If Not sweepListFailed Then zipMade = MakeZip(folder)        ' a folder that could not be checked is never zipped
-228     zipError = folder & "-zip-error.txt"
+253     swept = True
+254     sweepNotes = PrivacySweep(folder)
+255     If Len(sweepNotes) > 0 Then AppendLog folder, "setup", "privacy sweep", 0, 0, sweepNotes
+256     zipMade = False
+257     If Not sweepListFailed And Len(privateStuck) = 0 Then zipMade = MakeZip(folder)        ' a folder that could not be checked, or that still holds a private file, is never zipped
+258     zipError = folder & "-zip-error.txt"
     stepLabel = currentIdentity & ": main FileExists"
-230     If fs.FileExists(zipError) Then SweepFile fs, zipError, sweepNotes
-231     If zipMade Then SaveSetting "DutchmanFixtures", "SolidWorksBuilder", "LastZip", folder & ".zip"
-232     finishText = FinishMessage(CountStatus("ok") + CountStatus("failed") + CountStatus("not_scripted") + CountStatus("skipped"), _
+260     If fs.FileExists(zipError) Then SweepFile fs, zipError, sweepNotes
+261     If zipMade Then SaveSetting "DutchmanFixtures", "SolidWorksBuilder", "LastZip", folder & ".zip"
+262     finishText = FinishMessage(CountStatus("ok") + CountStatus("failed") + CountStatus("not_scripted") + CountStatus("skipped"), _
         CountStatus("ok"), CountStatus("failed"), CountStatus("not_scripted"), CountStatus("skipped"), folder & ".zip", zipMade, folder)
-234     AppendLog folder, "setup", "finish", 0, 0, finishText
-235     GoTo Cleanup
+264     AppendLog folder, "setup", "finish", 0, 0, finishText
+265     GoTo Cleanup
 Fatal:
     fatalLine = Erl: fatalNumber = Err.Number: fatalDescription = Err.Description: fatalStep = stepLabel
-238     finalMessage = fatalStep & " (line " & CStr(fatalLine) & "): " & fatalDescription
-239     On Error Resume Next
-240     swept = False        ' an error after the sweep (in the zip step) is swept again on the way out
-241     If Len(folder) > 0 Then AppendLog folder, currentIdentity, fatalStep, fatalLine, fatalNumber, fatalDescription
-242     Resume Cleanup
+268     finalMessage = fatalStep & " (line " & CStr(fatalLine) & "): " & fatalDescription
+269     On Error Resume Next
+270     swept = False        ' an error after the sweep (in the zip step) is swept again on the way out
+271     If Len(folder) > 0 Then AppendLog folder, currentIdentity, fatalStep, fatalLine, fatalNumber, fatalDescription
+272     Resume Cleanup
 Cleanup:
-244     On Error Resume Next
-245     Err.Clear
+274     On Error Resume Next
+275     Err.Clear
     ' Every way out of main passes here: the folder is swept once, so an error part way leaves no unswept text file.
-247     If Len(folder) > 0 And Not swept Then
-248         swept = True
-249         sweepNotes = PrivacySweep(folder)
-250         If Len(sweepNotes) > 0 Then AppendLog folder, "setup", "privacy sweep", 0, 0, sweepNotes
+277     If Len(folder) > 0 And Not swept Then
+278         swept = True
+279         sweepNotes = PrivacySweep(folder)
+280         If Len(sweepNotes) > 0 Then AppendLog folder, "setup", "privacy sweep", 0, 0, sweepNotes
     End If
-252     Err.Clear
+282     Err.Clear
     stepLabel = currentIdentity & ": main SetUserPreferenceIntegerValue"
-254     If actionSaved Then app.SetUserPreferenceIntegerValue swRebuildErrorAction, oldAction
-255     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
-256     Err.Clear
+284     If actionSaved Then app.SetUserPreferenceIntegerValue swRebuildErrorAction, oldAction
+285     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
+286     Err.Clear
     stepLabel = currentIdentity & ": main SetUserPreferenceToggle"
-258     If warnSaved Then app.SetUserPreferenceToggle swWarnSaveUpdateErrors, oldWarn
-259     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
-260     Err.Clear
+288     If warnSaved Then app.SetUserPreferenceToggle swWarnSaveUpdateErrors, oldWarn
+289     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
+290     Err.Clear
     stepLabel = currentIdentity & ": main SetUserPreferenceToggle"
-262     If rebuildSaved Then app.SetUserPreferenceToggle swShowErrorsEveryRebuild, oldRebuild
-263     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
-264     Err.Clear
+292     If rebuildSaved Then app.SetUserPreferenceToggle swShowErrorsEveryRebuild, oldRebuild
+293     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
+294     Err.Clear
     stepLabel = currentIdentity & ": main SetUserPreferenceToggle"
-266     If inputSaved Then app.SetUserPreferenceToggle swInputDimValOnCreate, oldInput
-267     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
-268     Err.Clear
+296     If inputSaved Then app.SetUserPreferenceToggle swInputDimValOnCreate, oldInput
+297     If Err.Number <> 0 Then ReportCleanupError folder, finalMessage
+298     Err.Clear
     ' FIXTURE_UNATTENDED=1: no Explorer window and no message box, only the log line written above.
-270     If Len(finalMessage) > 0 Then
-271         If Not IsUnattended() Then MsgBox PrivacyScrub(finalMessage), vbExclamation, "SolidWorks fixtures"
+300     If Len(finalMessage) > 0 Then
+301         If Not IsUnattended() Then MsgBox PrivacyScrub(finalMessage), vbExclamation, "SolidWorks fixtures"
     ElseIf Len(finishText) > 0 And Not IsUnattended() Then
-273         If zipMade Then
+303         If zipMade Then
     stepLabel = currentIdentity & ": main Run"
-275             CreateObject("WScript.Shell").Run "explorer.exe /select,""" & folder & ".zip""", 1, False
+305             CreateObject("WScript.Shell").Run "explorer.exe /select,""" & folder & ".zip""", 1, False
         Else
     stepLabel = currentIdentity & ": main Run"
-278             CreateObject("WScript.Shell").Run "explorer.exe """ & folder & """", 1, False
+308             CreateObject("WScript.Shell").Run "explorer.exe """ & folder & """", 1, False
         End If
-280         Err.Clear
-281         MsgBox PrivacyScrub(finishText), vbInformation, "SolidWorks fixtures"
+310         Err.Clear
+311         MsgBox PrivacyScrub(finishText), vbInformation, "SolidWorks fixtures"
     End If
 End Sub
 
@@ -286,265 +316,461 @@ Private Function PackageOutputRoot() As String
     ' The builder's output root: OUTPUT_FOLDER when it is set, else the launcher's OutputRoot setting, else the neutral default
     ' (Public\Documents\FixtureBuilder). The old Documents\FixtureBuilder is never looked in: it is a personal folder.
     Dim rootFolder As String
-289     rootFolder = OUTPUT_FOLDER
-290     If Len(rootFolder) = 0 Then rootFolder = GetSetting("DutchmanFixtures", "SolidWorksBuilder", "OutputRoot", "")
-291     If Len(rootFolder) = 0 Then rootFolder = DefaultOutputRoot()
-292     PackageOutputRoot = rootFolder
+319     rootFolder = OUTPUT_FOLDER
+320     If Len(rootFolder) = 0 Then rootFolder = GetSetting("DutchmanFixtures", "SolidWorksBuilder", "OutputRoot", "")
+321     If Len(rootFolder) = 0 Then rootFolder = DefaultOutputRoot()
+322     PackageOutputRoot = rootFolder
 End Function
 
 Private Function PackageRunFolderReason(ByVal runFolder As String) As String
-    ' "" when the run folder is neutral, else the refusal. A part keeps its own save path inside the file and a drawing references the part's path,
-    ' so drawings made from a run in a personal folder would carry that path. The text never repeats the folder.
-298     If Not DriveRooted(runFolder) Then
-299         PackageRunFolderReason = "The run folder was refused because the folder must be a full path starting with a drive letter. Nothing was drawn."
-    ElseIf Len(PersonalWhy(runFolder, True)) > 0 Then
-301         PackageRunFolderReason = "This run was made in a personal folder, so its parts carry that folder's path. Run the Fixture Builder " & BUILDER_VERSION & " or later first; it saves to " & DefaultOutputRoot() & "."
+    ' "" unless the run folder is not a full path starting with a drive letter, which is refused. A personal run folder is asked about instead
+    ' (PackageRunFolderNotice). The text never repeats the folder.
+328     If Not DriveRooted(runFolder) Then
+329         PackageRunFolderReason = "The run folder was refused because the folder must be a full path starting with a drive letter. Nothing was drawn."
     End If
+End Function
+
+Private Function PackageRunFolderNotice(ByVal runFolder As String, ByRef note As String) As String
+    ' "" to go on, else the message that nothing was drawn. note is the option line for the log ("" when the run folder is not personal): the rule
+    ' PersonalWhy gives, never the path. One OK/Cancel box; an unattended run is not asked and draws nothing.
+    Dim why As String
+337     note = ""
+338     why = PersonalWhy(runFolder, True)
+339     If Len(why) = 0 Then Exit Function
+340     If IsUnattended() Then
+341         note = "run folder: personal (" & why & "); cancelled (unattended run, not asked)"
+    ElseIf MsgBox("The run folder looks personal: " & why & ". Drawings store their part's full path, so these drawings would carry it. If you press OK they are drawn and kept private (not published). Press Cancel to draw nothing.", vbOKCancel + vbInformation, "SolidWorks fixtures") = vbOK Then
+343         note = "run folder: personal (" & why & "); drawing anyway on OK"
+344         Exit Function
+    Else
+346         note = "run folder: personal (" & why & "); cancelled"
+    End If
+348     PackageRunFolderNotice = "Canceled at the run folder notice (" & note & "). Nothing was drawn."
+End Function
+
+Private Function PackageCheckScope(ByVal personalNote As String) As String
+    ' What the setup line says was checked and passed.
+353     PackageCheckScope = "output folder and run folder"
+354     If Len(personalNote) > 0 Then PackageCheckScope = "output folder; the run folder is personal, see its option line"
+End Function
+
+Private Function PackageModelName() As String
+    ' The assembly's own name (its file name without the extension): the one prefix a component name may carry and still be top-level.
+    Dim fs As Object
+360     Set fs = CreateObject("Scripting.FileSystemObject")
+    stepLabel = currentIdentity & ": PackageModelName GetBaseName"
+362     PackageModelName = fs.GetBaseName(packagePart)
+End Function
+
+Private Function PackageModelFiles() As Variant
+    ' The model file names the drawings need, one each (a model two drawings share counts once).
+    Dim names() As String, total As Long, i As Long, k As Long, fileName As String, seen As Boolean
+368     ReDim names(0 To PackageCount() - 1)
+369     For i = 0 To PackageCount() - 1
+370         fileName = PackageModel(i) & PackageExtension(i)
+371         seen = False
+372         For k = 0 To total - 1
+373             If names(k) = fileName Then seen = True
+        Next k
+375         If Not seen Then
+376             names(total) = fileName
+377             total = total + 1
+        End If
+    Next i
+380     ReDim Preserve names(0 To total - 1)
+381     PackageModelFiles = names
+End Function
+
+Private Function PackageHeldCount(ByVal folderPath As String) As Long
+    ' How many of the model files the drawings need are in the folder (FileExists ignores case).
+    Dim fs As Object, names As Variant, i As Long
+387     Set fs = CreateObject("Scripting.FileSystemObject")
+388     names = PackageModelFiles()
+389     For i = 0 To UBound(names)
+    stepLabel = currentIdentity & ": PackageHeldCount FileExists"
+391         If fs.FileExists(folderPath & "\" & CStr(names(i))) Then PackageHeldCount = PackageHeldCount + 1
+    Next i
+End Function
+
+Private Function PackageDescend(ByVal runFolder As String, ByRef note As String, ByVal hide As Boolean) As String
+    ' A zip extracted inside a folder of its own name leaves the parts one folder down. When the chosen folder holds none of the model files and exactly
+    ' one folder named like it (or FixtureBuilder-SolidWorks-*) that holds some, that folder is used. One level only; a folder that holds parts is never
+    ' descended from. The note names folders by name only.
+    Dim fs As Object, child As Object, found As Object, matches As Long, ownName As String, shownOwn As String, shownInner As String
+400     note = ""
+401     PackageDescend = runFolder
+402     If PackageHeldCount(runFolder) > 0 Then Exit Function
+403     Set fs = CreateObject("Scripting.FileSystemObject")
+    stepLabel = currentIdentity & ": PackageDescend GetFileName"
+405     ownName = fs.GetFileName(runFolder)
+    stepLabel = currentIdentity & ": PackageDescend GetFolder"
+407     For Each child In fs.GetFolder(runFolder).SubFolders
+        ' A junction or symbolic link (a reparse point) is never descended into.
+    stepLabel = currentIdentity & ": PackageDescend Attributes"
+410         If (child.Attributes And 1024) = 0 And (StrComp(child.Name, ownName, vbTextCompare) = 0 Or InStr(1, child.Name, "FixtureBuilder-SolidWorks-", vbTextCompare) = 1) Then
+411             matches = matches + 1
+412             Set found = child
+        End If
+    Next child
+415     If matches <> 1 Then Exit Function
+    stepLabel = currentIdentity & ": PackageDescend Path"
+417     If PackageHeldCount(found.Path) = 0 Then Exit Function
+418     shownOwn = ownName
+    stepLabel = currentIdentity & ": PackageDescend Name"
+420     shownInner = found.Name
+421     If hide Then
+422         shownOwn = "(personal, name not logged)"
+423         shownInner = "(personal, name not logged)"
+    End If
+    stepLabel = currentIdentity & ": PackageDescend Name"
+426     If StrComp(found.Name, ownName, vbTextCompare) = 0 Then
+427         note = "run folder: " & shownOwn & " holds no part files but one folder of the same name that does (a zip extracted inside a folder of its own name); drawing from that folder"
+    Else
+429         note = "run folder: " & shownOwn & " holds no part files but one folder, " & shownInner & ", that does (a zip extracted inside another folder); drawing from that folder"
+    End If
+    stepLabel = currentIdentity & ": PackageDescend Path"
+432     PackageDescend = found.Path
+End Function
+
+Private Function PackageHoldsText(ByVal folderPath As String) As String
+    ' What the run folder holds, in counts and model file names only (never a path), for a run with a skipped drawing.
+    Dim fs As Object, held As String, wanted As String, heldCount As Long, i As Long, fileName As String, names As Variant
+    Dim folderCount As Long, otherCount As Long, shown As String, folderNoun As String, fileNoun As String
+439     Set fs = CreateObject("Scripting.FileSystemObject")
+440     names = PackageModelFiles()
+441     For i = 0 To UBound(names)
+442         fileName = CStr(names(i))
+    stepLabel = currentIdentity & ": PackageHoldsText FileExists"
+444         If fs.FileExists(folderPath & "\" & fileName) Then
+445             heldCount = heldCount + 1
+446             If Len(held) > 0 Then held = held & ", "
+447             held = held & fileName
+        End If
+449         If i < 2 Then wanted = wanted & fileName & ", "
+    Next i
+451     shown = held
+452     If heldCount = 0 Then shown = wanted & "..."
+    stepLabel = currentIdentity & ": PackageHoldsText GetFolder"
+454     folderCount = fs.GetFolder(folderPath).SubFolders.Count
+    stepLabel = currentIdentity & ": PackageHoldsText GetFolder"
+456     otherCount = fs.GetFolder(folderPath).Files.Count - heldCount
+457     folderNoun = " folders"
+458     If folderCount = 1 Then folderNoun = " folder"
+459     fileNoun = " other files"
+460     If otherCount = 1 Then fileNoun = " other file"
+461     PackageHoldsText = "run folder holds " & CStr(heldCount) & " of the " & CStr(UBound(names) + 1) & " model files (" & shown & "); it holds " & CStr(folderCount) & folderNoun & " and " & CStr(otherCount) & fileNoun
 End Function
 
 Private Function PackageTemplateRefusal() As String
     ' The drawing template is the only one the package uses (a drawing keeps the path of its template and sheet format).
     Dim path As String
-308     On Error Resume Next
-309     path = ResolveTemplate("drawing")
-310     Err.Clear
-311     On Error GoTo 0
-312     If Len(path) > 0 Then PackageTemplateRefusal = PersonalTemplateReason("drawing", path)
+467     On Error Resume Next
+468     path = ResolveTemplate("drawing")
+469     Err.Clear
+470     On Error GoTo 0
+471     If Len(path) > 0 Then PackageTemplateRefusal = PersonalTemplateReason("drawing", path)
 End Function
 
 Private Function PackageNewestRun(ByVal rootFolder As String) As String
     ' The newest FixtureBuilder-SolidWorks-* folder under the (neutral) output root ("" when there is none).
     Dim fs As Object, candidate As Object, best As Object
-318     Set fs = CreateObject("Scripting.FileSystemObject")
+477     Set fs = CreateObject("Scripting.FileSystemObject")
     stepLabel = currentIdentity & ": PackageNewestRun FolderExists"
-320     If Not fs.FolderExists(rootFolder) Then Exit Function
+479     If Not fs.FolderExists(rootFolder) Then Exit Function
     stepLabel = currentIdentity & ": PackageNewestRun GetFolder"
-322     For Each candidate In fs.GetFolder(rootFolder).SubFolders
+481     For Each candidate In fs.GetFolder(rootFolder).SubFolders
     stepLabel = currentIdentity & ": PackageNewestRun Name"
-324         If InStr(1, candidate.Name, "FixtureBuilder-SolidWorks-", vbTextCompare) = 1 Then
-325             If best Is Nothing Then
-326                 Set best = candidate
+483         If InStr(1, candidate.Name, "FixtureBuilder-SolidWorks-", vbTextCompare) = 1 Then
+484             If best Is Nothing Then
+485                 Set best = candidate
             ElseIf candidate.DateLastModified > best.DateLastModified Then
-328                 Set best = candidate
+487                 Set best = candidate
             End If
         End If
     Next candidate
     stepLabel = currentIdentity & ": PackageNewestRun Path"
-333     If Not best Is Nothing Then PackageNewestRun = best.Path
+492     If Not best Is Nothing Then PackageNewestRun = best.Path
 End Function
 
 Private Function FinishMessage(ByVal total As Long, ByVal made As Long, ByVal failed As Long, ByVal notScripted As Long, ByVal skipped As Long, ByVal zipPath As String, ByVal zipMade As Boolean, ByVal folder As String) As String
-    Dim noun As String, counts As String
-338     noun = "drawings"
-339     If total = 1 Then noun = "drawing"
-340     counts = CStr(total) & " " & noun & ": " & CStr(made) & " made, " & CStr(failed) & " failed, " & CStr(notScripted) & _
+    Dim noun As String, counts As String, fs As Object
+497     Set fs = CreateObject("Scripting.FileSystemObject")
+498     noun = "drawings"
+499     If total = 1 Then noun = "drawing"
+500     counts = CStr(total) & " " & noun & ": " & CStr(made) & " made, " & CStr(failed) & " failed, " & CStr(notScripted) & _
         " not scripted, " & CStr(skipped) & " skipped (details in FixtureDrawings.log)." & EmptiedLine()
-342     If sweepListFailed Then
-343         FinishMessage = counts & vbLf & "The zip was not made because the output folder could not be checked; nothing was sent."
+502     If privateCount > 0 Then
+    stepLabel = currentIdentity & ": FinishMessage GetBaseName"
+504         counts = counts & vbLf & CStr(privateCount) & IIf(privateCount = 1, " drawing", " drawings") & " (" & privateIds & ") " & IIf(privateCount = 1, "is", "are") & " in the folder " & fs.GetBaseName(zipPath) & "-private, in the shared Public Documents folder, which other users of this computer can read; " & _
+            IIf(privateCount = 1, "it is", "they are") & " not in the zip and not published. " & IIf(privateCount = 1, "It carries", "They carry") & " a personal name or path (the run folder is personal, as you agreed)."
+    End If
+507     counts = counts & vbLf & "The drawings package reads the builder run folder, so keep that folder."
+508     If Len(privateStuck) > 0 Then
+509         FinishMessage = counts & vbLf & "The zip was not made because these private files could not be moved out of the output folder or removed: " & privateStuck & "; nothing was sent."
+    ElseIf sweepListFailed Then
+511         FinishMessage = counts & vbLf & "The zip was not made because the output folder could not be checked; nothing was sent."
+    ElseIf zipMade And privateCount > 0 And made = privateCount Then
+513         FinishMessage = counts & vbLf & "Nothing else needs posting: the zip holds only results.json and the log, which hold no path, and it is the only file to send:" & vbLf & zipPath
     ElseIf zipMade Then
-345         FinishMessage = counts & vbLf & "Next: post this zip in your builder thread, or send it to Dutchy in a Discord direct message:" & vbLf & zipPath
+515         FinishMessage = counts & vbLf & "Next: post this zip in your builder thread, or send it to Dutchy in a Discord direct message:" & vbLf & zipPath
     Else
-347         FinishMessage = counts & vbLf & "The zip could not be made (the reason is in FixtureDrawings.log and " & folder & "-zip-error.txt)." & vbLf & _
+517         FinishMessage = counts & vbLf & "The zip could not be made (the reason is in FixtureDrawings.log and " & folder & "-zip-error.txt)." & vbLf & _
             "Next: right-click this folder, choose Send to > Compressed (zipped) folder, and post that zip in your builder thread or send it to Dutchy in a Discord direct message:" & vbLf & folder
     End If
 End Function
 
 Private Sub AppendLog(ByVal folder As String, ByVal identity As String, ByVal failedStep As String, ByVal lineNumber As Long, ByVal errorNumber As Long, ByVal description As String)
     Dim channel As Integer
-354     channel = FreeFile
-355     Open folder & "\FixtureDrawings.log" For Append As #channel
-356     Print #channel, Format$(Now, "yyyy-mm-dd hh:nn:ss") & " builder=" & BUILDER_VERSION & " recipe=" & identity & _
+524     channel = FreeFile
+525     Open folder & "\FixtureDrawings.log" For Append As #channel
+526     Print #channel, Format$(Now, "yyyy-mm-dd hh:nn:ss") & " builder=" & BUILDER_VERSION & " recipe=" & identity & _
         " step=" & failedStep & " Erl=" & CStr(lineNumber) & " Err.Number=" & CStr(errorNumber) & _
         " Err.Description=" & Replace(Replace(CleanError(description), vbCr, "\r"), vbLf, "\n")
-359     Close #channel
+529     Close #channel
 End Sub
 
 Private Sub RunPackage(ByVal index As Long, ByVal folder As String, ByVal version As String, ByVal build As String, ByVal major As Long)
     ' One companion drawing entry: skipped (not made by the builder, or its part file is not in the folder), not scripted, drawn, or failed with
     ' the step and the call inputs. A failure never stops the next entry.
     Dim identity As String, status As String, message As String, files As String, started As Double, elapsed As Double
-    Dim fs As Object, title As Variant
+    Dim fs As Object, title As Variant, removeFailed As String
     Dim failureLine As Long, failureNumber As Long, failureDescription As String, failureStep As String
-368     On Error GoTo Failed
-369     Set doc = Nothing
-370     Set loadedDocs = Nothing
-371     attemptErrorsSaved = False
-372     started = Timer
-373     identity = PackageId(index)
-374     currentIdentity = identity
-375     currentFolder = folder
-376     Set mitigations = CreateObject("Scripting.Dictionary")
-377     Set primaryFailures = CreateObject("Scripting.Dictionary")
-378     Set fallbackSuccesses = CreateObject("Scripting.Dictionary")
-379     apiInputs = "": callInputs = ""
-380     stepLabel = identity & ": preflight"
-381     status = "failed"
-382     files = "[]"
-383     Set fs = CreateObject("Scripting.FileSystemObject")
-384     Select Case PackageState(index)
+538     On Error GoTo Failed
+539     Set doc = Nothing
+540     Set loadedDocs = Nothing
+541     privateKept = False
+542     attemptErrorsSaved = False
+543     started = Timer
+544     identity = PackageId(index)
+545     currentIdentity = identity
+546     currentFolder = folder
+547     Set mitigations = CreateObject("Scripting.Dictionary")
+548     Set primaryFailures = CreateObject("Scripting.Dictionary")
+549     Set fallbackSuccesses = CreateObject("Scripting.Dictionary")
+550     apiInputs = "": callInputs = ""
+551     stepLabel = identity & ": preflight"
+552     status = "failed"
+553     files = "[]"
+554     Set fs = CreateObject("Scripting.FileSystemObject")
+555     Select Case PackageState(index)
         Case 1
-386             status = "not_scripted"
-387             message = PackageReason(index)
+557             status = "not_scripted"
+558             message = PackageReason(index)
         Case Else
-389             If major < 26 Then
-390                 status = "not_scripted"
-391                 message = "needs SolidWorks 2018+"
+560             If major < 26 Then
+561                 status = "not_scripted"
+562                 message = "needs SolidWorks 2018+"
             ElseIf Not fs.FileExists(packageFolder & "\" & PackageModel(index) & PackageExtension(index)) Then
-393                 status = "skipped"
-394                 message = "the part file is not in this folder"
+564                 status = "skipped"
+565                 message = "the part file is not in this folder"
             Else
-396                 AttemptPackage index, folder
-397                 status = "ok"
-398                 files = "[" & Quote(identity & ".slddrw") & "," & Quote(identity & ".pdf") & "," & Quote(identity & ".dxf") & "]"
+567                 AttemptPackage index, folder
+568                 status = "ok"
+569                 files = "[" & Quote(identity & ".slddrw") & "," & Quote(identity & ".pdf") & "," & Quote(identity & ".dxf") & "]"
+570                 If privateRun Then
+                    ' A personal run, OK pressed: EVERY drawing is private, whatever the PDF scan says (the part's path is inside the compressed .slddrw, which is never
+                    ' scanned). The files go to a sibling folder, never into the zip (a failure here fails the row, which removes them).
+573                     files = PackageMovePrivate(folder, identity)
+574                     privateCount = privateCount + 1
+575                     privateIds = privateIds & IIf(Len(privateIds) > 0, ", ", "") & identity
+    stepLabel = currentIdentity & ": RunPackage GetFileName"
+577                     AppendLog folder, identity, "option", 0, 0, "kept private: the run folder is personal, as agreed; moved to " & fs.GetFileName(folder) & "-private, in the shared Public Documents folder, which other users of this computer can read; not in the zip and not published"
+                End If
             End If
     End Select
-401     GoTo Finished
+581     GoTo Finished
 Failed:
     failureLine = Erl: failureNumber = Err.Number: failureDescription = Err.Description: failureStep = stepLabel
-404     AppendLog folder, currentIdentity, failureStep, failureLine, failureNumber, failureDescription
-405     message = failureStep & " (line " & CStr(failureLine) & "): " & failureDescription
-406     status = "failed"
-407     files = "[]"
-408     Resume Finished
+584     AppendLog folder, currentIdentity, failureStep, failureLine, failureNumber, failureDescription
+585     message = failureStep & " (line " & CStr(failureLine) & "): " & failureDescription
+586     status = "failed"
+587     files = "[]"
+588     Resume Finished
 Finished:
-410     On Error GoTo CleanupFailed
-411     If status <> "ok" Then PackageRemoveFiles folder, identity
-412     If Not doc Is Nothing Then
+590     On Error GoTo CleanupFailed
+591     If Not doc Is Nothing Then
     stepLabel = currentIdentity & ": RunPackage ShowFeatureErrorDialog"
-414         If attemptErrorsSaved Then doc.ShowFeatureErrorDialog = attemptOldErrors
+593         If attemptErrorsSaved Then doc.ShowFeatureErrorDialog = attemptOldErrors
     stepLabel = currentIdentity & ": RunPackage CloseDoc"
-416         app.CloseDoc doc.GetTitle()
+595         app.CloseDoc doc.GetTitle()
     End If
-418     Set doc = Nothing
-419     If Not loadedDocs Is Nothing Then
-420         For Each title In loadedDocs
+597     Set doc = Nothing
+598     If Not loadedDocs Is Nothing Then
+599         For Each title In loadedDocs
     stepLabel = currentIdentity & ": RunPackage CloseDoc"
-422             app.CloseDoc CStr(title)
+601             app.CloseDoc CStr(title)
         Next title
     End If
-425     Set loadedDocs = Nothing
-426     On Error GoTo ReportFailed
-427     elapsed = Timer - started
-428     If elapsed < 0 Then elapsed = elapsed + 86400#
-429     PackageRow identity, status, message, files, version, build, elapsed
-430     AppendLog folder, currentIdentity, "recipe complete: " & status, 0, 0, MitigationText()
-431     Exit Sub
+604     Set loadedDocs = Nothing
+    ' The drawing is closed first, so its files are not locked; a removal that fails is added after the error that led here, never in its place.
+606     If status <> "ok" Then
+607         removeFailed = PackageRemoveFiles(folder, identity)
+608         If Len(removeFailed) > 0 Then
+609             AppendLog folder, currentIdentity, "removing the files", 0, 0, removeFailed
+610             If privateRun Then privateStuck = privateStuck & IIf(Len(privateStuck) > 0, ", ", "") & removeFailed         ' still in the zipped folder: no zip
+611             If Len(message) > 0 Then message = message & "; then "
+612             message = message & "removing the files failed: " & removeFailed
+613             files = "[]"
+        End If
+    End If
+616     On Error GoTo ReportFailed
+617     elapsed = Timer - started
+618     If elapsed < 0 Then elapsed = elapsed + 86400#
+619     PackageRow identity, status, message, files, version, build, elapsed
+620     AppendLog folder, currentIdentity, "recipe complete: " & status, 0, 0, MitigationText()
+621     Exit Sub
 CleanupFailed:
     failureLine = Erl: failureNumber = Err.Number: failureDescription = Err.Description: failureStep = stepLabel
-434     AppendLog folder, currentIdentity, failureStep, failureLine, failureNumber, failureDescription
-435     message = failureStep & " (line " & CStr(failureLine) & "): " & failureDescription
-436     status = "failed"
-437     files = "[]"
-438     Resume Next
+624     AppendLog folder, currentIdentity, failureStep, failureLine, failureNumber, failureDescription
+    ' A row that already has an error keeps it; the close failure is added after it, never in its place.
+626     If Len(message) > 0 Then
+627         message = message & "; then closing failed: " & failureStep & " (line " & CStr(failureLine) & "): " & failureDescription
+    Else
+629         message = failureStep & " (line " & CStr(failureLine) & "): " & failureDescription
+    End If
+631     status = "failed"
+632     files = "[]"
+633     Resume Next
 ReportFailed:
     ' Propagate reporting failures to main's final visible error, never swallow them.
-441     Err.Raise Err.Number, "RunPackage reporting", Err.Description
+636     Err.Raise Err.Number, "RunPackage reporting", Err.Description
 End Sub
 
 Private Sub PackageRow(ByVal identity As String, ByVal status As String, ByVal message As String, ByVal files As String, ByVal version As String, ByVal build As String, ByVal elapsed As Double)
     Dim resultRow As String, priorRows As String
-446     priorRows = resultRows
-447     If Len(priorRows) > 0 Then priorRows = priorRows & ","
-448     resultRow = "{""id"":" & Quote(identity) & ",""status"":" & Quote(status) & _
+641     priorRows = resultRows
+642     If Len(priorRows) > 0 Then priorRows = priorRows & ","
+643     resultRow = "{""id"":" & Quote(identity) & ",""status"":" & Quote(status) & _
         ",""error"":" & Quote(CleanError(message)) & ",""files"":" & files & _
         ",""app"":""SolidWorks"",""version"":" & Quote(version) & _
-        ",""build"":" & Quote(build) & ",""mitigations"":" & MitigationJson() & ",""seconds"":" & Replace(Format$(elapsed, "0.0000"), ",", ".") & "}"
-452     resultRows = priorRows & resultRow
-453     WriteUtf8 currentFolder & "\results.json", "[" & resultRows & "]"
+        ",""build"":" & Quote(build) & ",""mitigations"":" & MitigationJson() & ",""seconds"":" & Replace(Format$(elapsed, "0.0000"), ",", ".") & IIf(privateKept And status = "ok", ",""private"":true", "") & "}"
+647     resultRows = priorRows & resultRow
+648     WriteUtf8 currentFolder & "\results.json", "[" & resultRows & "]"
 End Sub
 
-Private Sub PackageRemoveFiles(ByVal folder As String, ByVal identity As String)
-    ' A drawing that did not finish leaves no half-made file behind.
-    Dim fs As Object, extension As Variant, path As String
-459     Set fs = CreateObject("Scripting.FileSystemObject")
-460     For Each extension In Array(".slddrw", ".pdf", ".dxf")
-    stepLabel = currentIdentity & ": PackageRemoveFiles BuildPath"
-462         path = fs.BuildPath(folder, identity & CStr(extension))
-    stepLabel = currentIdentity & ": PackageRemoveFiles FileExists"
-464         If fs.FileExists(path) Then fs.DeleteFile path
+Private Function PackageMovePrivate(ByVal folder As String, ByVal identity As String) As String
+    ' A private drawing's files leave the zipped output folder for the sibling folder <output folder name>-private (same neutral output root). The row's
+    ' files list names them with the note that they are on this computer, not in the zip.
+    Dim fs As Object, target As String, extension As Variant, listing As String
+655     Set fs = CreateObject("Scripting.FileSystemObject")
+656     target = folder & "-private"
+    stepLabel = currentIdentity & ": PackageMovePrivate FolderExists"
+658     If Not fs.FolderExists(target) Then fs.CreateFolder target
+659     For Each extension In Array(".slddrw", ".pdf", ".dxf")
+    stepLabel = currentIdentity & ": PackageMovePrivate FileExists"
+661         If fs.FileExists(fs.BuildPath(target, identity & CStr(extension))) Then fs.DeleteFile fs.BuildPath(target, identity & CStr(extension))
+    stepLabel = currentIdentity & ": PackageMovePrivate MoveFile"
+663         fs.MoveFile fs.BuildPath(folder, identity & CStr(extension)), fs.BuildPath(target, identity & CStr(extension))
+664         If Len(listing) > 0 Then listing = listing & ","
+    stepLabel = currentIdentity & ": PackageMovePrivate GetFileName"
+666         listing = listing & Quote(identity & CStr(extension) & " (kept in " & fs.GetFileName(target) & ", in the shared Public Documents folder, which other users of this computer can read; not in the zip and not published)")
     Next extension
-End Sub
+668     PackageMovePrivate = "[" & listing & "]"
+End Function
+
+Private Function PackageRemoveFiles(ByVal folder As String, ByVal identity As String) As String
+    ' A drawing that did not finish leaves no half-made file behind. "" when all are gone, else what failed: the reason and the file name (never a path).
+    Dim fs As Object, extension As Variant, path As String
+674     Set fs = CreateObject("Scripting.FileSystemObject")
+675     For Each extension In Array(".slddrw", ".pdf", ".dxf")
+    stepLabel = currentIdentity & ": PackageRemoveFiles BuildPath"
+677         path = fs.BuildPath(folder, identity & CStr(extension))
+    stepLabel = currentIdentity & ": PackageRemoveFiles FileExists"
+679         If fs.FileExists(path) Then
+680             On Error Resume Next
+681             Err.Clear
+    stepLabel = currentIdentity & ": PackageRemoveFiles DeleteFile"
+683             fs.DeleteFile path
+684             If Err.Number <> 0 Then
+685                 If Len(PackageRemoveFiles) > 0 Then PackageRemoveFiles = PackageRemoveFiles & ", "
+686                 PackageRemoveFiles = PackageRemoveFiles & Err.Description & " (" & identity & CStr(extension) & ")"
+687                 Err.Clear
+            End If
+689             On Error GoTo 0
+        End If
+    Next extension
+End Function
 
 Private Sub AttemptPackage(ByVal index As Long, ByVal folder As String)
     ' One drawing in its own new document: the part opened read-only and silent first (so the new drawing is the active document afterwards, and the
     ' part is closed unsaved), the plan, the read-backs, the privacy blanking, the title block text, then the three files.
     Dim identity As String, fs As Object, template As String, model As Object, modelErrors As Long, modelWarnings As Long
     Dim native As String, pdfFile As String, dxfFile As String
-473     identity = currentIdentity
-474     Set loadedDocs = New Collection
-475     Set fs = CreateObject("Scripting.FileSystemObject")
-476     template = ResolveTemplate("drawing")
-477     stepLabel = identity & ": model open"
+699     identity = currentIdentity
+700     Set loadedDocs = New Collection
+701     Set fs = CreateObject("Scripting.FileSystemObject")
+702     template = ResolveTemplate("drawing")
+703     stepLabel = identity & ": model open"
     stepLabel = currentIdentity & ": AttemptPackage OpenDoc6"
-479     Set model = app.OpenDoc6(packageFolder & "\" & PackageModel(index) & PackageExtension(index), PackageDocType(index), swOpenDocOptions_Silent + swOpenDocOptions_ReadOnly, "", modelErrors, modelWarnings)
-480     If modelErrors <> 0 Then Err.Raise 5, , "SolidWorks OpenDoc6 error " & CStr(modelErrors) & " opening the drawing model"
-481     Require model, "The drawing model could not be opened"
-482     Set packageModelDoc = model
+705     Set model = app.OpenDoc6(packageFolder & "\" & PackageModel(index) & PackageExtension(index), PackageDocType(index), swOpenDocOptions_Silent + swOpenDocOptions_ReadOnly, "", modelErrors, modelWarnings)
+706     If modelErrors <> 0 Then Err.Raise 5, , "SolidWorks OpenDoc6 error " & CStr(modelErrors) & " opening the drawing model"
+707     Require model, "The drawing model could not be opened"
+708     Set packageModelDoc = model
     stepLabel = currentIdentity & ": AttemptPackage Add"
-484     loadedDocs.Add model.GetTitle()
+710     loadedDocs.Add model.GetTitle()
     stepLabel = currentIdentity & ": AttemptPackage NewDocument"
-486     Set doc = app.NewDocument(template, 0, 0#, 0#)
-487     If doc Is Nothing Then Err.Raise 5, , "Template could not be opened. Paths tried: " & template
+712     Set doc = app.NewDocument(template, 0, 0#, 0#)
+713     If doc Is Nothing Then Err.Raise 5, , "Template could not be opened. Paths tried: " & template
     stepLabel = currentIdentity & ": AttemptPackage GetFileName"
-489     AppendLog folder, currentIdentity, "option", 0, 0, "drawing template: " & fs.GetFileName(template)
+715     AppendLog folder, currentIdentity, "option", 0, 0, "drawing template: " & fs.GetFileName(template)
     stepLabel = currentIdentity & ": AttemptPackage ShowFeatureErrorDialog"
-491     attemptOldErrors = doc.ShowFeatureErrorDialog
-492     attemptErrorsSaved = True
+717     attemptOldErrors = doc.ShowFeatureErrorDialog
+718     attemptErrorsSaved = True
     stepLabel = currentIdentity & ": AttemptPackage ShowFeatureErrorDialog"
-494     doc.ShowFeatureErrorDialog = False
-495     BuildPackage index
-496     PackageFinish
-497     BlankProperties
-498     BuildPackageTitle index
-499     native = identity & ".slddrw"
-500     pdfFile = identity & ".pdf"
-501     dxfFile = identity & ".dxf"
+720     doc.ShowFeatureErrorDialog = False
+721     BuildPackage index
+722     PackageFinish
+723     BlankProperties
+724     BuildPackageTitle index
+725     native = identity & ".slddrw"
+726     pdfFile = identity & ".pdf"
+727     dxfFile = identity & ".dxf"
     stepLabel = currentIdentity & ": AttemptPackage BuildPath"
-503     SaveFile fs.BuildPath(folder, native)
-504     stepLabel = identity & ": pdf export"
+729     SaveFile fs.BuildPath(folder, native)
+730     stepLabel = identity & ": pdf export"
     stepLabel = currentIdentity & ": AttemptPackage BuildPath"
-506     SaveFile fs.BuildPath(folder, pdfFile)
+732     SaveFile fs.BuildPath(folder, pdfFile)
     stepLabel = currentIdentity & ": AttemptPackage BuildPath"
-508     PackageFileCheck fs.BuildPath(folder, pdfFile), "PDF"
-509     stepLabel = identity & ": dxf export"
+734     PackageFileCheck fs.BuildPath(folder, pdfFile), "PDF"
+735     stepLabel = identity & ": dxf export"
     stepLabel = currentIdentity & ": AttemptPackage BuildPath"
-511     ExportDrawing fs.BuildPath(folder, dxfFile)
+737     ExportDrawing fs.BuildPath(folder, dxfFile)
 End Sub
 
 Private Sub PackageFileCheck(ByVal path As String, ByVal kind As String)
     Dim fs As Object
-516     stepLabel = currentIdentity & ": " & kind & " file check"
-517     Set fs = CreateObject("Scripting.FileSystemObject")
+742     stepLabel = currentIdentity & ": " & kind & " file check"
+743     Set fs = CreateObject("Scripting.FileSystemObject")
     stepLabel = currentIdentity & ": PackageFileCheck FileExists"
-519     If Not fs.FileExists(path) Then Err.Raise 5, , "The " & kind & " export wrote no file"
+745     If Not fs.FileExists(path) Then Err.Raise 5, , "The " & kind & " export wrote no file"
     stepLabel = currentIdentity & ": PackageFileCheck GetFile"
-521     If fs.GetFile(path).Size = 0 Then Err.Raise 5, , "The " & kind & " export wrote an empty file"
+747     If fs.GetFile(path).Size = 0 Then Err.Raise 5, , "The " & kind & " export wrote an empty file"
     stepLabel = currentIdentity & ": PackageFileCheck GetFileName"
-523     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing " & kind & ": " & fs.GetFileName(path) & ", " & CStr(fs.GetFile(path).Size) & " bytes"
+749     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing " & kind & ": " & fs.GetFileName(path) & ", " & CStr(fs.GetFile(path).Size) & " bytes"
 End Sub
 
 Private Sub PackageStart(ByVal partFile As String, ByVal lowMm As Variant, ByVal highMm As Variant)
-527     packagePart = packageFolder & "\" & partFile
-528     packageComponents = Empty
-529     packageLow = Array(CDbl(lowMm(0)) * 0.001, CDbl(lowMm(1)) * 0.001, CDbl(lowMm(2)) * 0.001)
-530     packageHigh = Array(CDbl(highMm(0)) * 0.001, CDbl(highMm(1)) * 0.001, CDbl(highMm(2)) * 0.001)
-531     Set packageViews = CreateObject("Scripting.Dictionary")
-532     Set packageRecords = CreateObject("Scripting.Dictionary")
-533     Set packageDrops = CreateObject("Scripting.Dictionary")
-534     Set packageSpaces = CreateObject("Scripting.Dictionary")
-535     Set packageTitle = CreateObject("Scripting.Dictionary")
-536     packageOrder = ""
-537     packageDimCount = 0
-538     packageRatioN = 1#
-539     packageRatioD = 1#
-540     packageSheetW = 0.297
-541     packageSheetH = 0.21
-542     packageScalePending = False
+753     packagePart = packageFolder & "\" & partFile
+754     packageComponents = Empty
+755     packageLow = Array(CDbl(lowMm(0)) * 0.001, CDbl(lowMm(1)) * 0.001, CDbl(lowMm(2)) * 0.001)
+756     packageHigh = Array(CDbl(highMm(0)) * 0.001, CDbl(highMm(1)) * 0.001, CDbl(highMm(2)) * 0.001)
+757     Set packageViews = CreateObject("Scripting.Dictionary")
+758     Set packageRecords = CreateObject("Scripting.Dictionary")
+759     Set packageDrops = CreateObject("Scripting.Dictionary")
+760     Set packageSpaces = CreateObject("Scripting.Dictionary")
+761     Set packageTitle = CreateObject("Scripting.Dictionary")
+762     packageOrder = ""
+763     packageDimCount = 0
+764     packageRatioN = 1#
+765     packageRatioD = 1#
+766     packageSheetW = 0.297
+767     packageSheetH = 0.21
+768     packageScalePending = False
 End Sub
 
 Private Sub PackageAssembly(ByVal components As Variant)
     ' An assembly's components: Array(name, low, high, shift) in meters (their boxes in the assembly and where each one's origin stands), for the edges.
-547     packageComponents = components
+773     packageComponents = components
 End Sub
 
 Private Function PackageBomTemplate() As String
@@ -552,29 +778,29 @@ Private Function PackageBomTemplate() As String
     ' path (SolidWorks's own default) is not asked for: a template in a personal folder could put a path in the file, so one that is absent or personal fails
     ' the drawing precisely. Only the file name is ever logged.
     Dim fs As Object, install As String, candidate As String, found As Boolean
-555     Set fs = CreateObject("Scripting.FileSystemObject")
-556     On Error Resume Next
+781     Set fs = CreateObject("Scripting.FileSystemObject")
+782     On Error Resume Next
     stepLabel = currentIdentity & ": PackageBomTemplate GetExecutablePath"
-558     install = app.GetExecutablePath()
+784     install = app.GetExecutablePath()
     stepLabel = currentIdentity & ": PackageBomTemplate GetExtensionName"
-560     If LCase$(fs.GetExtensionName(install)) = "exe" Then install = fs.GetParentFolderName(install)
+786     If LCase$(fs.GetExtensionName(install)) = "exe" Then install = fs.GetParentFolderName(install)
     stepLabel = currentIdentity & ": PackageBomTemplate BuildPath"
-562     candidate = fs.BuildPath(fs.BuildPath(fs.BuildPath(install, "lang"), app.GetCurrentLanguage()), BOM_TEMPLATE)
+788     candidate = fs.BuildPath(fs.BuildPath(fs.BuildPath(install, "lang"), app.GetCurrentLanguage()), BOM_TEMPLATE)
     stepLabel = currentIdentity & ": PackageBomTemplate FileExists"
-564     found = fs.FileExists(candidate)
-565     If Err.Number <> 0 Then
-566         found = False
-567         Err.Clear
+790     found = fs.FileExists(candidate)
+791     If Err.Number <> 0 Then
+792         found = False
+793         Err.Clear
     End If
-569     On Error GoTo 0
-570     If found Then
-571         If Len(PersonalTemplateReason("BOM table", candidate)) > 0 Then
-572             AppendLog currentFolder, currentIdentity, "option", 0, 0, "parts list: the install's BOM template " & BOM_TEMPLATE & " is in a personal folder and is not used"
-573             found = False
+795     On Error GoTo 0
+796     If found Then
+797         If Len(PersonalTemplateReason("BOM table", candidate)) > 0 Then
+798             AppendLog currentFolder, currentIdentity, "option", 0, 0, "parts list: the install's BOM template " & BOM_TEMPLATE & " is in a personal folder and is not used"
+799             found = False
         End If
     End If
-576     If Not found Then Err.Raise 5, , "no usable BOM template (" & BOM_TEMPLATE & ") outside personal folders"
-577     PackageBomTemplate = candidate
+802     If Not found Then Err.Raise 5, , "no usable BOM template (" & BOM_TEMPLATE & ") outside personal folders"
+803     PackageBomTemplate = candidate
 End Function
 
 Private Sub PackagePartsList(ByVal anchor As Long, ByVal fractionX As Double, ByVal fractionY As Double, ByVal rows As Variant)
@@ -583,53 +809,53 @@ Private Sub PackagePartsList(ByVal anchor As Long, ByVal fractionX As Double, By
     ' BomTableAnnotation; RowCount, ColumnCount and Text belong to ITableAnnotation, so the answer is assigned to a variable of that type (the query).
     Dim fs As Object, baseView As Object, x As Double, y As Double, configuration As String, template As String
     Dim bomResult As Object, tableAnnotation As SldWorks.TableAnnotation
-586     Set fs = CreateObject("Scripting.FileSystemObject")
-587     Set baseView = packageViews("base")
-588     x = fractionX * packageSheetW
-589     y = fractionY * packageSheetH
+812     Set fs = CreateObject("Scripting.FileSystemObject")
+813     Set baseView = packageViews("base")
+814     x = fractionX * packageSheetW
+815     y = fractionY * packageSheetH
     stepLabel = currentIdentity & ": PackagePartsList Name"
-591     configuration = CStr(packageModelDoc.ConfigurationManager.ActiveConfiguration.Name)
-592     template = PackageBomTemplate()
+817     configuration = CStr(packageModelDoc.ConfigurationManager.ActiveConfiguration.Name)
+818     template = PackageBomTemplate()
     stepLabel = currentIdentity & ": PackagePartsList ClearSelection2"
-594     doc.ClearSelection2 True
+820     doc.ClearSelection2 True
     stepLabel = currentIdentity & ": PackagePartsList GetName2"
-596     callInputs = "parts list in " & baseView.GetName2() & " at(m)=" & NumberList(Array(x, y)) & " anchor " & CStr(anchor) & " top level only, configuration " & configuration & ", template " & fs.GetFileName(template)
+822     callInputs = "parts list in " & baseView.GetName2() & " at(m)=" & NumberList(Array(x, y)) & " anchor " & CStr(anchor) & " top level only, configuration " & configuration & ", template " & fs.GetFileName(template)
     stepLabel = currentIdentity & ": PackagePartsList SelectByID2" & " " & apiInputs & " " & callInputs
-598     If Not doc.Extension.SelectByID2(baseView.GetName2(), "DRAWINGVIEW", 0#, 0#, 0#, False, 0, Nothing, 0) Then Err.Raise 5, , "The base view could not be selected for the parts list: " & callInputs
+824     If Not doc.Extension.SelectByID2(baseView.GetName2(), "DRAWINGVIEW", 0#, 0#, 0#, False, 0, Nothing, 0) Then Err.Raise 5, , "The base view could not be selected for the parts list: " & callInputs
     stepLabel = currentIdentity & ": PackagePartsList InsertBomTable4"
-600     Set bomResult = baseView.InsertBomTable4(False, x, y, anchor, swBomType_TopLevelOnly, configuration, template, False, swNumberingType_Detailed, False)
+826     Set bomResult = baseView.InsertBomTable4(False, x, y, anchor, swBomType_TopLevelOnly, configuration, template, False, swNumberingType_Detailed, False)
     stepLabel = currentIdentity & ": PackagePartsList ClearSelection2"
-602     doc.ClearSelection2 True
-603     Require bomResult, "IView.InsertBomTable4 returned no table: " & callInputs
-604     Set tableAnnotation = bomResult
-605     Require tableAnnotation, "The parts list table does not answer ITableAnnotation: " & callInputs
-606     PackagePartsListCheck tableAnnotation, rows
+828     doc.ClearSelection2 True
+829     Require bomResult, "IView.InsertBomTable4 returned no table: " & callInputs
+830     Set tableAnnotation = bomResult
+831     Require tableAnnotation, "The parts list table does not answer ITableAnnotation: " & callInputs
+832     PackagePartsListCheck tableAnnotation, rows
 End Sub
 
 Private Function PackageWholeNumber(ByVal text As String) As Boolean
     ' Only digits: "1" is a quantity, "1.5", "1,0", "-1" and "" are not.
     Dim i As Long
-612     If Len(text) = 0 Or Len(text) > 9 Then Exit Function
-613     For i = 1 To Len(text)
-614         If Not Mid$(text, i, 1) Like "#" Then Exit Function
+838     If Len(text) = 0 Or Len(text) > 9 Then Exit Function
+839     For i = 1 To Len(text)
+840         If Not Mid$(text, i, 1) Like "#" Then Exit Function
     Next i
-616     PackageWholeNumber = True
+842     PackageWholeNumber = True
 End Function
 
 Private Function PackagePartName(ByVal text As String) As String
     ' A parts list's part number cell as a part name: without any <...> part, lower case, without .sldprt or .sldasm.
     Dim opens As Long, closes As Long
-622     text = Trim$(text)
-623     opens = InStr(text, "<")
-624     Do While opens > 0
-625         closes = InStr(opens, text, ">")
-626         If closes = 0 Then Exit Do
-627         text = Left$(text, opens - 1) & Mid$(text, closes + 1)
-628         opens = InStr(text, "<")
+848     text = Trim$(text)
+849     opens = InStr(text, "<")
+850     Do While opens > 0
+851         closes = InStr(opens, text, ">")
+852         If closes = 0 Then Exit Do
+853         text = Left$(text, opens - 1) & Mid$(text, closes + 1)
+854         opens = InStr(text, "<")
     Loop
-630     text = LCase$(Trim$(text))
-631     If Right$(text, 7) = ".sldprt" Or Right$(text, 7) = ".sldasm" Then text = Left$(text, Len(text) - 7)
-632     PackagePartName = text
+856     text = LCase$(Trim$(text))
+857     If Right$(text, 7) = ".sldprt" Or Right$(text, 7) = ".sldasm" Then text = Left$(text, Len(text) - 7)
+858     PackagePartName = text
 End Function
 
 Private Sub PackagePartsListCheck(ByVal tableAnnotation As SldWorks.TableAnnotation, ByVal rows As Variant)
@@ -639,315 +865,315 @@ Private Sub PackagePartsListCheck(ByVal tableAnnotation As SldWorks.TableAnnotat
     Dim count As Long, i As Long, k As Long, names() As String, quantities() As Long, used() As Boolean, matched As Boolean, quantityText As String
     Dim got As String, headerText As String
     stepLabel = currentIdentity & ": PackagePartsListCheck RowCount"
-642     rowCount = CLng(tableAnnotation.RowCount)
+868     rowCount = CLng(tableAnnotation.RowCount)
     stepLabel = currentIdentity & ": PackagePartsListCheck ColumnCount"
-644     columnCount = CLng(tableAnnotation.ColumnCount)
-645     header = -1
-646     nameColumn = -1
-647     quantityColumn = -1
-648     For r = 0 To rowCount - 1
-649         For c = 0 To columnCount - 1
+870     columnCount = CLng(tableAnnotation.ColumnCount)
+871     header = -1
+872     nameColumn = -1
+873     quantityColumn = -1
+874     For r = 0 To rowCount - 1
+875         For c = 0 To columnCount - 1
     stepLabel = currentIdentity & ": PackagePartsListCheck Text"
-651             cell = UCase$(Trim$(CStr(tableAnnotation.Text(r, c))))
-652             If header < 0 And (cell = "QTY" Or cell = "QTY.") Then
-653                 header = r
-654                 quantityColumn = c
+877             cell = UCase$(Trim$(CStr(tableAnnotation.Text(r, c))))
+878             If header < 0 And (cell = "QTY" Or cell = "QTY.") Then
+879                 header = r
+880                 quantityColumn = c
             End If
         Next c
     Next r
-658     If header < 0 Then Err.Raise 5, , "The parts list has no header row with a QTY. column in its " & CStr(rowCount) & " rows and " & CStr(columnCount) & " columns"
-659     For c = 0 To columnCount - 1
+884     If header < 0 Then Err.Raise 5, , "The parts list has no header row with a QTY. column in its " & CStr(rowCount) & " rows and " & CStr(columnCount) & " columns"
+885     For c = 0 To columnCount - 1
     stepLabel = currentIdentity & ": PackagePartsListCheck Text"
-661         cell = UCase$(Trim$(CStr(tableAnnotation.Text(header, c))))
-662         If Len(headerText) > 0 Then headerText = headerText & " | "
-663         headerText = headerText & cell
-664         If nameColumn < 0 And Replace(cell, " ", "") = "PARTNUMBER" Then nameColumn = c
+887         cell = UCase$(Trim$(CStr(tableAnnotation.Text(header, c))))
+888         If Len(headerText) > 0 Then headerText = headerText & " | "
+889         headerText = headerText & cell
+890         If nameColumn < 0 And Replace(cell, " ", "") = "PARTNUMBER" Then nameColumn = c
     Next c
-666     If nameColumn < 0 Then Err.Raise 5, , "The parts list has no PART NUMBER column (its header reads " & headerText & ")"
-667     count = rowCount - 1
-668     If count <> UBound(rows) + 1 Then Err.Raise 5, , "The parts list has " & CStr(count) & " rows, the assembly has " & CStr(UBound(rows) + 1) & " components"
-669     ReDim names(count - 1)
-670     ReDim quantities(count - 1)
-671     ReDim used(count - 1)
-672     i = 0
-673     For r = 0 To rowCount - 1
-674         If r <> header Then
+892     If nameColumn < 0 Then Err.Raise 5, , "The parts list has no PART NUMBER column (its header reads " & headerText & ")"
+893     count = rowCount - 1
+894     If count <> UBound(rows) + 1 Then Err.Raise 5, , "The parts list has " & CStr(count) & " rows, the assembly has " & CStr(UBound(rows) + 1) & " components"
+895     ReDim names(count - 1)
+896     ReDim quantities(count - 1)
+897     ReDim used(count - 1)
+898     i = 0
+899     For r = 0 To rowCount - 1
+900         If r <> header Then
     stepLabel = currentIdentity & ": PackagePartsListCheck Text"
-676             names(i) = PackagePartName(CStr(tableAnnotation.Text(r, nameColumn)))
+902             names(i) = PackagePartName(CStr(tableAnnotation.Text(r, nameColumn)))
     stepLabel = currentIdentity & ": PackagePartsListCheck Text"
-678             quantityText = Trim$(CStr(tableAnnotation.Text(r, quantityColumn)))
-679             If Not PackageWholeNumber(quantityText) Then Err.Raise 5, , "The parts list quantity " & quantityText & " of " & names(i) & " is not a whole number"
-680             quantities(i) = CLng(quantityText)
-681             If Len(got) > 0 Then got = got & ", "
-682             got = got & names(i) & " " & CStr(quantities(i))
-683             i = i + 1
+904             quantityText = Trim$(CStr(tableAnnotation.Text(r, quantityColumn)))
+905             If Not PackageWholeNumber(quantityText) Then Err.Raise 5, , "The parts list quantity " & quantityText & " of " & names(i) & " is not a whole number"
+906             quantities(i) = CLng(quantityText)
+907             If Len(got) > 0 Then got = got & ", "
+908             got = got & names(i) & " " & CStr(quantities(i))
+909             i = i + 1
         End If
     Next r
-686     For k = 0 To UBound(rows)
-687         matched = False
-688         For i = 0 To count - 1
-689             If Not used(i) And names(i) = LCase$(CStr(rows(k)(0))) And quantities(i) = CLng(rows(k)(1)) Then
-690                 used(i) = True
-691                 matched = True
-692                 Exit For
+912     For k = 0 To UBound(rows)
+913         matched = False
+914         For i = 0 To count - 1
+915             If Not used(i) And names(i) = LCase$(CStr(rows(k)(0))) And quantities(i) = CLng(rows(k)(1)) Then
+916                 used(i) = True
+917                 matched = True
+918                 Exit For
             End If
         Next i
-695         If Not matched Then Err.Raise 5, , "The parts list has no row for " & CStr(rows(k)(0)) & " with the quantity " & CStr(rows(k)(1)) & " (it reads: " & got & ")"
+921         If Not matched Then Err.Raise 5, , "The parts list has no row for " & CStr(rows(k)(0)) & " with the quantity " & CStr(rows(k)(1)) & " (it reads: " & got & ")"
     Next k
-697     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing parts list: " & CStr(count) & " rows read back, " & got
+923     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing parts list: " & CStr(count) & " rows read back, " & got
 End Sub
 
 Private Function PackageSheetProperties(ByVal sheetObject As Object) As Variant
     ' ISheet.GetProperties2 as exactly eight values (paper size, template, scale numerator and denominator, first angle, width, height,
     ' same custom property), or Empty when SolidWorks does not give them.
     Dim values As Variant, first As Long, same As Variant
-704     On Error Resume Next
+930     On Error Resume Next
     stepLabel = currentIdentity & ": PackageSheetProperties GetProperties2"
-706     values = sheetObject.GetProperties2()
-707     If Err.Number <> 0 Then
-708         Err.Clear
-709         Exit Function
+932     values = sheetObject.GetProperties2()
+933     If Err.Number <> 0 Then
+934         Err.Clear
+935         Exit Function
     End If
-711     On Error GoTo 0
-712     If Not IsArray(values) Then Exit Function
-713     first = LBound(values)
-714     If UBound(values) - first < 6 Then Exit Function
-715     same = False
-716     If UBound(values) - first >= 7 Then same = values(first + 7)
-717     PackageSheetProperties = Array(values(first), values(first + 1), values(first + 2), values(first + 3), values(first + 4), values(first + 5), values(first + 6), same)
+937     On Error GoTo 0
+938     If Not IsArray(values) Then Exit Function
+939     first = LBound(values)
+940     If UBound(values) - first < 6 Then Exit Function
+941     same = False
+942     If UBound(values) - first >= 7 Then same = values(first + 7)
+943     PackageSheetProperties = Array(values(first), values(first + 1), values(first + 2), values(first + 3), values(first + 4), values(first + 5), values(first + 6), same)
 End Function
 
 Private Sub PackageSetting(ByVal what As String, ByVal preference As Long, ByVal wanted As Long)
     ' A document preference the drawing must have (the standard, the units): read from the template's drawing, set when it differs, read again.
     Dim found As Long, again As Long, mitigation As String
-723     callInputs = "preference=" & CStr(preference) & " wanted=" & CStr(wanted)
+949     callInputs = "preference=" & CStr(preference) & " wanted=" & CStr(wanted)
     stepLabel = currentIdentity & ": PackageSetting GetUserPreferenceInteger"
-725     found = doc.Extension.GetUserPreferenceInteger(preference, swDetailingNoOptionSpecified)
-726     If found = wanted Then Exit Sub
-727     mitigation = "drawing-" & what & "-set"
-728     RecordMitigation mitigation, True, True
+951     found = doc.Extension.GetUserPreferenceInteger(preference, swDetailingNoOptionSpecified)
+952     If found = wanted Then Exit Sub
+953     mitigation = "drawing-" & what & "-set"
+954     RecordMitigation mitigation, True, True
     stepLabel = currentIdentity & ": PackageSetting SetUserPreferenceInteger"
-730     If Not doc.Extension.SetUserPreferenceInteger(preference, swDetailingNoOptionSpecified, wanted) Then Err.Raise 5, , "The drawing " & what & " could not be set: " & callInputs
+956     If Not doc.Extension.SetUserPreferenceInteger(preference, swDetailingNoOptionSpecified, wanted) Then Err.Raise 5, , "The drawing " & what & " could not be set: " & callInputs
     stepLabel = currentIdentity & ": PackageSetting GetUserPreferenceInteger"
-732     again = doc.Extension.GetUserPreferenceInteger(preference, swDetailingNoOptionSpecified)
-733     If again <> wanted Then Err.Raise 5, , "The drawing " & what & " stays " & CStr(again) & ", not " & CStr(wanted) & ", after setting it: " & callInputs
-734     fallbackSuccesses(mitigation) = fallbackSuccesses(mitigation) + 1
-735     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing " & what & ": the template had " & CStr(found) & ", set to " & CStr(wanted)
+958     again = doc.Extension.GetUserPreferenceInteger(preference, swDetailingNoOptionSpecified)
+959     If again <> wanted Then Err.Raise 5, , "The drawing " & what & " stays " & CStr(again) & ", not " & CStr(wanted) & ", after setting it: " & callInputs
+960     fallbackSuccesses(mitigation) = fallbackSuccesses(mitigation) + 1
+961     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing " & what & ": the template had " & CStr(found) & ", set to " & CStr(wanted)
 End Sub
 
 Private Sub PackageSheet(ByVal standard As Long, ByVal units As Long, ByVal paper As Long, ByVal paperWidth As Double, ByVal paperHeight As Double, ByVal numerator As Double, ByVal denominator As Double)
     Dim sheetObject As Object, properties As Variant, text As String
-740     Set drawingInterface = DrawingDocument(doc)
+966     Set drawingInterface = DrawingDocument(doc)
     stepLabel = currentIdentity & ": PackageSheet GetCurrentSheet"
-742     Set sheetObject = drawingInterface.GetCurrentSheet()
-743     Require sheetObject, "The new drawing has no current sheet"
-744     Set packageSheetObject = sheetObject
-745     If standard >= 0 Then PackageSetting "standard", swDetailingDimensionStandard, standard
-746     If units >= 0 Then PackageSetting "units", swUnitsLinear, units
-747     properties = PackageSheetProperties(sheetObject)
-748     If paper >= 0 Then
-749         callInputs = "PaperSz=" & CStr(paper) & " Width=" & NumberList(Array(paperWidth)) & " Height=" & NumberList(Array(paperHeight))
-750         If IsEmpty(properties) Then Err.Raise 5, , "ISheet.GetProperties2 returned no sheet properties: " & callInputs
-751         If CLng(properties(0)) <> paper Then
-752             RecordMitigation "drawing-sheet-size-set", True, True
+968     Set sheetObject = drawingInterface.GetCurrentSheet()
+969     Require sheetObject, "The new drawing has no current sheet"
+970     Set packageSheetObject = sheetObject
+971     If standard >= 0 Then PackageSetting "standard", swDetailingDimensionStandard, standard
+972     If units >= 0 Then PackageSetting "units", swUnitsLinear, units
+973     properties = PackageSheetProperties(sheetObject)
+974     If paper >= 0 Then
+975         callInputs = "PaperSz=" & CStr(paper) & " Width=" & NumberList(Array(paperWidth)) & " Height=" & NumberList(Array(paperHeight))
+976         If IsEmpty(properties) Then Err.Raise 5, , "ISheet.GetProperties2 returned no sheet properties: " & callInputs
+977         If CLng(properties(0)) <> paper Then
+978             RecordMitigation "drawing-sheet-size-set", True, True
             ' ISheet.SetProperties2 returns nothing (interop 32.1.0, void): it is read back, not checked for a result.
     stepLabel = currentIdentity & ": PackageSheet SetProperties2"
-755             sheetObject.SetProperties2 paper, CLng(properties(1)), CDbl(properties(2)), CDbl(properties(3)), CBool(properties(4)), paperWidth, paperHeight, CBool(properties(7))
-756             properties = PackageSheetProperties(sheetObject)
-757             If IsEmpty(properties) Then Err.Raise 5, , "ISheet.GetProperties2 returned no sheet properties after setting the size: " & callInputs
-758             If CLng(properties(0)) <> paper Then Err.Raise 5, , "The sheet size stays " & CStr(CLng(properties(0))) & ", not " & CStr(paper) & ", after setting it: " & callInputs
-759             fallbackSuccesses("drawing-sheet-size-set") = fallbackSuccesses("drawing-sheet-size-set") + 1
+981             sheetObject.SetProperties2 paper, CLng(properties(1)), CDbl(properties(2)), CDbl(properties(3)), CBool(properties(4)), paperWidth, paperHeight, CBool(properties(7))
+982             properties = PackageSheetProperties(sheetObject)
+983             If IsEmpty(properties) Then Err.Raise 5, , "ISheet.GetProperties2 returned no sheet properties after setting the size: " & callInputs
+984             If CLng(properties(0)) <> paper Then Err.Raise 5, , "The sheet size stays " & CStr(CLng(properties(0))) & ", not " & CStr(paper) & ", after setting it: " & callInputs
+985             fallbackSuccesses("drawing-sheet-size-set") = fallbackSuccesses("drawing-sheet-size-set") + 1
         End If
     End If
-762     If Not IsEmpty(properties) Then
-763         packageSheetW = CDbl(properties(5))
-764         packageSheetH = CDbl(properties(6))
+988     If Not IsEmpty(properties) Then
+989         packageSheetW = CDbl(properties(5))
+990         packageSheetH = CDbl(properties(6))
     End If
-766     callInputs = "Numerator=" & NumberList(Array(numerator)) & " Denominator=" & NumberList(Array(denominator))
+992     callInputs = "Numerator=" & NumberList(Array(numerator)) & " Denominator=" & NumberList(Array(denominator))
     stepLabel = currentIdentity & ": PackageSheet SetScale"
-768     If Not sheetObject.SetScale(numerator, denominator, False, False) Then Err.Raise 5, , "ISheet.SetScale failed: " & callInputs
-769     packageRatioN = numerator
-770     packageRatioD = denominator
-771     properties = PackageSheetProperties(sheetObject)
-772     If IsEmpty(properties) Then
+994     If Not sheetObject.SetScale(numerator, denominator, False, False) Then Err.Raise 5, , "ISheet.SetScale failed: " & callInputs
+995     packageRatioN = numerator
+996     packageRatioD = denominator
+997     properties = PackageSheetProperties(sheetObject)
+998     If IsEmpty(properties) Then
         ' The scale cannot be read from the sheet: every view's own scale is checked instead (and counted once the first one is right).
-774         RecordMitigation "drawing-sheet-scale-from-views", True, True
-775         packageScalePending = True
-776         text = "unknown"
+1000         RecordMitigation "drawing-sheet-scale-from-views", True, True
+1001         packageScalePending = True
+1002         text = "unknown"
     Else
-778         If Abs(CDbl(properties(2)) * denominator - CDbl(properties(3)) * numerator) > 0.000000001 Then Err.Raise 5, , "The sheet scale reads back " & NumberList(Array(properties(2), properties(3))) & ", not " & NumberList(Array(numerator, denominator)) & ": " & callInputs
-779         text = CStr(CBool(properties(4)))
+1004         If Abs(CDbl(properties(2)) * denominator - CDbl(properties(3)) * numerator) > 0.000000001 Then Err.Raise 5, , "The sheet scale reads back " & NumberList(Array(properties(2), properties(3))) & ", not " & NumberList(Array(numerator, denominator)) & ": " & callInputs
+1005         text = CStr(CBool(properties(4)))
     End If
-781     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: sheet " & NumberList(Array(packageSheetW, packageSheetH)) & " m, scale " & NumberList(Array(numerator, denominator)) & ", first angle " & text
+1007     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: sheet " & NumberList(Array(packageSheetW, packageSheetH)) & " m, scale " & NumberList(Array(numerator, denominator)) & ", first angle " & text
 End Sub
 
 Private Sub PackageCheckScale(ByVal view As Object, ByVal what As String, ByVal ownN As Double, ByVal ownD As Double)
     ' The view is at the sheet's scale, or at (ownN : ownD), a scale the recipe gives that view alone (ownD = 0 means none): set on the view and read back.
     Dim wanted As Double
-787     wanted = packageRatioN / packageRatioD
-788     If ownD > 0 Then wanted = ownN / ownD
+1013     wanted = packageRatioN / packageRatioD
+1014     If ownD > 0 Then wanted = ownN / ownD
     stepLabel = currentIdentity & ": PackageCheckScale ScaleDecimal"
-790     If Abs(view.ScaleDecimal - wanted) > 0.000000001 Then
+1016     If Abs(view.ScaleDecimal - wanted) > 0.000000001 Then
         ' The sheet scale was set first; a view that still is not at it is given the scale itself.
-792         If ownD = 0 Then RecordMitigation "drawing-view-scale-explicit", True, True
+1018         If ownD = 0 Then RecordMitigation "drawing-view-scale-explicit", True, True
     stepLabel = currentIdentity & ": PackageCheckScale UseSheetScale"
-794         view.UseSheetScale = 0
+1020         view.UseSheetScale = 0
     stepLabel = currentIdentity & ": PackageCheckScale ScaleDecimal"
-796         view.ScaleDecimal = wanted
+1022         view.ScaleDecimal = wanted
     stepLabel = currentIdentity & ": PackageCheckScale ScaleDecimal"
-798         If Abs(view.ScaleDecimal - wanted) > 0.000000001 Then Err.Raise 5, , "The " & what & " view scale is " & NumberList(Array(view.ScaleDecimal)) & ", not " & NumberList(Array(wanted)) & ", after setting it: " & callInputs
-799         If ownD = 0 Then
-800             fallbackSuccesses("drawing-view-scale-explicit") = fallbackSuccesses("drawing-view-scale-explicit") + 1
+1024         If Abs(view.ScaleDecimal - wanted) > 0.000000001 Then Err.Raise 5, , "The " & what & " view scale is " & NumberList(Array(view.ScaleDecimal)) & ", not " & NumberList(Array(wanted)) & ", after setting it: " & callInputs
+1025         If ownD = 0 Then
+1026             fallbackSuccesses("drawing-view-scale-explicit") = fallbackSuccesses("drawing-view-scale-explicit") + 1
         Else
-802             AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: the " & what & " view has its own scale " & NumberList(Array(ownN, ownD)) & ", set on the view and read back"
+1028             AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: the " & what & " view has its own scale " & NumberList(Array(ownN, ownD)) & ", set on the view and read back"
         End If
     End If
-805     If packageScalePending Then
-806         packageScalePending = False
-807         fallbackSuccesses("drawing-sheet-scale-from-views") = fallbackSuccesses("drawing-sheet-scale-from-views") + 1
+1031     If packageScalePending Then
+1032         packageScalePending = False
+1033         fallbackSuccesses("drawing-sheet-scale-from-views") = fallbackSuccesses("drawing-sheet-scale-from-views") + 1
     End If
 End Sub
 
 Private Function PackageModelView(ByVal orientation As String, ByVal what As String, ByVal x As Double, ByVal y As Double, ByVal ownN As Double, ByVal ownD As Double) As Object
     Dim created As Object
     stepLabel = currentIdentity & ": PackageModelView ClearSelection2"
-814     doc.ClearSelection2 True
-815     callInputs = "model=" & Mid$(packagePart, InStrRev(packagePart, "\") + 1) & " view=" & orientation & " at(m)=" & NumberList(Array(x, y)) & ",0"
+1040     doc.ClearSelection2 True
+1041     callInputs = "model=" & Mid$(packagePart, InStrRev(packagePart, "\") + 1) & " view=" & orientation & " at(m)=" & NumberList(Array(x, y)) & ",0"
     stepLabel = currentIdentity & ": PackageModelView CreateDrawViewFromModelView3" & " " & apiInputs & " " & callInputs
-817     Set created = drawingInterface.CreateDrawViewFromModelView3(packagePart, orientation, x, y, 0#)
-818     Require created, "The " & what & " view was not created: " & callInputs
+1043     Set created = drawingInterface.CreateDrawViewFromModelView3(packagePart, orientation, x, y, 0#)
+1044     Require created, "The " & what & " view was not created: " & callInputs
     stepLabel = currentIdentity & ": PackageModelView ClearSelection2"
-820     doc.ClearSelection2 True
-821     PackageCheckScale created, what, ownN, ownD
-822     Set PackageModelView = created
+1046     doc.ClearSelection2 True
+1047     PackageCheckScale created, what, ownN, ownD
+1048     Set PackageModelView = created
 End Function
 
 Private Function PackageProjectedView(ByVal what As String, ByVal x As Double, ByVal y As Double) As Object
     Dim created As Object, source As Object
-827     Set source = packageViews("base")
+1053     Set source = packageViews("base")
     stepLabel = currentIdentity & ": PackageProjectedView ClearSelection2"
-829     doc.ClearSelection2 True
+1055     doc.ClearSelection2 True
     stepLabel = currentIdentity & ": PackageProjectedView GetName2"
-831     callInputs = "projected from " & source.GetName2() & " at(m)=" & NumberList(Array(x, y)) & ",0"
+1057     callInputs = "projected from " & source.GetName2() & " at(m)=" & NumberList(Array(x, y)) & ",0"
     stepLabel = currentIdentity & ": PackageProjectedView SelectByID2" & " " & apiInputs & " " & callInputs
-833     If Not doc.Extension.SelectByID2(source.GetName2(), "DRAWINGVIEW", 0#, 0#, 0#, False, 0, Nothing, 0) Then Err.Raise 5, , "The base view could not be selected to project from: " & callInputs
+1059     If Not doc.Extension.SelectByID2(source.GetName2(), "DRAWINGVIEW", 0#, 0#, 0#, False, 0, Nothing, 0) Then Err.Raise 5, , "The base view could not be selected to project from: " & callInputs
     stepLabel = currentIdentity & ": PackageProjectedView CreateUnfoldedViewAt3" & " " & apiInputs & " " & callInputs
-835     Set created = drawingInterface.CreateUnfoldedViewAt3(x, y, 0#, False)
-836     Require created, "The " & what & " view was not created: " & callInputs
+1061     Set created = drawingInterface.CreateUnfoldedViewAt3(x, y, 0#, False)
+1062     Require created, "The " & what & " view was not created: " & callInputs
     stepLabel = currentIdentity & ": PackageProjectedView ClearSelection2"
-838     doc.ClearSelection2 True
-839     PackageCheckScale created, what, 0#, 0#
-840     Set PackageProjectedView = created
+1064     doc.ClearSelection2 True
+1065     PackageCheckScale created, what, 0#, 0#
+1066     Set PackageProjectedView = created
 End Function
 
 Private Function PackageViewAxis(ByVal view As Object) As Long
     ' The model axis a view looks along, or -1 when it looks along none (a tilted view).
-845     On Error Resume Next
-846     PackageViewAxis = ViewDrop(view)
-847     If Err.Number <> 0 Then
-848         PackageViewAxis = -1
-849         Err.Clear
+1071     On Error Resume Next
+1072     PackageViewAxis = ViewDrop(view)
+1073     If Err.Number <> 0 Then
+1074         PackageViewAxis = -1
+1075         Err.Clear
     End If
 End Function
 
 Private Function PackageAxisText(ByVal axisIndex As Long) As String
-854     If axisIndex >= 0 And axisIndex < 3 Then PackageAxisText = Mid$("XYZ", axisIndex + 1, 1) Else PackageAxisText = "no model axis"
+1080     If axisIndex >= 0 And axisIndex < 3 Then PackageAxisText = Mid$("XYZ", axisIndex + 1, 1) Else PackageAxisText = "no model axis"
 End Function
 
 Private Sub PackageDeleteView(ByVal view As Object)
     stepLabel = currentIdentity & ": PackageDeleteView GetName2"
-859     callInputs = "delete " & view.GetName2()
+1085     callInputs = "delete " & view.GetName2()
     stepLabel = currentIdentity & ": PackageDeleteView ClearSelection2"
-861     doc.ClearSelection2 True
+1087     doc.ClearSelection2 True
     stepLabel = currentIdentity & ": PackageDeleteView SelectByID2" & " " & apiInputs & " " & callInputs
-863     If Not doc.Extension.SelectByID2(view.GetName2(), "DRAWINGVIEW", 0#, 0#, 0#, False, 0, Nothing, 0) Then Err.Raise 5, , "The view could not be selected to delete it: " & callInputs
+1089     If Not doc.Extension.SelectByID2(view.GetName2(), "DRAWINGVIEW", 0#, 0#, 0#, False, 0, Nothing, 0) Then Err.Raise 5, , "The view could not be selected to delete it: " & callInputs
     stepLabel = currentIdentity & ": PackageDeleteView DeleteSelection2"
-865     If Not doc.Extension.DeleteSelection2(swDelete_Absorbed) Then Err.Raise 5, , "The view could not be deleted: " & callInputs
+1091     If Not doc.Extension.DeleteSelection2(swDelete_Absorbed) Then Err.Raise 5, , "The view could not be deleted: " & callInputs
     stepLabel = currentIdentity & ": PackageDeleteView ClearSelection2"
-867     doc.ClearSelection2 True
+1093     doc.ClearSelection2 True
 End Sub
 
 Private Function PackageViewSign(ByVal view As Object, ByVal axisIndex As Long) As Long
     ' Which side of the model the viewer is on along the axis (+1 or -1): the view's own z axis (toward the viewer) is column 2 of the rotation.
     Dim matrix As Variant
     stepLabel = currentIdentity & ": PackageViewSign ArrayData"
-874     matrix = view.ModelToViewTransform.ArrayData
-875     If CDbl(matrix(LBound(matrix) + 3 * axisIndex + 2)) > 0 Then PackageViewSign = 1 Else PackageViewSign = -1
+1100     matrix = view.ModelToViewTransform.ArrayData
+1101     If CDbl(matrix(LBound(matrix) + 3 * axisIndex + 2)) > 0 Then PackageViewSign = 1 Else PackageViewSign = -1
 End Function
 
 Private Function PackageViewOk(ByVal view As Object, ByVal axisIndex As Long, ByVal signValue As Long) As Boolean
-879     If PackageViewAxis(view) <> axisIndex Then Exit Function
-880     If signValue <> 0 Then
-881         If PackageViewSign(view, axisIndex) <> signValue Then Exit Function
+1105     If PackageViewAxis(view) <> axisIndex Then Exit Function
+1106     If signValue <> 0 Then
+1107         If PackageViewSign(view, axisIndex) <> signValue Then Exit Function
     End If
-883     PackageViewOk = True
+1109     PackageViewOk = True
 End Function
 
 Private Sub PackageBase(ByVal orientation As String, ByVal axisIndex As Long, ByVal acrossIndex As Long, ByVal upIndex As Long, ByVal fractionX As Double, ByVal fractionY As Double)
     Dim created As Object, found As Long, matrix As Variant, rightPart As Double, upPart As Double
-888     Set created = PackageModelView(orientation, "base", fractionX * packageSheetW, fractionY * packageSheetH, 0#, 0#)
-889     found = PackageViewAxis(created)
-890     If found <> axisIndex Then Err.Raise 5, , "The base view " & orientation & " looks along " & PackageAxisText(found) & ", not " & PackageAxisText(axisIndex) & ": " & callInputs
+1114     Set created = PackageModelView(orientation, "base", fractionX * packageSheetW, fractionY * packageSheetH, 0#, 0#)
+1115     found = PackageViewAxis(created)
+1116     If found <> axisIndex Then Err.Raise 5, , "The base view " & orientation & " looks along " & PackageAxisText(found) & ", not " & PackageAxisText(axisIndex) & ": " & callInputs
     ' The sign, not only the axis: model +across must point to the right on the sheet and model +up must point up (the recipe's Z-up world).
     stepLabel = currentIdentity & ": PackageBase ArrayData"
-893     matrix = created.ModelToViewTransform.ArrayData
-894     rightPart = CDbl(matrix(LBound(matrix) + 3 * acrossIndex))
-895     upPart = CDbl(matrix(LBound(matrix) + 3 * upIndex + 1))
-896     If rightPart <= 0.5 Or upPart <= 0.5 Then Err.Raise 5, , "The base view " & orientation & " does not show the recipe's orientation: model +" & PackageAxisText(acrossIndex) & " has the x component " & NumberList(Array(rightPart)) & " and model +" & PackageAxisText(upIndex) & " the y component " & NumberList(Array(upPart)) & " on the sheet; they must be right and up: " & callInputs
-897     Set packageViews("base") = created
-898     packageOrder = "base"
+1119     matrix = created.ModelToViewTransform.ArrayData
+1120     rightPart = CDbl(matrix(LBound(matrix) + 3 * acrossIndex))
+1121     upPart = CDbl(matrix(LBound(matrix) + 3 * upIndex + 1))
+1122     If rightPart <= 0.5 Or upPart <= 0.5 Then Err.Raise 5, , "The base view " & orientation & " does not show the recipe's orientation: model +" & PackageAxisText(acrossIndex) & " has the x component " & NumberList(Array(rightPart)) & " and model +" & PackageAxisText(upIndex) & " the y component " & NumberList(Array(upPart)) & " on the sheet; they must be right and up: " & callInputs
+1123     Set packageViews("base") = created
+1124     packageOrder = "base"
     stepLabel = currentIdentity & ": PackageBase GetName2"
-900     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: base view " & created.GetName2() & " " & orientation & " looks along " & PackageAxisText(found)
+1126     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: base view " & created.GetName2() & " " & orientation & " looks along " & PackageAxisText(found)
 End Sub
 
 Private Sub PackageProjected(ByVal direction As String, ByVal axisIndex As Long, ByVal signValue As Long, ByVal fractionX As Double, ByVal fractionY As Double, ByVal oppositeX As Double, ByVal oppositeY As Double)
     Dim created As Object, found As Long
-905     Set created = PackageProjectedView(direction, fractionX * packageSheetW, fractionY * packageSheetH)
-906     found = PackageViewAxis(created)
-907     If Not PackageViewOk(created, axisIndex, signValue) Then
+1131     Set created = PackageProjectedView(direction, fractionX * packageSheetW, fractionY * packageSheetH)
+1132     found = PackageViewAxis(created)
+1133     If Not PackageViewOk(created, axisIndex, signValue) Then
         ' A first-angle template puts the projected view on the other side: delete it and place it on the opposite side of the base view.
-909         RecordMitigation "drawing-projection-opposite-side", True, True
+1135         RecordMitigation "drawing-projection-opposite-side", True, True
     stepLabel = currentIdentity & ": PackageProjected GetName2"
-911         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: the " & direction & " view " & created.GetName2() & " looks along " & PackageAxisText(found) & " with the viewer on another side than wanted (" & CStr(signValue) & " along " & PackageAxisText(axisIndex) & "); deleting it and projecting on the opposite side"
-912         PackageDeleteView created
-913         Set created = PackageProjectedView(direction, oppositeX * packageSheetW, oppositeY * packageSheetH)
-914         found = PackageViewAxis(created)
-915         If Not PackageViewOk(created, axisIndex, signValue) Then Err.Raise 5, , "The " & direction & " view looks along " & PackageAxisText(found) & ", not " & PackageAxisText(axisIndex) & " (viewer side " & CStr(signValue) & "), on either side of the base view: " & callInputs
-916         fallbackSuccesses("drawing-projection-opposite-side") = fallbackSuccesses("drawing-projection-opposite-side") + 1
+1137         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: the " & direction & " view " & created.GetName2() & " looks along " & PackageAxisText(found) & " with the viewer on another side than wanted (" & CStr(signValue) & " along " & PackageAxisText(axisIndex) & "); deleting it and projecting on the opposite side"
+1138         PackageDeleteView created
+1139         Set created = PackageProjectedView(direction, oppositeX * packageSheetW, oppositeY * packageSheetH)
+1140         found = PackageViewAxis(created)
+1141         If Not PackageViewOk(created, axisIndex, signValue) Then Err.Raise 5, , "The " & direction & " view looks along " & PackageAxisText(found) & ", not " & PackageAxisText(axisIndex) & " (viewer side " & CStr(signValue) & "), on either side of the base view: " & callInputs
+1142         fallbackSuccesses("drawing-projection-opposite-side") = fallbackSuccesses("drawing-projection-opposite-side") + 1
     End If
-918     Set packageViews(direction) = created
-919     packageOrder = packageOrder & "," & direction
+1144     Set packageViews(direction) = created
+1145     packageOrder = packageOrder & "," & direction
     stepLabel = currentIdentity & ": PackageProjected GetName2"
-921     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: " & direction & " view " & created.GetName2() & " looks along " & PackageAxisText(found)
+1147     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: " & direction & " view " & created.GetName2() & " looks along " & PackageAxisText(found)
 End Sub
 
 Private Sub PackageIso(ByVal numerator As Double, ByVal denominator As Double, ByVal fractionX As Double, ByVal fractionY As Double)
     Dim created As Object, ownN As Double, ownD As Double
-926     If numerator * packageRatioD <> denominator * packageRatioN Then
-927         ownN = numerator
-928         ownD = denominator
+1152     If numerator * packageRatioD <> denominator * packageRatioN Then
+1153         ownN = numerator
+1154         ownD = denominator
     End If
-930     Set created = PackageModelView("*Isometric", "iso", fractionX * packageSheetW, fractionY * packageSheetH, ownN, ownD)
+1156     Set created = PackageModelView("*Isometric", "iso", fractionX * packageSheetW, fractionY * packageSheetH, ownN, ownD)
     stepLabel = currentIdentity & ": PackageIso ArrayData"
-932     If Not MatrixUsable(created.ModelToViewTransform.ArrayData) Then Err.Raise 5, , "The isometric view transform is not a rotation: " & callInputs
-933     If PackageViewAxis(created) >= 0 Then Err.Raise 5, , "The isometric view is an axis-aligned view (it looks along " & PackageAxisText(PackageViewAxis(created)) & "): " & callInputs
-934     Set packageViews("iso") = created
+1158     If Not MatrixUsable(created.ModelToViewTransform.ArrayData) Then Err.Raise 5, , "The isometric view transform is not a rotation: " & callInputs
+1159     If PackageViewAxis(created) >= 0 Then Err.Raise 5, , "The isometric view is an axis-aligned view (it looks along " & PackageAxisText(PackageViewAxis(created)) & "): " & callInputs
+1160     Set packageViews("iso") = created
     stepLabel = currentIdentity & ": PackageIso GetName2"
-936     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: isometric view " & created.GetName2() & " is not axis-aligned"
+1162     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: isometric view " & created.GetName2() & " is not axis-aligned"
 End Sub
 
 Private Function PackageTryPlan(ByVal records As Collection, ByVal first As Variant, ByVal second As Variant) As Collection
     ' The dimension plan of a view, or Nothing when the two points coincide in that view (a view that looks along the line between them cannot show it).
     Dim failure As String, failureNumber As Long
-942     On Error Resume Next
-943     Set PackageTryPlan = DimensionPlan(records, first, second)
-944     failureNumber = Err.Number
-945     failure = Err.Description
-946     Err.Clear
-947     On Error GoTo 0
-948     If failureNumber <> 0 Then
-949         If InStr(1, failure, "coincide", vbTextCompare) = 0 Then Err.Raise failureNumber, , failure
-950         Set PackageTryPlan = Nothing
+1168     On Error Resume Next
+1169     Set PackageTryPlan = DimensionPlan(records, first, second)
+1170     failureNumber = Err.Number
+1171     failure = Err.Description
+1172     Err.Clear
+1173     On Error GoTo 0
+1174     If failureNumber <> 0 Then
+1175         If InStr(1, failure, "coincide", vbTextCompare) = 0 Then Err.Raise failureNumber, , failure
+1176         Set PackageTryPlan = Nothing
     End If
 End Function
 
@@ -955,11 +1181,11 @@ Private Function PackageRung(ByVal plan As Collection) As String
     ' The mitigation name of a dimension made by a plan form D05a's plan does not make: the plan's records carry it (see dimension_rung in the Python twin).
     Dim k As Long
     stepLabel = currentIdentity & ": PackageRung Count"
-958     For k = 1 To plan.Count
+1184     For k = 1 To plan.Count
     stepLabel = currentIdentity & ": PackageRung Exists"
-960         If plan(k).Exists("rung") Then
-961             PackageRung = plan(k)("rung")
-962             Exit Function
+1186         If plan(k).Exists("rung") Then
+1187             PackageRung = plan(k)("rung")
+1188             Exit Function
         End If
     Next k
 End Function
@@ -967,120 +1193,120 @@ End Function
 Private Function PackageLastDimensionType(ByVal view As Object) As String
     ' swDimensionType_e of the view's last display dimension (IDisplayDimension.GetType), for the log; never a failure on its own.
     Dim display As Object, last As Object, failure As Long
-970     On Error Resume Next
+1196     On Error Resume Next
     stepLabel = currentIdentity & ": PackageLastDimensionType GetFirstDisplayDimension5"
-972     Set display = view.GetFirstDisplayDimension5()
-973     Do While Not display Is Nothing
-974         Set last = display
+1198     Set display = view.GetFirstDisplayDimension5()
+1199     Do While Not display Is Nothing
+1200         Set last = display
     stepLabel = currentIdentity & ": PackageLastDimensionType GetNext3"
-976         Set display = display.GetNext3()
+1202         Set display = display.GetNext3()
     Loop
     stepLabel = currentIdentity & ": PackageLastDimensionType GetType"
-979     If Not last Is Nothing Then PackageLastDimensionType = CStr(last.GetType())
-980     failure = Err.Number
-981     Err.Clear
-982     On Error GoTo 0
-983     If failure <> 0 Or last Is Nothing Then PackageLastDimensionType = "unreadable"
+1205     If Not last Is Nothing Then PackageLastDimensionType = CStr(last.GetType())
+1206     failure = Err.Number
+1207     Err.Clear
+1208     On Error GoTo 0
+1209     If failure <> 0 Or last Is Nothing Then PackageLastDimensionType = "unreadable"
 End Function
 
 Private Sub PackageDimension(ByVal valueMm As Double, ByVal firstMm As Variant, ByVal secondMm As Variant)
     Dim first As Variant, second As Variant, labels As Variant, k As Long, key As String, plan As Collection, chosen As String
     Dim activeView As Object, outline As Variant, measured As Double, text As String, drop As Long, spaceName As String, index As Long, rung As String, failure As String, failureNumber As Long, found As Long, stopAt As Long
-989     index = packageDimCount
-990     packageDimCount = packageDimCount + 1
-991     If index = 0 Then
-992         ReDim packageValues(0)
+1215     index = packageDimCount
+1216     packageDimCount = packageDimCount + 1
+1217     If index = 0 Then
+1218         ReDim packageValues(0)
     Else
-994         ReDim Preserve packageValues(index)
+1220         ReDim Preserve packageValues(index)
     End If
-996     packageValues(index) = valueMm
-997     first = Array(CDbl(firstMm(0)) * 0.001, CDbl(firstMm(1)) * 0.001, CDbl(firstMm(2)) * 0.001)
-998     second = Array(CDbl(secondMm(0)) * 0.001, CDbl(secondMm(1)) * 0.001, CDbl(secondMm(2)) * 0.001)
-999     labels = Split(packageOrder, ",")
-1000     For k = 0 To UBound(labels)
-1001         key = CStr(labels(k))
+1222     packageValues(index) = valueMm
+1223     first = Array(CDbl(firstMm(0)) * 0.001, CDbl(firstMm(1)) * 0.001, CDbl(firstMm(2)) * 0.001)
+1224     second = Array(CDbl(secondMm(0)) * 0.001, CDbl(secondMm(1)) * 0.001, CDbl(secondMm(2)) * 0.001)
+1225     labels = Split(packageOrder, ",")
+1226     For k = 0 To UBound(labels)
+1227         key = CStr(labels(k))
     stepLabel = currentIdentity & ": PackageDimension Exists"
-1003         If Not packageRecords.Exists(key) Then
-1004             Set activeView = packageViews(key)
-1005             Set packageRecords(key) = DrawingEdges(activeView, packageLow, packageHigh, drop, spaceName, packageComponents)
-1006             packageDrops(key) = drop
-1007             packageSpaces(key) = spaceName
+1229         If Not packageRecords.Exists(key) Then
+1230             Set activeView = packageViews(key)
+1231             Set packageRecords(key) = DrawingEdges(activeView, packageLow, packageHigh, drop, spaceName, packageComponents, PackageModelName())
+1232             packageDrops(key) = drop
+1233             packageSpaces(key) = spaceName
         End If
-1009         Set plan = PackageTryPlan(packageRecords(key), FlatPoint(first, packageDrops(key)), FlatPoint(second, packageDrops(key)))
-1010         If Not plan Is Nothing Then
-1011             chosen = key
-1012             Exit For
+1235         Set plan = PackageTryPlan(packageRecords(key), FlatPoint(first, packageDrops(key)), FlatPoint(second, packageDrops(key)))
+1236         If Not plan Is Nothing Then
+1237             chosen = key
+1238             Exit For
         End If
     Next k
-1015     If Len(chosen) = 0 Then Err.Raise 5, , "No view shows the edges for the " & NumberList(Array(valueMm)) & " dimension between " & NumberList(firstMm) & " and " & NumberList(secondMm) & " (mm)"
-1016     Set activeView = packageViews(chosen)
+1241     If Len(chosen) = 0 Then Err.Raise 5, , "No view shows the edges for the " & NumberList(Array(valueMm)) & " dimension between " & NumberList(firstMm) & " and " & NumberList(secondMm) & " (mm)"
+1242     Set activeView = packageViews(chosen)
     stepLabel = currentIdentity & ": PackageDimension GetOutline"
-1018     outline = activeView.GetOutline()
-1019     rung = PackageRung(plan)
-1020     If Len(rung) > 0 Then RecordMitigation rung, True, True
-1021     On Error Resume Next
-1022     measured = AddDrawingDimension(activeView, plan, IIf(outline(0) > outline(2), outline(0), outline(2)) + PACKAGE_TEXT_STEP * (index + 1), IIf(outline(1) > outline(3), outline(1), outline(3)) + PACKAGE_TEXT_STEP * (index + 1), valueMm, "dimension " & CStr(index + 1))
-1023     failureNumber = Err.Number
-1024     failure = Err.Description
-1025     Err.Clear
-1026     On Error GoTo 0
-1027     If failureNumber <> 0 Then
-1028         found = InStr(1, failure, "measured ", vbTextCompare)
-1029         stopAt = 0
-1030         If found > 0 Then stopAt = InStr(found, failure, " mm, not", vbTextCompare)
+1244     outline = activeView.GetOutline()
+1245     rung = PackageRung(plan)
+1246     If Len(rung) > 0 Then RecordMitigation rung, True, True
+1247     On Error Resume Next
+1248     measured = AddDrawingDimension(activeView, plan, IIf(outline(0) > outline(2), outline(0), outline(2)) + PACKAGE_TEXT_STEP * (index + 1), IIf(outline(1) > outline(3), outline(1), outline(3)) + PACKAGE_TEXT_STEP * (index + 1), valueMm, "dimension " & CStr(index + 1))
+1249     failureNumber = Err.Number
+1250     failure = Err.Description
+1251     Err.Clear
+1252     On Error GoTo 0
+1253     If failureNumber <> 0 Then
+1254         found = InStr(1, failure, "measured ", vbTextCompare)
+1255         stopAt = 0
+1256         If found > 0 Then stopAt = InStr(found, failure, " mm, not", vbTextCompare)
         ' " mm, not" absent (or before the number): a negative length would raise Err 5 here, so the failure goes out as it is.
-1032         If rung = "drawing-dimension-edge-on-circles" And found > 0 And stopAt > found + 9 Then
-1033             Err.Raise failureNumber, , "edge-on circles: SolidWorks measured " & Mid$(failure, found + 9, stopAt - found - 9) & " mm, not center to center (" & NumberList(Array(valueMm)) & " mm): " & failure
+1258         If rung = "drawing-dimension-edge-on-circles" And found > 0 And stopAt > found + 9 Then
+1259             Err.Raise failureNumber, , "edge-on circles: SolidWorks measured " & Mid$(failure, found + 9, stopAt - found - 9) & " mm, not center to center (" & NumberList(Array(valueMm)) & " mm): " & failure
         End If
-1035         Err.Raise failureNumber, , failure
+1261         Err.Raise failureNumber, , failure
     End If
-1037     If Len(rung) > 0 Then fallbackSuccesses(rung) = fallbackSuccesses(rung) + 1
-1038     If rung = "drawing-dimension-edge-on-circles" Then
+1263     If Len(rung) > 0 Then fallbackSuccesses(rung) = fallbackSuccesses(rung) + 1
+1264     If rung = "drawing-dimension-edge-on-circles" Then
         ' What SolidWorks reported, raw, so a first real run shows what happened: each circle's CircleParams (center, axis, radius), how many edges were
         ' selected and the type of the dimension SolidWorks made.
     stepLabel = currentIdentity & ": PackageDimension Count"
-1042         For k = 1 To plan.Count
-1043             If plan(k)("kind") = "circle" Then text = text & "; circle " & CStr(k) & " CircleParams " & NumberList(plan(k)("raw"))
+1268         For k = 1 To plan.Count
+1269             If plan(k)("kind") = "circle" Then text = text & "; circle " & CStr(k) & " CircleParams " & NumberList(plan(k)("raw"))
         Next k
     stepLabel = currentIdentity & ": PackageDimension Count"
-1046         AppendLog currentFolder, currentIdentity, "option", 0, 0, "edge-on circles: " & Mid$(text, 3) & "; " & CStr(plan.Count) & " edges selected; dimension type (swDimensionType_e) " & PackageLastDimensionType(activeView)
-1047         text = ""
+1272         AppendLog currentFolder, currentIdentity, "option", 0, 0, "edge-on circles: " & Mid$(text, 3) & "; " & CStr(plan.Count) & " edges selected; dimension type (swDimensionType_e) " & PackageLastDimensionType(activeView)
+1273         text = ""
     End If
     stepLabel = currentIdentity & ": PackageDimension Count"
-1050     For k = 0 To plan.Count - 1
-1051         If k > 0 Then text = text & " + "
-1052         text = text & plan(k + 1)("kind")
+1276     For k = 0 To plan.Count - 1
+1277         If k > 0 Then text = text & " + "
+1278         text = text & plan(k + 1)("kind")
     Next k
     stepLabel = currentIdentity & ": PackageDimension GetName2"
-1055     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing dimension " & NumberList(Array(valueMm)) & ": " & chosen & " view " & activeView.GetName2() & ", " & text & ", entity coordinates were " & packageSpaces(chosen) & " coordinates, measured " & Replace(Format$(measured, "0.000000"), ",", ".") & " mm"
+1281     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing dimension " & NumberList(Array(valueMm)) & ": " & chosen & " view " & activeView.GetName2() & ", " & text & ", entity coordinates were " & packageSpaces(chosen) & " coordinates, measured " & Replace(Format$(measured, "0.000000"), ",", ".") & " mm"
 End Sub
 
 Private Function PackageBoxFits(ByVal matrix As Variant, ByVal outline As Variant) As Boolean
     ' Every corner of the model box, mapped through the matrix, lies inside the view's outline (within SECTION_TOLERANCE).
     Dim a As Long, b As Long, c As Long, p As Variant
     Dim leftEdge As Double, rightEdge As Double, bottomEdge As Double, topEdge As Double
-1062     leftEdge = IIf(outline(0) < outline(2), outline(0), outline(2))
-1063     rightEdge = IIf(outline(0) > outline(2), outline(0), outline(2))
-1064     bottomEdge = IIf(outline(1) < outline(3), outline(1), outline(3))
-1065     topEdge = IIf(outline(1) > outline(3), outline(1), outline(3))
-1066     For a = 0 To 1
-1067         For b = 0 To 1
-1068             For c = 0 To 1
-1069                 p = MatrixPoint(matrix, CDbl(IIf(a = 0, packageLow(0), packageHigh(0))), CDbl(IIf(b = 0, packageLow(1), packageHigh(1))), CDbl(IIf(c = 0, packageLow(2), packageHigh(2))))
-1070                 If p(0) < leftEdge - SECTION_TOLERANCE Or p(0) > rightEdge + SECTION_TOLERANCE Or p(1) < bottomEdge - SECTION_TOLERANCE Or p(1) > topEdge + SECTION_TOLERANCE Then Exit Function
+1288     leftEdge = IIf(outline(0) < outline(2), outline(0), outline(2))
+1289     rightEdge = IIf(outline(0) > outline(2), outline(0), outline(2))
+1290     bottomEdge = IIf(outline(1) < outline(3), outline(1), outline(3))
+1291     topEdge = IIf(outline(1) > outline(3), outline(1), outline(3))
+1292     For a = 0 To 1
+1293         For b = 0 To 1
+1294             For c = 0 To 1
+1295                 p = MatrixPoint(matrix, CDbl(IIf(a = 0, packageLow(0), packageHigh(0))), CDbl(IIf(b = 0, packageLow(1), packageHigh(1))), CDbl(IIf(c = 0, packageLow(2), packageHigh(2))))
+1296                 If p(0) < leftEdge - SECTION_TOLERANCE Or p(0) > rightEdge + SECTION_TOLERANCE Or p(1) < bottomEdge - SECTION_TOLERANCE Or p(1) > topEdge + SECTION_TOLERANCE Then Exit Function
             Next c
         Next b
     Next a
-1074     PackageBoxFits = True
+1300     PackageBoxFits = True
 End Function
 
 Private Function PackageFitMatrix(ByVal matrix As Variant, ByVal outline As Variant, ByVal scaleFactor As Double) As Variant
     ' The view's rotation, the given scale, and the translation that puts the model box center at the center of the view's outline.
     Dim first As Long, rotation As Variant, rotated As Variant
-1080     first = LBound(matrix)
-1081     rotation = Array(matrix(first), matrix(first + 1), matrix(first + 2), matrix(first + 3), matrix(first + 4), matrix(first + 5), matrix(first + 6), matrix(first + 7), matrix(first + 8), 0#, 0#, 0#, scaleFactor)
-1082     rotated = MatrixPoint(rotation, (CDbl(packageLow(0)) + CDbl(packageHigh(0))) / 2, (CDbl(packageLow(1)) + CDbl(packageHigh(1))) / 2, (CDbl(packageLow(2)) + CDbl(packageHigh(2))) / 2)
-1083     PackageFitMatrix = Array(matrix(first), matrix(first + 1), matrix(first + 2), matrix(first + 3), matrix(first + 4), matrix(first + 5), matrix(first + 6), matrix(first + 7), matrix(first + 8), (outline(0) + outline(2)) / 2 - rotated(0), (outline(1) + outline(3)) / 2 - rotated(1), 0#, scaleFactor)
+1306     first = LBound(matrix)
+1307     rotation = Array(matrix(first), matrix(first + 1), matrix(first + 2), matrix(first + 3), matrix(first + 4), matrix(first + 5), matrix(first + 6), matrix(first + 7), matrix(first + 8), 0#, 0#, 0#, scaleFactor)
+1308     rotated = MatrixPoint(rotation, (CDbl(packageLow(0)) + CDbl(packageHigh(0))) / 2, (CDbl(packageLow(1)) + CDbl(packageHigh(1))) / 2, (CDbl(packageLow(2)) + CDbl(packageHigh(2))) / 2)
+1309     PackageFitMatrix = Array(matrix(first), matrix(first + 1), matrix(first + 2), matrix(first + 3), matrix(first + 4), matrix(first + 5), matrix(first + 6), matrix(first + 7), matrix(first + 8), (outline(0) + outline(2)) / 2 - rotated(0), (outline(1) + outline(3)) / 2 - rotated(1), 0#, scaleFactor)
 End Function
 
 Private Sub PackageSection(ByVal letter As String, ByVal cutAxis As Long, ByVal lineAxis As Long, ByVal vertical As Boolean, ByVal coordinate As Double, ByVal fractionX As Double, ByVal fractionY As Double)
@@ -1092,193 +1318,193 @@ Private Sub PackageSection(ByVal letter As String, ByVal cutAxis As Long, ByVal 
     Dim firstX As Double, firstY As Double, secondX As Double, secondY As Double, placeX As Double, placeY As Double
     Dim i As Long, found As Long, side As Long, labelText As String, fitted As Variant, readText As String
     Dim sketchLine As Object, lineStart As Object, lineEnd As Object
-1095     Set source = packageViews("base")
+1321     Set source = packageViews("base")
     stepLabel = currentIdentity & ": PackageSection ArrayData"
-1097     matrix = source.ModelToViewTransform.ArrayData
-1098     For i = 0 To 2
-1099         middle(i) = (CDbl(packageLow(i)) + CDbl(packageHigh(i))) / 2
+1323     matrix = source.ModelToViewTransform.ArrayData
+1324     For i = 0 To 2
+1325         middle(i) = (CDbl(packageLow(i)) + CDbl(packageHigh(i))) / 2
     Next i
     stepLabel = currentIdentity & ": PackageSection GetOutline"
-1102     outline = source.GetOutline()
-1103     leftEdge = IIf(outline(0) < outline(2), outline(0), outline(2))
-1104     rightEdge = IIf(outline(0) > outline(2), outline(0), outline(2))
-1105     bottomEdge = IIf(outline(1) < outline(3), outline(1), outline(3))
-1106     topEdge = IIf(outline(1) > outline(3), outline(1), outline(3))
-1107     If PackageBoxFits(matrix, outline) Then
-1108         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section line mapped through the base view transform (the model box lands inside the outline " & NumberList(outline) & ")"
+1328     outline = source.GetOutline()
+1329     leftEdge = IIf(outline(0) < outline(2), outline(0), outline(2))
+1330     rightEdge = IIf(outline(0) > outline(2), outline(0), outline(2))
+1331     bottomEdge = IIf(outline(1) < outline(3), outline(1), outline(3))
+1332     topEdge = IIf(outline(1) > outline(3), outline(1), outline(3))
+1333     If PackageBoxFits(matrix, outline) Then
+1334         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section line mapped through the base view transform (the model box lands inside the outline " & NumberList(outline) & ")"
     Else
         ' The transform does not map model meters to sheet meters (it may be view-local): the mapping is derived from the outline instead. Its rotation
         ' is the transform's, its scale the view's own, and its translation puts the model box center at the center of the outline.
-1112         RecordMitigation "drawing-section-outline-fit", True, True
+1338         RecordMitigation "drawing-section-outline-fit", True, True
     stepLabel = currentIdentity & ": PackageSection ScaleDecimal"
-1114         fitted = PackageFitMatrix(matrix, outline, CDbl(source.ScaleDecimal))
-1115         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: the base view transform puts the model box outside the outline " & NumberList(outline) & "; mapping from the outline instead: rotation of the transform, scale " & NumberList(Array(fitted(12))) & " (the view's), translation " & NumberList(Array(fitted(9), fitted(10))) & " m"
-1116         If Not PackageBoxFits(fitted, outline) Then Err.Raise 5, , "The model box does not land inside the view outline " & NumberList(outline) & " even when mapped from it: the section line cannot be placed"
-1117         matrix = fitted
-1118         fallbackSuccesses("drawing-section-outline-fit") = fallbackSuccesses("drawing-section-outline-fit") + 1
+1340         fitted = PackageFitMatrix(matrix, outline, CDbl(source.ScaleDecimal))
+1341         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: the base view transform puts the model box outside the outline " & NumberList(outline) & "; mapping from the outline instead: rotation of the transform, scale " & NumberList(Array(fitted(12))) & " (the view's), translation " & NumberList(Array(fitted(9), fitted(10))) & " m"
+1342         If Not PackageBoxFits(fitted, outline) Then Err.Raise 5, , "The model box does not land inside the view outline " & NumberList(outline) & " even when mapped from it: the section line cannot be placed"
+1343         matrix = fitted
+1344         fallbackSuccesses("drawing-section-outline-fit") = fallbackSuccesses("drawing-section-outline-fit") + 1
     End If
-1120     For side = 0 To 1
-1121         For i = 0 To 2
-1122             point(i) = middle(i)
+1346     For side = 0 To 1
+1347         For i = 0 To 2
+1348             point(i) = middle(i)
         Next i
-1124         point(cutAxis) = coordinate * 0.001
-1125         point(lineAxis) = IIf(side = 0, packageLow(lineAxis), packageHigh(lineAxis))
-1126         endPoint(side) = MatrixPoint(matrix, point(0), point(1), point(2))
+1350         point(cutAxis) = coordinate * 0.001
+1351         point(lineAxis) = IIf(side = 0, packageLow(lineAxis), packageHigh(lineAxis))
+1352         endPoint(side) = MatrixPoint(matrix, point(0), point(1), point(2))
     Next side
-1128     If vertical Then
-1129         If Abs(endPoint(0)(0) - endPoint(1)(0)) > 0.000000001 Then Err.Raise 5, , "The " & letter & " section line is not vertical in the base view (its ends are at x = " & NumberList(Array(endPoint(0)(0), endPoint(1)(0))) & " m)"
-1130         firstX = endPoint(0)(0)
-1131         secondX = endPoint(0)(0)
-1132         firstY = bottomEdge - SECTION_MARGIN
-1133         secondY = topEdge + SECTION_MARGIN
+1354     If vertical Then
+1355         If Abs(endPoint(0)(0) - endPoint(1)(0)) > 0.000000001 Then Err.Raise 5, , "The " & letter & " section line is not vertical in the base view (its ends are at x = " & NumberList(Array(endPoint(0)(0), endPoint(1)(0))) & " m)"
+1356         firstX = endPoint(0)(0)
+1357         secondX = endPoint(0)(0)
+1358         firstY = bottomEdge - SECTION_MARGIN
+1359         secondY = topEdge + SECTION_MARGIN
     Else
-1135         If Abs(endPoint(0)(1) - endPoint(1)(1)) > 0.000000001 Then Err.Raise 5, , "The " & letter & " section line is not horizontal in the base view (its ends are at y = " & NumberList(Array(endPoint(0)(1), endPoint(1)(1))) & " m)"
-1136         firstX = leftEdge - SECTION_MARGIN
-1137         secondX = rightEdge + SECTION_MARGIN
-1138         firstY = endPoint(0)(1)
-1139         secondY = endPoint(0)(1)
+1361         If Abs(endPoint(0)(1) - endPoint(1)(1)) > 0.000000001 Then Err.Raise 5, , "The " & letter & " section line is not horizontal in the base view (its ends are at y = " & NumberList(Array(endPoint(0)(1), endPoint(1)(1))) & " m)"
+1362         firstX = leftEdge - SECTION_MARGIN
+1363         secondX = rightEdge + SECTION_MARGIN
+1364         firstY = endPoint(0)(1)
+1365         secondY = endPoint(0)(1)
     End If
-1141     placeX = fractionX * packageSheetW
-1142     placeY = fractionY * packageSheetH
+1367     placeX = fractionX * packageSheetW
+1368     placeY = fractionY * packageSheetH
     stepLabel = currentIdentity & ": PackageSection GetName2"
-1144     callInputs = "section " & letter & " line(m)=" & NumberList(Array(firstX, firstY, secondX, secondY)) & " in " & source.GetName2() & ", cut normal " & PackageAxisText(cutAxis) & ", view at(m)=" & NumberList(Array(placeX, placeY))
+1370     callInputs = "section " & letter & " line(m)=" & NumberList(Array(firstX, firstY, secondX, secondY)) & " in " & source.GetName2() & ", cut normal " & PackageAxisText(cutAxis) & ", view at(m)=" & NumberList(Array(placeX, placeY))
     stepLabel = currentIdentity & ": PackageSection ActivateView"
-1146     If Not drawingInterface.ActivateView(source.GetName2()) Then Err.Raise 5, , "ActivateView failed: " & callInputs
+1372     If Not drawingInterface.ActivateView(source.GetName2()) Then Err.Raise 5, , "ActivateView failed: " & callInputs
     stepLabel = currentIdentity & ": PackageSection ClearSelection2"
-1148     doc.ClearSelection2 True
+1374     doc.ClearSelection2 True
     stepLabel = currentIdentity & ": PackageSection CreateLine" & " " & apiInputs & " " & callInputs
-1150     Set segment = doc.SketchManager.CreateLine(firstX, firstY, 0#, secondX, secondY, 0#)
-1151     Require segment, "The section line was not created: " & callInputs
+1376     Set segment = doc.SketchManager.CreateLine(firstX, firstY, 0#, secondX, secondY, 0#)
+1377     Require segment, "The section line was not created: " & callInputs
     ' The end points as SolidWorks reports them, logged beside the ones asked for (never a failure on its own: it tells whether a view's sketch takes sheet coordinates).
-1153     readText = ""
-1154     On Error Resume Next
-1155     Set sketchLine = segment
+1379     readText = ""
+1380     On Error Resume Next
+1381     Set sketchLine = segment
     stepLabel = currentIdentity & ": PackageSection GetStartPoint2"
-1157     Set lineStart = sketchLine.GetStartPoint2()
+1383     Set lineStart = sketchLine.GetStartPoint2()
     stepLabel = currentIdentity & ": PackageSection GetEndPoint2"
-1159     Set lineEnd = sketchLine.GetEndPoint2()
+1385     Set lineEnd = sketchLine.GetEndPoint2()
     stepLabel = currentIdentity & ": PackageSection X"
-1161     readText = NumberList(Array(lineStart.X, lineStart.Y, lineEnd.X, lineEnd.Y))
-1162     If Err.Number <> 0 Then
-1163         readText = ""
-1164         Err.Clear
+1387     readText = NumberList(Array(lineStart.X, lineStart.Y, lineEnd.X, lineEnd.Y))
+1388     If Err.Number <> 0 Then
+1389         readText = ""
+1390         Err.Clear
     End If
-1166     On Error GoTo 0
-1167     If Len(readText) = 0 Then
-1168         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section line end points could not be read back"
+1392     On Error GoTo 0
+1393     If Len(readText) = 0 Then
+1394         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section line end points could not be read back"
     Else
-1170         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section line asked at(m)=" & NumberList(Array(firstX, firstY, secondX, secondY)) & ", SolidWorks reports " & readText
+1396         AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section line asked at(m)=" & NumberList(Array(firstX, firstY, secondX, secondY)) & ", SolidWorks reports " & readText
     End If
     stepLabel = currentIdentity & ": PackageSection GetSelectedObjectCount2"
-1173     If doc.SelectionManager.GetSelectedObjectCount2(-1) <> 1 Then
+1399     If doc.SelectionManager.GetSelectedObjectCount2(-1) <> 1 Then
         ' The new line is normally still selected; when it is not, select it.
-1175         RecordMitigation "drawing-section-line-reselect", True, True
+1401         RecordMitigation "drawing-section-line-reselect", True, True
     stepLabel = currentIdentity & ": PackageSection ClearSelection2"
-1177         doc.ClearSelection2 True
+1403         doc.ClearSelection2 True
     stepLabel = currentIdentity & ": PackageSection Select4" & " " & apiInputs & " " & callInputs
-1179         If Not segment.Select4(False, doc.SelectionManager.CreateSelectData()) Then Err.Raise 5, , "The section line could not be selected: " & callInputs
+1405         If Not segment.Select4(False, doc.SelectionManager.CreateSelectData()) Then Err.Raise 5, , "The section line could not be selected: " & callInputs
     stepLabel = currentIdentity & ": PackageSection GetSelectedObjectCount2"
-1181         If doc.SelectionManager.GetSelectedObjectCount2(-1) <> 1 Then Err.Raise 5, , CStr(doc.SelectionManager.GetSelectedObjectCount2(-1)) & " objects are selected, not the one section line: " & callInputs
-1182         fallbackSuccesses("drawing-section-line-reselect") = fallbackSuccesses("drawing-section-line-reselect") + 1
+1407         If doc.SelectionManager.GetSelectedObjectCount2(-1) <> 1 Then Err.Raise 5, , CStr(doc.SelectionManager.GetSelectedObjectCount2(-1)) & " objects are selected, not the one section line: " & callInputs
+1408         fallbackSuccesses("drawing-section-line-reselect") = fallbackSuccesses("drawing-section-line-reselect") + 1
     End If
     stepLabel = currentIdentity & ": PackageSection CreateSectionViewAt5" & " " & apiInputs & " " & callInputs
-1185     Set created = drawingInterface.CreateSectionViewAt5(placeX, placeY, 0#, letter, 0, Nothing, 0#)
-1186     Require created, "CreateSectionViewAt5 returned no view: " & callInputs
+1411     Set created = drawingInterface.CreateSectionViewAt5(placeX, placeY, 0#, letter, 0, Nothing, 0#)
+1412     Require created, "CreateSectionViewAt5 returned no view: " & callInputs
     stepLabel = currentIdentity & ": PackageSection ClearSelection2"
-1188     doc.ClearSelection2 True
-1189     PackageCheckScale created, "section", 0#, 0#
-1190     found = PackageViewAxis(created)
+1414     doc.ClearSelection2 True
+1415     PackageCheckScale created, "section", 0#, 0#
+1416     found = PackageViewAxis(created)
     stepLabel = currentIdentity & ": PackageSection GetName2"
-1192     If found <> cutAxis Then Err.Raise 5, , "The section view " & created.GetName2() & " looks along " & PackageAxisText(found) & ", not along the cut normal " & PackageAxisText(cutAxis) & ": " & callInputs
+1418     If found <> cutAxis Then Err.Raise 5, , "The section view " & created.GetName2() & " looks along " & PackageAxisText(found) & ", not along the cut normal " & PackageAxisText(cutAxis) & ": " & callInputs
     stepLabel = currentIdentity & ": PackageSection GetSection"
-1194     Set sectionData = created.GetSection()
-1195     Require sectionData, "IView.GetSection returned no section data for the new view: " & callInputs
+1420     Set sectionData = created.GetSection()
+1421     Require sectionData, "IView.GetSection returned no section data for the new view: " & callInputs
     stepLabel = currentIdentity & ": PackageSection GetLabel"
-1197     labelText = CStr(sectionData.GetLabel())
-1198     If UCase$(Trim$(labelText)) <> letter Then Err.Raise 5, , "The section view reads back the label " & labelText & ", not " & letter & ": " & callInputs
-1199     Set packageViews("section") = created
+1423     labelText = CStr(sectionData.GetLabel())
+1424     If UCase$(Trim$(labelText)) <> letter Then Err.Raise 5, , "The section view reads back the label " & labelText & ", not " & letter & ": " & callInputs
+1425     Set packageViews("section") = created
     stepLabel = currentIdentity & ": PackageSection GetName2"
-1201     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section view " & created.GetName2() & ", label " & labelText & ", looks along " & PackageAxisText(found)
+1427     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: section view " & created.GetName2() & ", label " & labelText & ", looks along " & PackageAxisText(found)
 End Sub
 
 Private Sub PackageFinish()
     ' Every display dimension in the drawing, read from the drawing, must be exactly the recipe's.
     Dim listing As String
-1207     If packageDimCount = 0 Then listing = DrawingReadBack(Array()) Else listing = DrawingReadBack(packageValues)
-1208     If Len(listing) = 0 Then listing = "no dimensions"
-1209     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing read-back: " & listing
+1433     If packageDimCount = 0 Then listing = DrawingReadBack(Array()) Else listing = DrawingReadBack(packageValues)
+1434     If Len(listing) = 0 Then listing = "no dimensions"
+1435     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing read-back: " & listing
 End Sub
 
 Private Sub PackageProperty(ByVal propertyName As String, ByVal propertyText As String)
     ' One title block field as a drawing custom property, set after the privacy blanking and read back.
     Dim manager As Object, valueText As String, resolvedText As String, wasResolved As Boolean
-1215     callInputs = "property=" & propertyName
+1441     callInputs = "property=" & propertyName
     stepLabel = currentIdentity & ": PackageProperty CustomPropertyManager"
-1217     Set manager = doc.Extension.CustomPropertyManager("")
+1443     Set manager = doc.Extension.CustomPropertyManager("")
     stepLabel = currentIdentity & ": PackageProperty Add3"
-1219     If manager.Add3(propertyName, swCustomInfoText, propertyText, swCustomPropertyReplaceValue) <> 0 Then Err.Raise 5, , "The title block property could not be set: " & callInputs
+1445     If manager.Add3(propertyName, swCustomInfoText, propertyText, swCustomPropertyReplaceValue) <> 0 Then Err.Raise 5, , "The title block property could not be set: " & callInputs
     stepLabel = currentIdentity & ": PackageProperty Get5"
-1221     If manager.Get5(propertyName, False, valueText, resolvedText, wasResolved) = swCustomInfoGetResult_NotPresent Or (valueText <> propertyText And resolvedText <> propertyText) Then
-1222         Err.Raise 5, , "The title block property reads back " & valueText & ", not " & propertyText & ": " & callInputs
+1447     If manager.Get5(propertyName, False, valueText, resolvedText, wasResolved) = swCustomInfoGetResult_NotPresent Or (valueText <> propertyText And resolvedText <> propertyText) Then
+1448         Err.Raise 5, , "The title block property reads back " & valueText & ", not " & propertyText & ": " & callInputs
     End If
-1224     packageTitle(propertyName) = propertyText
+1450     packageTitle(propertyName) = propertyText
 End Sub
 
 Private Sub PackageTitleCheck()
     ' A look at the title block's own notes: never claims the text is shown on the sheet when the notes do not show it.
     Dim titleBlock As Object, notes As Variant, noteItem As Variant, key As Variant, shown As Boolean, found As Boolean, names As String
-1230     shown = False
-1231     On Error Resume Next
+1456     shown = False
+1457     On Error Resume Next
     stepLabel = currentIdentity & ": PackageTitleCheck TitleBlock"
-1233     Set titleBlock = packageSheetObject.TitleBlock
-1234     If Err.Number <> 0 Then
-1235         Err.Clear
-1236         Set titleBlock = Nothing
+1459     Set titleBlock = packageSheetObject.TitleBlock
+1460     If Err.Number <> 0 Then
+1461         Err.Clear
+1462         Set titleBlock = Nothing
     End If
-1238     If Not titleBlock Is Nothing Then
+1464     If Not titleBlock Is Nothing Then
     stepLabel = currentIdentity & ": PackageTitleCheck GetNotes"
-1240         notes = titleBlock.GetNotes()
-1241         If Err.Number <> 0 Then
-1242             Err.Clear
-1243             notes = Empty
+1466         notes = titleBlock.GetNotes()
+1467         If Err.Number <> 0 Then
+1468             Err.Clear
+1469             notes = Empty
         End If
     End If
-1246     On Error GoTo 0
-1247     If Not titleBlock Is Nothing Then
-1248         shown = True
+1472     On Error GoTo 0
+1473     If Not titleBlock Is Nothing Then
+1474         shown = True
     stepLabel = currentIdentity & ": PackageTitleCheck Keys"
-1250         For Each key In packageTitle.Keys
-1251             found = False
-1252             If IsArray(notes) Then
-1253                 For Each noteItem In notes
+1476         For Each key In packageTitle.Keys
+1477             found = False
+1478             If IsArray(notes) Then
+1479                 For Each noteItem In notes
     stepLabel = currentIdentity & ": PackageTitleCheck GetText"
-1255                     If InStr(1, CStr(noteItem.GetText()), CStr(packageTitle(key)), vbBinaryCompare) > 0 Then found = True
+1481                     If InStr(1, CStr(noteItem.GetText()), CStr(packageTitle(key)), vbBinaryCompare) > 0 Then found = True
                 Next noteItem
             End If
-1258             If Not found Then shown = False
+1484             If Not found Then shown = False
         Next key
     End If
     stepLabel = currentIdentity & ": PackageTitleCheck Keys"
-1262     For Each key In packageTitle.Keys
-1263         If Len(names) > 0 Then names = names & ", "
-1264         names = names & CStr(key)
+1488     For Each key In packageTitle.Keys
+1489         If Len(names) > 0 Then names = names & ", "
+1490         names = names & CStr(key)
     Next key
-1266     If Not shown Then
+1492     If Not shown Then
         ' The properties are set and read back; the sheet's title block does not show their text (no title block, or one that does not link them).
-1268         RecordMitigation "title-block-property-only", True, True
-1269         fallbackSuccesses("title-block-property-only") = fallbackSuccesses("title-block-property-only") + 1
-1270         AppendLog currentFolder, currentIdentity, "option", 0, 0, "title block: the properties " & names & " are set and read back; the sheet's title block notes do not show their text, so it is not claimed as shown"
+1494         RecordMitigation "title-block-property-only", True, True
+1495         fallbackSuccesses("title-block-property-only") = fallbackSuccesses("title-block-property-only") + 1
+1496         AppendLog currentFolder, currentIdentity, "option", 0, 0, "title block: the properties " & names & " are set and read back; the sheet's title block notes do not show their text, so it is not claimed as shown"
     Else
-1272         AppendLog currentFolder, currentIdentity, "option", 0, 0, "title block: the properties " & names & " are set, read back, and shown in the title block notes"
+1498         AppendLog currentFolder, currentIdentity, "option", 0, 0, "title block: the properties " & names & " are set, read back, and shown in the title block notes"
     End If
 End Sub
 
 Private Function PackageCount() As Long
-1277     PackageCount = 10
+1503     PackageCount = 10
 End Function
 
 Private Function PackageId(ByVal index As Long) As String
-1281     Select Case index
+1507     Select Case index
         Case 0: PackageId = "D10a"
         Case 1: PackageId = "D11a"
         Case 2: PackageId = "D12a"
@@ -1293,7 +1519,7 @@ Private Function PackageId(ByVal index As Long) As String
 End Function
 
 Private Function PackageModel(ByVal index As Long) As String
-1296     Select Case index
+1522     Select Case index
         Case 0: PackageModel = "F04a"
         Case 1: PackageModel = "D04a"
         Case 2: PackageModel = "D06a"
@@ -1309,20 +1535,20 @@ End Function
 
 Private Function PackageExtension(ByVal index As Long) As String
     ' the model's file extension: .sldasm for an assembly (a parts list is read back from its components), else .sldprt
-1312     PackageExtension = ".sldprt"
-1313     Select Case index
+1538     PackageExtension = ".sldprt"
+1539     Select Case index
         Case 9: PackageExtension = ".sldasm"
     End Select
 End Function
 
 Private Function PackageDocType(ByVal index As Long) As Long
-1319     PackageDocType = swDocPART
-1320     If PackageExtension(index) = ".sldasm" Then PackageDocType = swDocASSEMBLY
+1545     PackageDocType = swDocPART
+1546     If PackageExtension(index) = ".sldasm" Then PackageDocType = swDocASSEMBLY
 End Function
 
 Private Function PackageState(ByVal index As Long) As Long
     ' 0 drawn, 1 not scripted (PackageReason says why)
-1325     Select Case index
+1551     Select Case index
         Case 0: PackageState = 0
         Case 1: PackageState = 0
         Case 2: PackageState = 0
@@ -1337,12 +1563,12 @@ Private Function PackageState(ByVal index As Long) As Long
 End Function
 
 Private Function PackageReason(ByVal index As Long) As String
-1340     Select Case index
+1566     Select Case index
     End Select
 End Function
 
 Private Sub BuildPackage(ByVal index As Long)
-1345     Select Case index
+1571     Select Case index
         Case 0: BuildPackage0
         Case 1: BuildPackage1
         Case 2: BuildPackage2
@@ -1357,7 +1583,7 @@ Private Sub BuildPackage(ByVal index As Long)
 End Sub
 
 Private Sub BuildPackageTitle(ByVal index As Long)
-1360     Select Case index
+1586     Select Case index
         Case 0: BuildPackageTitle0
         Case 1: BuildPackageTitle1
         Case 2: BuildPackageTitle2
@@ -1372,228 +1598,228 @@ Private Sub BuildPackageTitle(ByVal index As Long)
 End Sub
 
 Private Sub BuildPackage0()
-1375     PackageStart "F04a.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
-1376     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1377     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1378     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1379     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1380     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1381     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
-1382     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
-1383     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
-1384     PackageDimension 10.0#, Array(-10.0#, 0.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
-1385     PackageDimension 15.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
-1386     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
+1601     PackageStart "F04a.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
+1602     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1603     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1604     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1605     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1606     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1607     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
+1608     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
+1609     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
+1610     PackageDimension 10.0#, Array(-10.0#, 0.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
+1611     PackageDimension 15.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
+1612     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle0()
-1390     PackageProperty "Title", "F04a drawing"
-1391     PackageProperty "DrawnBy", "Fixture Builder"
-1392     PackageTitleCheck
+1616     PackageProperty "Title", "F04a drawing"
+1617     PackageProperty "DrawnBy", "Fixture Builder"
+1618     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage1()
-1396     PackageStart "D04a.sldprt", Array(0.0#, 0.0#, 0.0#), Array(40.0#, 30.0#, 30.0#)
-1397     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1398     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1399     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1400     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1401     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1402     PackageDimension 40.0#, Array(0.0#, 0.0#, 0.0#), Array(40.0#, 0.0#, 0.0#)
-1403     PackageDimension 30.0#, Array(0.0#, 0.0#, 0.0#), Array(0.0#, 0.0#, 30.0#)
-1404     PackageDimension 5.0#, Array(40.0#, 0.0#, 0.0#), Array(40.0#, 0.0#, 5.0#)
-1405     PackageDimension 25.0#, Array(0.0#, 15.0#, 5.0#), Array(25.0#, 15.0#, 5.0#)
-1406     PackageSection "A", 0, 2, True, 25.0#, 0.83#, 0.65#
+1622     PackageStart "D04a.sldprt", Array(0.0#, 0.0#, 0.0#), Array(40.0#, 30.0#, 30.0#)
+1623     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1624     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1625     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1626     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1627     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1628     PackageDimension 40.0#, Array(0.0#, 0.0#, 0.0#), Array(40.0#, 0.0#, 0.0#)
+1629     PackageDimension 30.0#, Array(0.0#, 0.0#, 0.0#), Array(0.0#, 0.0#, 30.0#)
+1630     PackageDimension 5.0#, Array(40.0#, 0.0#, 0.0#), Array(40.0#, 0.0#, 5.0#)
+1631     PackageDimension 25.0#, Array(0.0#, 15.0#, 5.0#), Array(25.0#, 15.0#, 5.0#)
+1632     PackageSection "A", 0, 2, True, 25.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle1()
-1410     PackageProperty "Title", "D04a drawing"
-1411     PackageProperty "DrawnBy", "Fixture Builder"
-1412     PackageTitleCheck
+1636     PackageProperty "Title", "D04a drawing"
+1637     PackageProperty "DrawnBy", "Fixture Builder"
+1638     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage2()
-1416     PackageStart "D06a.sldprt", Array(0.0#, 0.0#, 0.0#), Array(60.0#, 40.0#, 10.0#)
-1417     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1418     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1419     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1420     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1421     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1422     PackageDimension 60.0#, Array(0.0#, 0.0#, 0.0#), Array(60.0#, 0.0#, 0.0#)
-1423     PackageDimension 40.0#, Array(0.0#, 0.0#, 10.0#), Array(0.0#, 40.0#, 10.0#)
-1424     PackageDimension 10.0#, Array(60.0#, 0.0#, 0.0#), Array(60.0#, 0.0#, 10.0#)
-1425     PackageDimension 20.0#, Array(0.0#, 20.0#, 10.0#), Array(20.0#, 20.0#, 10.0#)
-1426     PackageDimension 20.0#, Array(60.0#, 0.0#, 10.0#), Array(60.0#, 20.0#, 10.0#)
-1427     PackageSection "A", 0, 2, True, 20.0#, 0.83#, 0.65#
+1642     PackageStart "D06a.sldprt", Array(0.0#, 0.0#, 0.0#), Array(60.0#, 40.0#, 10.0#)
+1643     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1644     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1645     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1646     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1647     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1648     PackageDimension 60.0#, Array(0.0#, 0.0#, 0.0#), Array(60.0#, 0.0#, 0.0#)
+1649     PackageDimension 40.0#, Array(0.0#, 0.0#, 10.0#), Array(0.0#, 40.0#, 10.0#)
+1650     PackageDimension 10.0#, Array(60.0#, 0.0#, 0.0#), Array(60.0#, 0.0#, 10.0#)
+1651     PackageDimension 20.0#, Array(0.0#, 20.0#, 10.0#), Array(20.0#, 20.0#, 10.0#)
+1652     PackageDimension 20.0#, Array(60.0#, 0.0#, 10.0#), Array(60.0#, 20.0#, 10.0#)
+1653     PackageSection "A", 0, 2, True, 20.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle2()
-1431     PackageProperty "Title", "D06a drawing"
-1432     PackageProperty "DrawnBy", "Fixture Builder"
-1433     PackageTitleCheck
+1657     PackageProperty "Title", "D06a drawing"
+1658     PackageProperty "DrawnBy", "Fixture Builder"
+1659     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage3()
-1437     PackageStart "P03a.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
-1438     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1439     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1440     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1441     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1442     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1443     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
-1444     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
-1445     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
-1446     PackageDimension 10.0#, Array(-10.0#, 0.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
-1447     PackageDimension 15.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
-1448     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
+1663     PackageStart "P03a.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
+1664     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1665     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1666     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1667     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1668     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1669     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
+1670     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
+1671     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
+1672     PackageDimension 10.0#, Array(-10.0#, 0.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
+1673     PackageDimension 15.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
+1674     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle3()
-1452     PackageProperty "Title", "P03a drawing"
-1453     PackageProperty "DrawnBy", "Fixture Builder"
-1454     PackageTitleCheck
+1678     PackageProperty "Title", "P03a drawing"
+1679     PackageProperty "DrawnBy", "Fixture Builder"
+1680     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage4()
-1458     PackageStart "P03b.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
-1459     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1460     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1461     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1462     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1463     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1464     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
-1465     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
-1466     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
-1467     PackageDimension 10.0#, Array(-10.0#, 0.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
-1468     PackageDimension 15.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
-1469     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
+1684     PackageStart "P03b.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
+1685     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1686     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1687     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1688     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1689     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1690     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
+1691     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
+1692     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
+1693     PackageDimension 10.0#, Array(-10.0#, 0.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
+1694     PackageDimension 15.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, 0.0#, 10.0#)
+1695     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle4()
-1473     PackageProperty "Title", "P03b drawing"
-1474     PackageProperty "DrawnBy", "Fixture Builder"
-1475     PackageTitleCheck
+1699     PackageProperty "Title", "P03b drawing"
+1700     PackageProperty "DrawnBy", "Fixture Builder"
+1701     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage5()
-1479     PackageStart "P07a.sldprt", Array(0.0#, 0.0#, 0.0#), Array(60.0#, 40.0#, 5.0#)
-1480     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1481     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1482     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1483     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1484     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1485     PackageDimension 60.0#, Array(0.0#, 0.0#, 5.0#), Array(60.0#, 0.0#, 5.0#)
-1486     PackageDimension 40.0#, Array(0.0#, 0.0#, 5.0#), Array(0.0#, 40.0#, 5.0#)
-1487     PackageDimension 5.0#, Array(60.0#, 0.0#, 0.0#), Array(60.0#, 0.0#, 5.0#)
-1488     PackageDimension 5.0#, Array(0.0#, 5.0#, 5.0#), Array(5.0#, 5.0#, 5.0#)
-1489     PackageDimension 10.0#, Array(5.0#, 5.0#, 5.0#), Array(15.0#, 5.0#, 5.0#)
-1490     PackageDimension 10.0#, Array(5.0#, 5.0#, 5.0#), Array(5.0#, 15.0#, 5.0#)
-1491     PackageSection "A", 0, 2, True, 5.0#, 0.83#, 0.65#
+1705     PackageStart "P07a.sldprt", Array(0.0#, 0.0#, 0.0#), Array(60.0#, 40.0#, 5.0#)
+1706     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1707     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1708     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1709     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1710     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1711     PackageDimension 60.0#, Array(0.0#, 0.0#, 5.0#), Array(60.0#, 0.0#, 5.0#)
+1712     PackageDimension 40.0#, Array(0.0#, 0.0#, 5.0#), Array(0.0#, 40.0#, 5.0#)
+1713     PackageDimension 5.0#, Array(60.0#, 0.0#, 0.0#), Array(60.0#, 0.0#, 5.0#)
+1714     PackageDimension 5.0#, Array(0.0#, 5.0#, 5.0#), Array(5.0#, 5.0#, 5.0#)
+1715     PackageDimension 10.0#, Array(5.0#, 5.0#, 5.0#), Array(15.0#, 5.0#, 5.0#)
+1716     PackageDimension 10.0#, Array(5.0#, 5.0#, 5.0#), Array(5.0#, 15.0#, 5.0#)
+1717     PackageSection "A", 0, 2, True, 5.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle5()
-1495     PackageProperty "Title", "P07a drawing"
-1496     PackageProperty "DrawnBy", "Fixture Builder"
-1497     PackageTitleCheck
+1721     PackageProperty "Title", "P07a drawing"
+1722     PackageProperty "DrawnBy", "Fixture Builder"
+1723     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage6()
-1501     PackageStart "P08a.sldprt", Array(-30.0#, -30.0#, 0.0#), Array(30.0#, 30.0#, 5.0#)
-1502     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1503     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1504     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1505     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1506     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1507     PackageDimension 60.0#, Array(-30.0#, 0.0#, 5.0#), Array(30.0#, 0.0#, 5.0#)
-1508     PackageDimension 5.0#, Array(30.0#, 0.0#, 0.0#), Array(30.0#, 0.0#, 5.0#)
-1509     PackageDimension 20.0#, Array(0.0#, 0.0#, 5.0#), Array(20.0#, 0.0#, 5.0#)
-1510     PackageDimension 40.0#, Array(-20.0#, 0.0#, 5.0#), Array(20.0#, 0.0#, 5.0#)
-1511     PackageSection "A", 0, 2, True, 20.0#, 0.83#, 0.65#
+1727     PackageStart "P08a.sldprt", Array(-30.0#, -30.0#, 0.0#), Array(30.0#, 30.0#, 5.0#)
+1728     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1729     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1730     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1731     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1732     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1733     PackageDimension 60.0#, Array(-30.0#, 0.0#, 5.0#), Array(30.0#, 0.0#, 5.0#)
+1734     PackageDimension 5.0#, Array(30.0#, 0.0#, 0.0#), Array(30.0#, 0.0#, 5.0#)
+1735     PackageDimension 20.0#, Array(0.0#, 0.0#, 5.0#), Array(20.0#, 0.0#, 5.0#)
+1736     PackageDimension 40.0#, Array(-20.0#, 0.0#, 5.0#), Array(20.0#, 0.0#, 5.0#)
+1737     PackageSection "A", 0, 2, True, 20.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle6()
-1515     PackageProperty "Title", "P08a drawing"
-1516     PackageProperty "DrawnBy", "Fixture Builder"
-1517     PackageTitleCheck
+1741     PackageProperty "Title", "P08a drawing"
+1742     PackageProperty "DrawnBy", "Fixture Builder"
+1743     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage7()
-1521     PackageStart "P06a.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
-1522     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1523     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1524     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1525     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1526     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1527     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
-1528     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
-1529     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
-1530     PackageDimension 1.5#, Array(-10.0#, 0.0#, 10.0#), Array(-8.5#, 0.0#, 10.0#)
-1531     PackageDimension 1.5#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, -13.5#, 10.0#)
-1532     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
+1747     PackageStart "P06a.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
+1748     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1749     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1750     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1751     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1752     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1753     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
+1754     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
+1755     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
+1756     PackageDimension 1.5#, Array(-10.0#, 0.0#, 10.0#), Array(-8.5#, 0.0#, 10.0#)
+1757     PackageDimension 1.5#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, -13.5#, 10.0#)
+1758     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle7()
-1536     PackageProperty "Title", "P06a drawing"
-1537     PackageProperty "DrawnBy", "Fixture Builder"
-1538     PackageTitleCheck
+1762     PackageProperty "Title", "P06a drawing"
+1763     PackageProperty "DrawnBy", "Fixture Builder"
+1764     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage8()
-1542     PackageStart "P06b.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
-1543     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1544     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1545     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1546     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1547     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1548     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
-1549     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
-1550     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
-1551     PackageDimension 2.0#, Array(-10.0#, 0.0#, 10.0#), Array(-8.0#, 0.0#, 10.0#)
-1552     PackageDimension 2.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, -13.0#, 10.0#)
-1553     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
+1768     PackageStart "P06b.sldprt", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 10.0#)
+1769     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1770     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1771     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1772     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1773     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1774     PackageDimension 20.0#, Array(-10.0#, -15.0#, 10.0#), Array(10.0#, -15.0#, 10.0#)
+1775     PackageDimension 30.0#, Array(-10.0#, -15.0#, 10.0#), Array(-10.0#, 15.0#, 10.0#)
+1776     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
+1777     PackageDimension 2.0#, Array(-10.0#, 0.0#, 10.0#), Array(-8.0#, 0.0#, 10.0#)
+1778     PackageDimension 2.0#, Array(0.0#, -15.0#, 10.0#), Array(0.0#, -13.0#, 10.0#)
+1779     PackageSection "A", 0, 2, True, 0.0#, 0.83#, 0.65#
 End Sub
 
 Private Sub BuildPackageTitle8()
-1557     PackageProperty "Title", "P06b drawing"
-1558     PackageProperty "DrawnBy", "Fixture Builder"
-1559     PackageTitleCheck
+1783     PackageProperty "Title", "P06b drawing"
+1784     PackageProperty "DrawnBy", "Fixture Builder"
+1785     PackageTitleCheck
 End Sub
 
 Private Sub BuildPackage9()
-1563     PackageStart "F10a.sldasm", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 30.0#)
-1564     PackageAssembly Array(Array("block", Array(-0.01#, -0.015#, 0.0#), Array(0.01#, 0.015#, 0.01#), Array(0.0#, 0.0#, 0.0#)), Array("pin", Array(-0.0025#, -0.0025#, 0.01#), Array(0.0025#, 0.0025#, 0.03#), Array(0.0#, 0.0#, 0.01#)))
-1565     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
-1566     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
-1567     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
-1568     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
-1569     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
-1570     PackageDimension 20.0#, Array(-10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 0.0#)
-1571     PackageDimension 30.0#, Array(-10.0#, -15.0#, 0.0#), Array(-10.0#, 15.0#, 0.0#)
-1572     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
-1573     PackageDimension 20.0#, Array(2.5#, 0.0#, 10.0#), Array(2.5#, 0.0#, 30.0#)
-1574     PackageDimension 5.0#, Array(-2.5#, 0.0#, 30.0#), Array(2.5#, 0.0#, 30.0#)
-1575     PackagePartsList 2, 0.97#, 0.95#, Array(Array("block", 1), Array("pin", 1))
+1789     PackageStart "F10a.sldasm", Array(-10.0#, -15.0#, 0.0#), Array(10.0#, 15.0#, 30.0#)
+1790     PackageAssembly Array(Array("block", Array(-0.01#, -0.015#, 0.0#), Array(0.01#, 0.015#, 0.01#), Array(0.0#, 0.0#, 0.0#)), Array("pin", Array(-0.0025#, -0.0025#, 0.01#), Array(0.0025#, 0.0025#, 0.03#), Array(0.0#, 0.0#, 0.01#)))
+1791     PackageSheet 2, 0, 6, 0.297#, 0.21#, 1.0#, 1.0#
+1792     PackageBase "*Bottom", 1, 0, 2, 0.34#, 0.45#
+1793     PackageProjected "beside", 0, 1, 0.57#, 0.45#, 0.1#, 0.45#
+1794     PackageProjected "vertical", 2, 1, 0.34#, 0.8#, 0.34#, 0.12#
+1795     PackageIso 1.0#, 2.0#, 0.83#, 0.2#
+1796     PackageDimension 20.0#, Array(-10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 0.0#)
+1797     PackageDimension 30.0#, Array(-10.0#, -15.0#, 0.0#), Array(-10.0#, 15.0#, 0.0#)
+1798     PackageDimension 10.0#, Array(10.0#, -15.0#, 0.0#), Array(10.0#, -15.0#, 10.0#)
+1799     PackageDimension 20.0#, Array(2.5#, 0.0#, 10.0#), Array(2.5#, 0.0#, 30.0#)
+1800     PackageDimension 5.0#, Array(-2.5#, 0.0#, 30.0#), Array(2.5#, 0.0#, 30.0#)
+1801     PackagePartsList 2, 0.97#, 0.95#, Array(Array("block", 1), Array("pin", 1))
 End Sub
 
 Private Sub BuildPackageTitle9()
-1579     PackageProperty "Title", "F10a drawing"
-1580     PackageProperty "DrawnBy", "Fixture Builder"
-1581     PackageTitleCheck
+1805     PackageProperty "Title", "F10a drawing"
+1806     PackageProperty "DrawnBy", "Fixture Builder"
+1807     PackageTitleCheck
 End Sub
 
 Private Function IsUnattended() As Boolean
-1585     IsUnattended = (Trim$(Environ$("FIXTURE_UNATTENDED")) = "1")
+1811     IsUnattended = (Trim$(Environ$("FIXTURE_UNATTENDED")) = "1")
 End Function
 
 Private Sub EnsureFolder(ByVal fs As Object, ByVal path As String)
     Dim parent As String
     stepLabel = currentIdentity & ": EnsureFolder FolderExists"
-1591     If fs.FolderExists(path) Then Exit Sub
+1817     If fs.FolderExists(path) Then Exit Sub
     stepLabel = currentIdentity & ": EnsureFolder GetParentFolderName"
-1593     parent = fs.GetParentFolderName(path)
-1594     If Len(parent) > 0 Then EnsureFolder fs, parent
+1819     parent = fs.GetParentFolderName(path)
+1820     If Len(parent) > 0 Then EnsureFolder fs, parent
     stepLabel = currentIdentity & ": EnsureFolder CreateFolder" & " " & apiInputs & " " & callInputs
-1596     fs.CreateFolder path
+1822     fs.CreateFolder path
 End Sub
 
 ' ---------------------------------------------------------------- personal-path check
@@ -1607,34 +1833,34 @@ Private Function EnvText(ByVal variable As String) As String
     ' WScript.Shell reads the variable as UTF-16: Environ$ would turn a Cyrillic or CJK user name into "?" before any rule saw it.
     ' MYDOCUMENTS is the (possibly redirected) Documents folder, which has no environment variable.
     Dim value As String
-1610     On Error Resume Next
-1611     If variable = "MYDOCUMENTS" Then
-1612         value = CreateObject("WScript.Shell").SpecialFolders("MyDocuments")
+1836     On Error Resume Next
+1837     If variable = "MYDOCUMENTS" Then
+1838         value = CreateObject("WScript.Shell").SpecialFolders("MyDocuments")
     Else
-1614         value = CreateObject("WScript.Shell").ExpandEnvironmentStrings("%" & variable & "%")
-1615         If value = "%" & variable & "%" Then value = ""
+1840         value = CreateObject("WScript.Shell").ExpandEnvironmentStrings("%" & variable & "%")
+1841         If value = "%" & variable & "%" Then value = ""
     End If
-1617     If Err.Number <> 0 Then value = ""
-1618     Err.Clear
-1619     EnvText = Trim$(value)
+1843     If Err.Number <> 0 Then value = ""
+1844     Err.Clear
+1845     EnvText = Trim$(value)
 End Function
 
 Private Function DefaultOutputRoot() As String
     Dim pub As String, result As String
-1624     pub = Replace(EnvText("PUBLIC"), "/", "\")
-1625     Do While Len(pub) > 0 And Right$(pub, 1) = "\"
-1626         pub = Left$(pub, Len(pub) - 1)
+1850     pub = Replace(EnvText("PUBLIC"), "/", "\")
+1851     Do While Len(pub) > 0 And Right$(pub, 1) = "\"
+1852         pub = Left$(pub, Len(pub) - 1)
     Loop
-1628     If Len(pub) = 0 Then
-1629         result = "C:\FixtureBuilder"
+1854     If Len(pub) = 0 Then
+1855         result = "C:\FixtureBuilder"
     Else
-1631         result = pub & "\Documents\FixtureBuilder"
+1857         result = pub & "\Documents\FixtureBuilder"
     End If
-1633     DefaultOutputRoot = result
+1859     DefaultOutputRoot = result
 End Function
 
 Private Function UserNameNotice() As String
-1637     UserNameNotice = "SolidWorks writes your Windows user name into each file it saves. We keep these native files private and publish only STEP and files we've checked clean; to keep your name out of the files entirely, run SolidWorks under a neutral Windows account."
+1863     UserNameNotice = "SolidWorks writes your Windows user name into each file it saves. We keep these native files private and publish only STEP and files we've checked clean; to keep your name out of the files entirely, run SolidWorks under a neutral Windows account."
 End Function
 
 Private Function NameInsideComponents(ByVal user As String) As Boolean
@@ -1642,70 +1868,70 @@ Private Function NameInsideComponents(ByVal user As String) As Boolean
     ' letters or digits (the start of the text, a tab, a quote, a length byte, "-", "_" ...); any other name (and a shorter one) only as a
     ' whole path segment. The same for the user name, the profile folder's own name and the computer, domain and logon-server names.
     Dim inside As Boolean
-1645     inside = (Len(user) >= 3)
-1646     If InStr("|admin|user|users|owner|public|default|test|cad|work|data|home|the|and|pro|dev|lab|app|sys|doc|docs|temp|office|pc|laptop|desktop|", "|" & user & "|") > 0 Then inside = False
-1647     NameInsideComponents = inside
+1871     inside = (Len(user) >= 3)
+1872     If InStr("|admin|user|users|owner|public|default|test|cad|work|data|home|the|and|pro|dev|lab|app|sys|doc|docs|temp|office|pc|laptop|desktop|", "|" & user & "|") > 0 Then inside = False
+1873     NameInsideComponents = inside
 End Function
 
 Private Function IsAsciiAlnum(ByVal ch As String) As Boolean
-1651     IsAsciiAlnum = (ch Like "[A-Za-z0-9]")
+1877     IsAsciiAlnum = (ch Like "[A-Za-z0-9]")
 End Function
 
 Private Function WordIn(ByVal text As String, ByVal needle As String) As Boolean
     ' The needle in the text with no ASCII letter or digit next to it (or the edge of the text): both already lower-cased.
     Dim pos As Long, before As String, after As String, found As Boolean
-1657     If Len(needle) > 0 Then
-1658         pos = InStr(1, text, needle, vbBinaryCompare)
-1659         Do While pos > 0 And Not found
-1660             before = ""
-1661             after = ""
-1662             If pos > 1 Then before = Mid$(text, pos - 1, 1)
-1663             If pos + Len(needle) <= Len(text) Then after = Mid$(text, pos + Len(needle), 1)
-1664             If (Len(before) = 0 Or Not IsAsciiAlnum(before)) And (Len(after) = 0 Or Not IsAsciiAlnum(after)) Then found = True
-1665             pos = InStr(pos + 1, text, needle, vbBinaryCompare)
+1883     If Len(needle) > 0 Then
+1884         pos = InStr(1, text, needle, vbBinaryCompare)
+1885         Do While pos > 0 And Not found
+1886             before = ""
+1887             after = ""
+1888             If pos > 1 Then before = Mid$(text, pos - 1, 1)
+1889             If pos + Len(needle) <= Len(text) Then after = Mid$(text, pos + Len(needle), 1)
+1890             If (Len(before) = 0 Or Not IsAsciiAlnum(before)) And (Len(after) = 0 Or Not IsAsciiAlnum(after)) Then found = True
+1891             pos = InStr(pos + 1, text, needle, vbBinaryCompare)
         Loop
     End If
-1668     WordIn = found
+1894     WordIn = found
 End Function
 
 Private Function SegmentMatches(ByVal part As String, ByVal needle As String) As Boolean
     Dim hit As Boolean
-1673     If Len(needle) > 0 Then hit = (part = needle)
-1674     If Len(needle) > 0 And Not hit Then
-1675         If NameInsideComponents(needle) Then hit = WordIn(part, needle)
+1899     If Len(needle) > 0 Then hit = (part = needle)
+1900     If Len(needle) > 0 And Not hit Then
+1901         If NameInsideComponents(needle) Then hit = WordIn(part, needle)
     End If
-1677     SegmentMatches = hit
+1903     SegmentMatches = hit
 End Function
 
 Private Function NormalPath(ByVal path As String) As String
     Dim p As String
-1682     p = LCase$(Replace(Trim$(path), "/", "\"))
-1683     Do While Len(p) > 0 And Right$(p, 1) = "\"
-1684         p = Left$(p, Len(p) - 1)
+1908     p = LCase$(Replace(Trim$(path), "/", "\"))
+1909     Do While Len(p) > 0 And Right$(p, 1) = "\"
+1910         p = Left$(p, Len(p) - 1)
     Loop
-1686     NormalPath = p
+1912     NormalPath = p
 End Function
 
 Private Function LeafOf(ByVal normal As String) As String
-1690     LeafOf = Mid$(normal, InStrRev(normal, "\") + 1)
+1916     LeafOf = Mid$(normal, InStrRev(normal, "\") + 1)
 End Function
 
 Private Function UnderRoot(ByVal p As String, ByVal root As String) As Boolean
     Dim under As Boolean
-1695     If Len(root) > 0 Then under = (p = root Or Left$(p, Len(root) + 1) = root & "\")
-1696     UnderRoot = under
+1921     If Len(root) > 0 Then under = (p = root Or Left$(p, Len(root) + 1) = root & "\")
+1922     UnderRoot = under
 End Function
 
 Private Function PersonalPathRefusal(ByVal what As String, ByVal why As String) As String
-1700     PersonalPathRefusal = "The " & what & " was refused because " & why & ". " & _
+1926     PersonalPathRefusal = "The " & what & " was refused because " & why & ". " & _
         "SolidWorks stores this path inside every assembly and drawing it saves, so the files you send would show it. " & _
         "Choose a neutral one instead, for example " & DefaultOutputRoot() & " for the output folder. Nothing was built."
 End Function
 
 Private Function DriveRooted(ByVal path As String) As Boolean
     Dim t As String
-1707     t = Trim$(path)
-1708     DriveRooted = (Len(t) >= 3 And Mid$(t, 1, 1) Like "[A-Za-z]" And Mid$(t, 2, 1) = ":" And (Mid$(t, 3, 1) = "\" Or Mid$(t, 3, 1) = "/"))
+1933     t = Trim$(path)
+1934     DriveRooted = (Len(t) >= 3 And Mid$(t, 1, 1) Like "[A-Za-z]" And Mid$(t, 2, 1) = ":" And (Mid$(t, 3, 1) = "\" Or Mid$(t, 3, 1) = "/"))
 End Function
 
 Private Function PersonalWhy(ByVal path As String, ByVal identity As Boolean) As String
@@ -1715,78 +1941,78 @@ Private Function PersonalWhy(ByVal path As String, ByVal identity As Boolean) As
     ' domain or logon server; a folder whose name contains "onedrive"; a UNC share; a Users\<name> folder that is not Public.
     Dim p As String, profile As String, parts As Variant, i As Long, k As Long, why As String
     Dim names(0 To 1) As String, machines(0 To 2) As String, roots(0 To 3) As String
-1718     p = NormalPath(path)
-1719     profile = NormalPath(EnvText("USERPROFILE"))
-1720     names(0) = LCase$(EnvText("USERNAME"))
-1721     names(1) = LeafOf(profile)
-1722     machines(0) = LCase$(EnvText("COMPUTERNAME"))
-1723     machines(1) = LCase$(EnvText("USERDOMAIN"))
-1724     machines(2) = LCase$(Replace(EnvText("LOGONSERVER"), "\", ""))
-1725     roots(0) = NormalPath(EnvText("OneDrive"))
-1726     roots(1) = NormalPath(EnvText("OneDriveCommercial"))
-1727     roots(2) = NormalPath(EnvText("OneDriveConsumer"))
-1728     roots(3) = NormalPath(EnvText("MYDOCUMENTS"))
-1729     parts = Split(p, "\")
-1730     If identity Then
-1731         If UnderRoot(p, profile) Then why = "it is inside your user profile folder"
+1944     p = NormalPath(path)
+1945     profile = NormalPath(EnvText("USERPROFILE"))
+1946     names(0) = LCase$(EnvText("USERNAME"))
+1947     names(1) = LeafOf(profile)
+1948     machines(0) = LCase$(EnvText("COMPUTERNAME"))
+1949     machines(1) = LCase$(EnvText("USERDOMAIN"))
+1950     machines(2) = LCase$(Replace(EnvText("LOGONSERVER"), "\", ""))
+1951     roots(0) = NormalPath(EnvText("OneDrive"))
+1952     roots(1) = NormalPath(EnvText("OneDriveCommercial"))
+1953     roots(2) = NormalPath(EnvText("OneDriveConsumer"))
+1954     roots(3) = NormalPath(EnvText("MYDOCUMENTS"))
+1955     parts = Split(p, "\")
+1956     If identity Then
+1957         If UnderRoot(p, profile) Then why = "it is inside your user profile folder"
     End If
-1733     If Len(why) = 0 And identity Then
-1734         For k = 0 To 3
-1735             If UnderRoot(p, roots(k)) Then why = "it is inside your OneDrive or redirected Documents folder"
+1959     If Len(why) = 0 And identity Then
+1960         For k = 0 To 3
+1961             If UnderRoot(p, roots(k)) Then why = "it is inside your OneDrive or redirected Documents folder"
         Next k
     End If
-1738     If Len(why) = 0 And identity Then
-1739         For k = 0 To 1
-1740             If Len(names(k)) > 0 Then
-1741                 For i = 0 To UBound(parts)
-1742                     If SegmentMatches(CStr(parts(i)), names(k)) Then why = "a folder in its path contains your Windows user name"
+1964     If Len(why) = 0 And identity Then
+1965         For k = 0 To 1
+1966             If Len(names(k)) > 0 Then
+1967                 For i = 0 To UBound(parts)
+1968                     If SegmentMatches(CStr(parts(i)), names(k)) Then why = "a folder in its path contains your Windows user name"
                 Next i
             End If
         Next k
     End If
-1747     If Len(why) = 0 And identity Then
-1748         For k = 0 To 2
-1749             For i = 0 To UBound(parts)
-1750                 If SegmentMatches(CStr(parts(i)), machines(k)) Then why = "a folder in its path is named after this computer, its domain or its logon server"
+1973     If Len(why) = 0 And identity Then
+1974         For k = 0 To 2
+1975             For i = 0 To UBound(parts)
+1976                 If SegmentMatches(CStr(parts(i)), machines(k)) Then why = "a folder in its path is named after this computer, its domain or its logon server"
             Next i
         Next k
     End If
-1754     If Len(why) = 0 And identity Then
-1755         For i = 0 To UBound(parts)
-1756             If InStr(parts(i), "onedrive") > 0 Then why = "a folder in its path is a OneDrive folder"
+1980     If Len(why) = 0 And identity Then
+1981         For i = 0 To UBound(parts)
+1982             If InStr(parts(i), "onedrive") > 0 Then why = "a folder in its path is a OneDrive folder"
         Next i
     End If
-1759     If Len(why) = 0 And Left$(p, 2) = "\\" Then why = "it is on a network share (a \\server\share path)"
-1760     If Len(why) = 0 Then
-1761         For i = 0 To UBound(parts) - 1
-1762             If parts(i) = "users" And Len(parts(i + 1)) > 0 And parts(i + 1) <> "public" And parts(i + 1) <> "default" And parts(i + 1) <> "all users" And parts(i + 1) <> "shared" Then why = "it is inside the personal folder of a Windows user (a Users\<name> folder)"
+1985     If Len(why) = 0 And Left$(p, 2) = "\\" Then why = "it is on a network share (a \\server\share path)"
+1986     If Len(why) = 0 Then
+1987         For i = 0 To UBound(parts) - 1
+1988             If parts(i) = "users" And Len(parts(i + 1)) > 0 And parts(i + 1) <> "public" And parts(i + 1) <> "default" And parts(i + 1) <> "all users" And parts(i + 1) <> "shared" Then why = "it is inside the personal folder of a Windows user (a Users\<name> folder)"
         Next i
     End If
     ' Last, and for every folder (the default root too): a folder that is not a full path with a drive letter ("FixtureOut", "..\x",
     ' "%USERPROFILE%\x", which FileSystemObject does not expand) would resolve against SolidWorks' own current folder, which may be under the profile.
-1767     If Len(why) = 0 Then
-1768         If Not DriveRooted(path) Then why = "the folder must be a full path starting with a drive letter"
+1993     If Len(why) = 0 Then
+1994         If Not DriveRooted(path) Then why = "the folder must be a full path starting with a drive letter"
     End If
-1770     PersonalWhy = why
+1996     PersonalWhy = why
 End Function
 
 Private Function PersonalPathReason(ByVal path As String) As String
     Dim why As String
-1775     why = PersonalWhy(path, NormalPath(path) <> NormalPath(DefaultOutputRoot()))
-1776     If Len(why) = 0 Then
-1777         PersonalPathReason = ""
+2001     why = PersonalWhy(path, NormalPath(path) <> NormalPath(DefaultOutputRoot()))
+2002     If Len(why) = 0 Then
+2003         PersonalPathReason = ""
     Else
-1779         PersonalPathReason = PersonalPathRefusal("output folder", why)
+2005         PersonalPathReason = PersonalPathRefusal("output folder", why)
     End If
 End Function
 
 Private Function PersonalTemplateReason(ByVal kind As String, ByVal path As String) As String
     Dim why As String
-1785     why = PersonalWhy(path, True)
-1786     If Len(why) = 0 Then
-1787         PersonalTemplateReason = ""
+2011     why = PersonalWhy(path, True)
+2012     If Len(why) = 0 Then
+2013         PersonalTemplateReason = ""
     Else
-1789         PersonalTemplateReason = "The " & kind & " template SolidWorks would use was refused because " & why & ". " & _
+2015         PersonalTemplateReason = "The " & kind & " template SolidWorks would use was refused because " & why & ". " & _
             "A SolidWorks drawing stores the path of its sheet format and template, so the files you send would show it. " & _
             "In SolidWorks, under Tools > Options > Default Templates, choose a " & kind & " template in a neutral folder (for example the SolidWorks install folder or C:\ProgramData). Nothing was built."
     End If
@@ -1794,39 +2020,39 @@ End Function
 
 Private Function EscapeRegex(ByVal text As String) As String
     Dim i As Long, ch As String, result As String
-1797     For i = 1 To Len(text)
-1798         ch = Mid$(text, i, 1)
-1799         If InStr("\.+*?^$()[]{}|-", ch) > 0 Then result = result & "\"
-1800         result = result & ch
+2023     For i = 1 To Len(text)
+2024         ch = Mid$(text, i, 1)
+2025         If InStr("\.+*?^$()[]{}|-", ch) > 0 Then result = result & "\"
+2026         result = result & ch
     Next i
-1802     EscapeRegex = result
+2028     EscapeRegex = result
 End Function
 
 Private Function RootPattern(ByVal root As String) As String
     ' A folder path as a pattern that also matches its doubled-backslash (JSON) and forward-slash forms.
-1807     RootPattern = Replace(EscapeRegex(root), "\\", "[\\/]+")
+2033     RootPattern = Replace(EscapeRegex(root), "\\", "[\\/]+")
 End Function
 
 Private Function CaseForms(ByVal word As String) As String
     ' The word as written, lower-cased and upper-cased, as one escaped alternation: VBScript's RegExp folds the case of ASCII letters only, so a
     ' Cyrillic or Greek name written in another case would be missed. LCase$ and UCase$ are Unicode-aware.
-1813     CaseForms = "(?:" & EscapeRegex(word) & "|" & EscapeRegex(LCase$(word)) & "|" & EscapeRegex(UCase$(word)) & ")"
+2039     CaseForms = "(?:" & EscapeRegex(word) & "|" & EscapeRegex(LCase$(word)) & "|" & EscapeRegex(UCase$(word)) & ")"
 End Function
 
 Private Function ScrubNeedle(ByVal regex As Object, ByVal text As String, ByVal needle As String, ByVal marker As String) As String
     ' A word-matched needle wherever no ASCII letter or digit is next to it (start of text, tab, quote ...); any other only as a whole folder name.
     Dim result As String
-1819     result = text
-1820     If Len(needle) > 0 Then
-1821         If NameInsideComponents(LCase$(needle)) Then
-1822             regex.Pattern = "(^|[^A-Za-z0-9])" & CaseForms(needle) & "(?=[^A-Za-z0-9]|$)"
-1823             result = regex.Replace(result, "$1" & marker)
+2045     result = text
+2046     If Len(needle) > 0 Then
+2047         If NameInsideComponents(LCase$(needle)) Then
+2048             regex.Pattern = "(^|[^A-Za-z0-9])" & CaseForms(needle) & "(?=[^A-Za-z0-9]|$)"
+2049             result = regex.Replace(result, "$1" & marker)
         Else
-1825             regex.Pattern = "([\\/])" & CaseForms(needle) & "(?=[.,;)]*(?:[\\/\s""'<>|:*?]|$))"
-1826             result = regex.Replace(result, "$1" & marker)
+2051             regex.Pattern = "([\\/])" & CaseForms(needle) & "(?=[.,;)]*(?:[\\/\s""'<>|:*?]|$))"
+2052             result = regex.Replace(result, "$1" & marker)
         End If
     End If
-1829     ScrubNeedle = result
+2055     ScrubNeedle = result
 End Function
 
 Private Function PrivacyScrub(ByVal text As String) As String
@@ -1837,114 +2063,114 @@ Private Function PrivacyScrub(ByVal text As String) As String
     ' computer, domain and logon server names (whole tokens, guarded) become <host>; a \\server\share prefix becomes <share>.
     Dim regex As Object, result As String, roots(0 To 4) As String, names(0 To 1) As String, machines(0 To 2) As String
     Dim k As Long, tailEnd As String, swap As String, exempt As String
-1840     tailEnd = "(?=[.,;)]*(?:[""'\r\n<>|]|$))"
-1841     exempt = "(?!(?:public|default|all users|shared)(?:[\\/""'\r\n<>|]|$))"
-1842     result = text
-1843     Set regex = CreateObject("VBScript.RegExp")
-1844     regex.Global = True
-1845     regex.IgnoreCase = True
-1846     regex.Pattern = "([\\/]Users[\\/]+)" & exempt & "[^\\/""'\r\n<>|:*?]+?((?:\\\\|[\\/](?![""']))+)(?:[^""'\r\n<>|\\]|\\\\|\\(?![""']))*"
-1847     result = regex.Replace(result, "$1<user>$2<path>")
-1848     regex.Pattern = "([\\/]Users[\\/]+)" & exempt & "[^\\/""'\r\n<>|:*?]+?" & tailEnd
-1849     result = regex.Replace(result, "$1<user>")
-1850     roots(0) = EnvText("USERPROFILE")
-1851     roots(1) = EnvText("OneDrive")
-1852     roots(2) = EnvText("OneDriveCommercial")
-1853     roots(3) = EnvText("MYDOCUMENTS")
-1854     roots(4) = EnvText("OneDriveConsumer")
-1855     For k = 0 To 4
-1856         If Len(roots(k)) > 0 Then
-1857             regex.Pattern = RootPattern(roots(k)) & "((?:\\\\|[\\/](?![""']))+)(?:[^""'\r\n<>|\\]|\\\\|\\(?![""']))*"
-1858             result = regex.Replace(result, "<user>$1<path>")
-1859             regex.Pattern = RootPattern(roots(k))
-1860             result = regex.Replace(result, "<user>")
+2066     tailEnd = "(?=[.,;)]*(?:[""'\r\n<>|]|$))"
+2067     exempt = "(?!(?:public|default|all users|shared)(?:[\\/""'\r\n<>|]|$))"
+2068     result = text
+2069     Set regex = CreateObject("VBScript.RegExp")
+2070     regex.Global = True
+2071     regex.IgnoreCase = True
+2072     regex.Pattern = "([\\/]Users[\\/]+)" & exempt & "[^\\/""'\r\n<>|:*?]+?((?:\\\\|[\\/](?![""']))+)(?:[^""'\r\n<>|\\]|\\\\|\\(?![""']))*"
+2073     result = regex.Replace(result, "$1<user>$2<path>")
+2074     regex.Pattern = "([\\/]Users[\\/]+)" & exempt & "[^\\/""'\r\n<>|:*?]+?" & tailEnd
+2075     result = regex.Replace(result, "$1<user>")
+2076     roots(0) = EnvText("USERPROFILE")
+2077     roots(1) = EnvText("OneDrive")
+2078     roots(2) = EnvText("OneDriveCommercial")
+2079     roots(3) = EnvText("MYDOCUMENTS")
+2080     roots(4) = EnvText("OneDriveConsumer")
+2081     For k = 0 To 4
+2082         If Len(roots(k)) > 0 Then
+2083             regex.Pattern = RootPattern(roots(k)) & "((?:\\\\|[\\/](?![""']))+)(?:[^""'\r\n<>|\\]|\\\\|\\(?![""']))*"
+2084             result = regex.Replace(result, "<user>$1<path>")
+2085             regex.Pattern = RootPattern(roots(k))
+2086             result = regex.Replace(result, "<user>")
         End If
     Next k
-1863     names(0) = EnvText("USERNAME")
-1864     names(1) = LeafOf(Replace(EnvText("USERPROFILE"), "/", "\"))
+2089     names(0) = EnvText("USERNAME")
+2090     names(1) = LeafOf(Replace(EnvText("USERPROFILE"), "/", "\"))
     ' The longer of the two first (jsmith.ACME before jsmith), so no part of the profile folder's name is left behind.
-1866     If Len(names(1)) > Len(names(0)) Then
-1867         swap = names(0)
-1868         names(0) = names(1)
-1869         names(1) = swap
+2092     If Len(names(1)) > Len(names(0)) Then
+2093         swap = names(0)
+2094         names(0) = names(1)
+2095         names(1) = swap
     End If
-1871     machines(0) = EnvText("COMPUTERNAME")
-1872     machines(1) = EnvText("USERDOMAIN")
-1873     machines(2) = Replace(EnvText("LOGONSERVER"), "\", "")
-1874     For k = 0 To 1
-1875         result = ScrubNeedle(regex, result, names(k), "<user>")
+2097     machines(0) = EnvText("COMPUTERNAME")
+2098     machines(1) = EnvText("USERDOMAIN")
+2099     machines(2) = Replace(EnvText("LOGONSERVER"), "\", "")
+2100     For k = 0 To 1
+2101         result = ScrubNeedle(regex, result, names(k), "<user>")
     Next k
-1877     For k = 0 To 2
-1878         result = ScrubNeedle(regex, result, machines(k), "<host>")
+2103     For k = 0 To 2
+2104         result = ScrubNeedle(regex, result, machines(k), "<host>")
     Next k
-1880     regex.Pattern = "(^|[^\\/\w:])(?:\\\\|//){1,2}[^\\/\s""'<>|:*?]+(?:\\\\|[\\/](?![""']))+(?:[^""'\r\n<>|\\]|\\\\|\\(?![""']))*"
-1881     result = regex.Replace(result, "$1<share>")
-1882     PrivacyScrub = result
+2106     regex.Pattern = "(^|[^\\/\w:])(?:\\\\|//){1,2}[^\\/\s""'<>|:*?]+(?:\\\\|[\\/](?![""']))+(?:[^""'\r\n<>|\\]|\\\\|\\(?![""']))*"
+2107     result = regex.Replace(result, "$1<share>")
+2108     PrivacyScrub = result
 End Function
 
 Private Function EmptiedLine() As String
     ' "" unless the sweep had to empty or delete a text file it could not clean: then the volunteer is told the zip is incomplete.
-1887     If sweepEmptiedCount > 0 Then EmptiedLine = vbLf & CStr(sweepEmptiedCount) & " file(s) could not be cleaned and were emptied: " & sweepEmptied
+2113     If sweepEmptiedCount > 0 Then EmptiedLine = vbLf & CStr(sweepEmptiedCount) & " file(s) could not be cleaned and were emptied: " & sweepEmptied
 End Function
 
 Private Function ZipReady(ByVal zipPath As String) As Boolean
     ' The zip exists and holds something (an empty zip is 22 bytes).
     Dim fs As Object
-1893     On Error Resume Next
-1894     Set fs = CreateObject("Scripting.FileSystemObject")
+2119     On Error Resume Next
+2120     Set fs = CreateObject("Scripting.FileSystemObject")
     stepLabel = currentIdentity & ": ZipReady FileExists"
-1896     ZipReady = fs.FileExists(zipPath)
+2122     ZipReady = fs.FileExists(zipPath)
     stepLabel = currentIdentity & ": ZipReady GetFile"
-1898     If ZipReady Then ZipReady = (fs.GetFile(zipPath).Size > 22)
-1899     If Err.Number <> 0 Then ZipReady = False
-1900     Err.Clear
+2124     If ZipReady Then ZipReady = (fs.GetFile(zipPath).Size > 22)
+2125     If Err.Number <> 0 Then ZipReady = False
+2126     Err.Clear
 End Function
 
 Private Function ZipErrorHead(ByVal errorFile As String) As String
     ' The first 300 characters of the PowerShell error file, one line, or "no error text".
     Dim fs As Object, stream As Object, text As String
-1906     On Error Resume Next
-1907     Set fs = CreateObject("Scripting.FileSystemObject")
-1908     If fs.FileExists(errorFile) Then
-1909         Set stream = fs.OpenTextFile(errorFile, 1)
-1910         text = stream.ReadAll
-1911         stream.Close
+2132     On Error Resume Next
+2133     Set fs = CreateObject("Scripting.FileSystemObject")
+2134     If fs.FileExists(errorFile) Then
+2135         Set stream = fs.OpenTextFile(errorFile, 1)
+2136         text = stream.ReadAll
+2137         stream.Close
     End If
-1913     text = Trim$(Replace(Replace(text, vbCr, " "), vbLf, " "))
-1914     If Len(text) > 300 Then text = Left$(text, 300)
-1915     If Len(text) = 0 Then text = "no error text"
-1916     ZipErrorHead = PrivacyScrub(text)
-1917     Err.Clear
+2139     text = Trim$(Replace(Replace(text, vbCr, " "), vbLf, " "))
+2140     If Len(text) > 300 Then text = Left$(text, 300)
+2141     If Len(text) = 0 Then text = "no error text"
+2142     ZipErrorHead = PrivacyScrub(text)
+2143     Err.Clear
 End Function
 
 Private Sub ZipRemoveOld(ByVal folder As String)
     ' An old zip or error file of the same name (a manual Send to, an earlier run) never counts and is never shown.
     Dim fs As Object
-1923     On Error Resume Next
-1924     Set fs = CreateObject("Scripting.FileSystemObject")
+2149     On Error Resume Next
+2150     Set fs = CreateObject("Scripting.FileSystemObject")
     stepLabel = currentIdentity & ": ZipRemoveOld FileExists"
-1926     If fs.FileExists(folder & ".zip") Then fs.DeleteFile folder & ".zip", True
+2152     If fs.FileExists(folder & ".zip") Then fs.DeleteFile folder & ".zip", True
     stepLabel = currentIdentity & ": ZipRemoveOld FileExists"
-1928     If fs.FileExists(folder & "-zip-error.txt") Then fs.DeleteFile folder & "-zip-error.txt", True
-1929     Err.Clear
+2154     If fs.FileExists(folder & "-zip-error.txt") Then fs.DeleteFile folder & "-zip-error.txt", True
+2155     Err.Clear
 End Sub
 
 Private Function ZipPowerShell(ByVal folder As String, ByVal errorFile As String) As Boolean
     ' Compress-Archive; a failure is written to errorFile (ASCII) and exits 1. True only if the exit code is 0, the zip exists and holds something,
     ' and no error file was written. The old zip and error file are deleted first.
     Dim command As String, quotedFolder As String, quotedZip As String, quotedError As String, code As Long, fs As Object
-1936     ZipRemoveOld folder
-1937     quotedFolder = Replace(folder, "'", "''")
-1938     quotedZip = Replace(folder & ".zip", "'", "''")
-1939     quotedError = Replace(errorFile, "'", "''")
-1940     command = "powershell.exe -NoProfile -NonInteractive -Command " & Chr$(34) & _
+2162     ZipRemoveOld folder
+2163     quotedFolder = Replace(folder, "'", "''")
+2164     quotedZip = Replace(folder & ".zip", "'", "''")
+2165     quotedError = Replace(errorFile, "'", "''")
+2166     command = "powershell.exe -NoProfile -NonInteractive -Command " & Chr$(34) & _
         "try { Compress-Archive -LiteralPath '" & quotedFolder & "' -DestinationPath '" & quotedZip & "' -Force -ErrorAction Stop } " & _
         "catch { $_ | Out-File -LiteralPath '" & quotedError & "' -Encoding ASCII; exit 1 }" & Chr$(34)
     stepLabel = currentIdentity & ": ZipPowerShell Run"
-1944     code = CreateObject("WScript.Shell").Run(command, 0, True)
-1945     Set fs = CreateObject("Scripting.FileSystemObject")
+2170     code = CreateObject("WScript.Shell").Run(command, 0, True)
+2171     Set fs = CreateObject("Scripting.FileSystemObject")
     stepLabel = currentIdentity & ": ZipPowerShell FileExists"
-1947     ZipPowerShell = (code = 0) And ZipReady(folder & ".zip") And Not fs.FileExists(errorFile)
+2173     ZipPowerShell = (code = 0) And ZipReady(folder & ".zip") And Not fs.FileExists(errorFile)
 End Function
 
 Private Function ZipWithShell(ByVal folder As String) As Boolean
@@ -1952,70 +2178,94 @@ Private Function ZipWithShell(ByVal folder As String) As Boolean
     ' folder's items are all inside, the zip stops growing, or about 120 seconds pass.
     Dim fs As Object, stream As Object, shellObject As Object, zipSpace As Object, parentSpace As Object, innerSpace As Object
     Dim zipPath As String, wanted As Long, started As Date, size As Double, lastSize As Double, steady As Long, pause As Double, complete As Boolean
-1955     On Error GoTo Failed
-1956     zipPath = folder & ".zip"
-1957     Set fs = CreateObject("Scripting.FileSystemObject")
-1958     ZipRemoveOld folder
+2181     On Error GoTo Failed
+2182     zipPath = folder & ".zip"
+2183     Set fs = CreateObject("Scripting.FileSystemObject")
+2184     ZipRemoveOld folder
     stepLabel = currentIdentity & ": ZipWithShell CreateTextFile" & " " & apiInputs & " " & callInputs
-1960     Set stream = fs.CreateTextFile(zipPath, True)
+2186     Set stream = fs.CreateTextFile(zipPath, True)
     stepLabel = currentIdentity & ": ZipWithShell Write"
-1962     stream.Write "PK" & Chr(5) & Chr(6) & String(18, 0)
+2188     stream.Write "PK" & Chr(5) & Chr(6) & String(18, 0)
     stepLabel = currentIdentity & ": ZipWithShell Close"
-1964     stream.Close
-1965     Set shellObject = CreateObject("Shell.Application")
+2190     stream.Close
+2191     Set shellObject = CreateObject("Shell.Application")
     stepLabel = currentIdentity & ": ZipWithShell Namespace"
-1967     Set parentSpace = shellObject.Namespace(CVar(fs.GetParentFolderName(folder)))
+2193     Set parentSpace = shellObject.Namespace(CVar(fs.GetParentFolderName(folder)))
     stepLabel = currentIdentity & ": ZipWithShell Namespace"
-1969     wanted = shellObject.Namespace(CVar(folder)).Items.Count
+2195     wanted = shellObject.Namespace(CVar(folder)).Items.Count
     stepLabel = currentIdentity & ": ZipWithShell Namespace"
-1971     Set zipSpace = shellObject.Namespace(CVar(zipPath))
+2197     Set zipSpace = shellObject.Namespace(CVar(zipPath))
     stepLabel = currentIdentity & ": ZipWithShell CopyHere"
-1973     zipSpace.CopyHere parentSpace.ParseName(fs.GetFileName(folder))
-1974     started = Now
-1975     lastSize = -1
-1976     Do While DateDiff("s", started, Now) < 120
-1977         pause = Timer + 0.25
-1978         Do While Timer >= pause - 0.25 And Timer < pause
-1979             DoEvents
+2199     zipSpace.CopyHere parentSpace.ParseName(fs.GetFileName(folder))
+2200     started = Now
+2201     lastSize = -1
+2202     Do While DateDiff("s", started, Now) < 120
+2203         pause = Timer + 0.25
+2204         Do While Timer >= pause - 0.25 And Timer < pause
+2205             DoEvents
         Loop
-1981         size = 0
+2207         size = 0
     stepLabel = currentIdentity & ": ZipWithShell FileExists"
-1983         If fs.FileExists(zipPath) Then size = fs.GetFile(zipPath).Size
+2209         If fs.FileExists(zipPath) Then size = fs.GetFile(zipPath).Size
     stepLabel = currentIdentity & ": ZipWithShell Count"
-1985         If zipSpace.Items.Count >= 1 Then
+2211         If zipSpace.Items.Count >= 1 Then
     stepLabel = currentIdentity & ": ZipWithShell Item"
-1987             Set innerSpace = zipSpace.Items.Item(0).GetFolder
-1988             If Not innerSpace Is Nothing Then
+2213             Set innerSpace = zipSpace.Items.Item(0).GetFolder
+2214             If Not innerSpace Is Nothing Then
     stepLabel = currentIdentity & ": ZipWithShell Count"
-1990                 If innerSpace.Items.Count >= wanted And size > 22 Then
-1991                     If size = lastSize Then steady = steady + 1 Else steady = 0
-1992                     If steady >= 8 Then
-1993                         complete = True
-1994                         Exit Do
+2216                 If innerSpace.Items.Count >= wanted And size > 22 Then
+2217                     If size = lastSize Then steady = steady + 1 Else steady = 0
+2218                     If steady >= 8 Then
+2219                         complete = True
+2220                         Exit Do
                     End If
                 End If
             End If
         End If
-1999         lastSize = size
+2225         lastSize = size
     Loop
     ' Only if every item arrived and the zip stopped growing; a timeout part way is not a zip.
-2002     ZipWithShell = complete And ZipReady(zipPath)
-2003     Exit Function
+2228     ZipWithShell = complete And ZipReady(zipPath)
+2229     Exit Function
 Failed:
-2005     ZipWithShell = False
+2231     ZipWithShell = False
 End Function
 
 Private Function ZipMitigationLine() As String
     ' A `mitigations:` line of the zip step alone (the recipes' lines are written before the zip).
     Dim itemName As Variant, text As String
-2011     For Each itemName In Array("zip-verify-retry", "zip-shell-application")
+2237     For Each itemName In Array("zip-verify-retry", "zip-shell-application")
     stepLabel = currentIdentity & ": ZipMitigationLine Exists"
-2013         If mitigations.Exists(CStr(itemName)) Then
-2014             If Len(text) > 0 Then text = text & " "
-2015             text = text & CStr(itemName) & "=" & CStr(mitigations(itemName)) & ",primary-failed=" & CStr(primaryFailures(itemName)) & ",fallback-ok=" & CStr(fallbackSuccesses(itemName))
+2239         If mitigations.Exists(CStr(itemName)) Then
+2240             If Len(text) > 0 Then text = text & " "
+2241             text = text & CStr(itemName) & "=" & CStr(mitigations(itemName)) & ",primary-failed=" & CStr(primaryFailures(itemName)) & ",fallback-ok=" & CStr(fallbackSuccesses(itemName))
         End If
     Next itemName
-2018     ZipMitigationLine = "mitigations: " & text
+2244     ZipMitigationLine = "mitigations: " & text
+End Function
+
+Private Function PrivateRunExtra(ByVal folder As String) As String
+    ' "" when the folder holds exactly the files a personal run may zip (results.json, FixtureDrawings.log) and no subfolder; else the other names
+    ' (names only), or "a folder that could not be listed".
+    Dim fs As Object, item As Object, names As String, leaf As String
+2251     On Error GoTo unreadable
+2252     Set fs = CreateObject("Scripting.FileSystemObject")
+    stepLabel = currentIdentity & ": PrivateRunExtra GetFolder"
+2254     For Each item In fs.GetFolder(folder).Files
+    stepLabel = currentIdentity & ": PrivateRunExtra Name"
+2256         leaf = LCase$(CStr(item.Name))
+    stepLabel = currentIdentity & ": PrivateRunExtra Name"
+2258         If leaf <> "results.json" And leaf <> "fixturedrawings.log" Then names = names & IIf(Len(names) > 0, ", ", "") & CStr(item.Name)
+    Next item
+    stepLabel = currentIdentity & ": PrivateRunExtra GetFolder"
+2261     For Each item In fs.GetFolder(folder).SubFolders
+    stepLabel = currentIdentity & ": PrivateRunExtra Name"
+2263         names = names & IIf(Len(names) > 0, ", ", "") & CStr(item.Name) & " (a folder)"
+    Next item
+2265     PrivateRunExtra = names
+2266     Exit Function
+unreadable:
+2268     PrivateRunExtra = "a folder that could not be listed"
 End Function
 
 Private Function MakeZip(ByVal folder As String) As Boolean
@@ -2023,178 +2273,190 @@ Private Function MakeZip(ByVal folder As String) As Boolean
     ' 2026.11.24.3: exit code 0 and no zip). An old zip or error file is deleted first and before every attempt. Then: all documents closed and a
     ' second Compress-Archive with its error text kept (zip-verify-retry), then a zip written in-process (zip-shell-application). Never raises: the
     ' finish message tells the person what to do by hand. The mitigations are logged in a line of their own.
-    Dim zipPath As String, errorFile As String
-2027     zipPath = folder & ".zip"
-2028     errorFile = folder & "-zip-error.txt"
-2029     On Error Resume Next
-2030     ZipRemoveOld folder
-2031     If ZipPowerShell(folder, errorFile) Then MakeZip = True: Exit Function
-2032     Err.Clear
-2033     AppendLog folder, "setup", "zip", 0, 0, "zip: no zip was written; " & ZipErrorHead(errorFile)
-2034     RecordMitigation "zip-verify-retry", True, True
+    Dim zipPath As String, errorFile As String, extra As String
+2277     zipPath = folder & ".zip"
+2278     errorFile = folder & "-zip-error.txt"
+2279     On Error Resume Next
+2280     ZipRemoveOld folder
+    ' A personal run (the drawings package, after OK): every drawing is private and was moved out, so the folder must hold exactly results.json and
+    ' FixtureDrawings.log. Checked before every zip route (both Compress-Archive tries and the Shell.Application fallback zip the whole folder):
+    ' anything else there, or a folder that cannot be listed, means no zip.
+2284     If privateRun Then
+2285         extra = PrivateRunExtra(folder)
+2286         If Len(extra) > 0 Then
+2287             AppendLog folder, "setup", "zip", 0, 0, "zip: not made: on a personal run the folder may hold only results.json and FixtureDrawings.log; it also holds " & extra
+2288             privateStuck = privateStuck & IIf(Len(privateStuck) > 0, ", ", "") & extra
+2289             MakeZip = False
+2290             Exit Function
+        End If
+    End If
+2293     If ZipPowerShell(folder, errorFile) Then MakeZip = True: Exit Function
+2294     Err.Clear
+2295     AppendLog folder, "setup", "zip", 0, 0, "zip: no zip was written; " & ZipErrorHead(errorFile)
+2296     RecordMitigation "zip-verify-retry", True, True
     stepLabel = currentIdentity & ": MakeZip CloseAllDocuments"
-2036     app.CloseAllDocuments True
-2037     Err.Clear
-2038     If ZipPowerShell(folder, errorFile) Then
-2039         fallbackSuccesses("zip-verify-retry") = fallbackSuccesses("zip-verify-retry") + 1
-2040         AppendLog folder, "setup", "zip", 0, 0, "zip-verify-retry: the second Compress-Archive wrote the zip"
-2041         AppendLog folder, "setup", "zip", 0, 0, ZipMitigationLine()
-2042         MakeZip = True: Exit Function
+2298     app.CloseAllDocuments True
+2299     Err.Clear
+2300     If ZipPowerShell(folder, errorFile) Then
+2301         fallbackSuccesses("zip-verify-retry") = fallbackSuccesses("zip-verify-retry") + 1
+2302         AppendLog folder, "setup", "zip", 0, 0, "zip-verify-retry: the second Compress-Archive wrote the zip"
+2303         AppendLog folder, "setup", "zip", 0, 0, ZipMitigationLine()
+2304         MakeZip = True: Exit Function
     End If
-2044     Err.Clear
-2045     AppendLog folder, "setup", "zip", 0, 0, "zip-verify-retry: still no zip; " & ZipErrorHead(errorFile)
-2046     RecordMitigation "zip-shell-application", True, True
-2047     If ZipWithShell(folder) Then
-2048         fallbackSuccesses("zip-shell-application") = fallbackSuccesses("zip-shell-application") + 1
-2049         AppendLog folder, "setup", "zip", 0, 0, "zip-shell-application: Shell.Application wrote the zip"
-2050         MakeZip = True
+2306     Err.Clear
+2307     AppendLog folder, "setup", "zip", 0, 0, "zip-verify-retry: still no zip; " & ZipErrorHead(errorFile)
+2308     RecordMitigation "zip-shell-application", True, True
+2309     If ZipWithShell(folder) Then
+2310         fallbackSuccesses("zip-shell-application") = fallbackSuccesses("zip-shell-application") + 1
+2311         AppendLog folder, "setup", "zip", 0, 0, "zip-shell-application: Shell.Application wrote the zip"
+2312         MakeZip = True
     Else
-2052         Err.Clear
-2053         AppendLog folder, "setup", "zip", 0, 0, "zip-shell-application: no zip either; the folder is complete, the person zips it by hand"
+2314         Err.Clear
+2315         AppendLog folder, "setup", "zip", 0, 0, "zip-shell-application: no zip either; the folder is complete, the person zips it by hand"
     End If
-2055     AppendLog folder, "setup", "zip", 0, 0, ZipMitigationLine()
+2317     AppendLog folder, "setup", "zip", 0, 0, ZipMitigationLine()
 End Function
 
 Private Function CountStatus(ByVal status As String) As Long
     Dim needle As String
-2060     needle = """status"":" & Quote(status) & ",""error"""
-2061     CountStatus = (Len(resultRows) - Len(Replace(resultRows, needle, ""))) \ Len(needle)
+2322     needle = """status"":" & Quote(status) & ",""error"""
+2323     CountStatus = (Len(resultRows) - Len(Replace(resultRows, needle, ""))) \ Len(needle)
 End Function
 
 Private Sub ReportCleanupError(ByVal folder As String, ByRef finalMessage As String)
     Dim number As Long, lineNumber As Long, description As String, failedStep As String
     lineNumber = Erl: number = Err.Number: description = Err.Description: failedStep = stepLabel
-2067     finalMessage = failedStep & " (line " & CStr(lineNumber) & "): " & description
-2068     If Len(folder) > 0 Then AppendLog folder, currentIdentity, failedStep, lineNumber, number, description
+2329     finalMessage = failedStep & " (line " & CStr(lineNumber) & "): " & description
+2330     If Len(folder) > 0 Then AppendLog folder, currentIdentity, failedStep, lineNumber, number, description
 End Sub
 
 Private Function TryTopologySelect(ByVal topology As SldWorks.Entity, ByVal appendSelection As Boolean, ByVal data As Object) As Boolean
     ' Only the original call is trapped; fallback errors retain their own diagnostics.
-2073     On Error GoTo Failed
+2335     On Error GoTo Failed
     stepLabel = currentIdentity & ": TryTopologySelect Select4" & " " & apiInputs & " " & callInputs
-2075     TryTopologySelect = topology.Select4(appendSelection, data)
-2076     Exit Function
+2337     TryTopologySelect = topology.Select4(appendSelection, data)
+2338     Exit Function
 Failed:
-2078     TryTopologySelect = False
+2340     TryTopologySelect = False
 End Function
 
 Private Sub RecordMitigation(ByVal itemName As String, Optional ByVal primaryFailed As Boolean = False, Optional ByVal always As Boolean = False)
     ' Mitigations log on every revision (SolidWorks 2023 hit the 2026 failures too).
-2083     If Not mitigations.Exists(itemName) Then mitigations.Add itemName, 0
-2084     mitigations(itemName) = mitigations(itemName) + 1
-2085     If primaryFailed Then
-2086         If Not primaryFailures.Exists(itemName) Then primaryFailures.Add itemName, 0
-2087         If Not fallbackSuccesses.Exists(itemName) Then fallbackSuccesses.Add itemName, 0
-2088         primaryFailures(itemName) = primaryFailures(itemName) + 1
+2345     If Not mitigations.Exists(itemName) Then mitigations.Add itemName, 0
+2346     mitigations(itemName) = mitigations(itemName) + 1
+2347     If primaryFailed Then
+2348         If Not primaryFailures.Exists(itemName) Then primaryFailures.Add itemName, 0
+2349         If Not fallbackSuccesses.Exists(itemName) Then fallbackSuccesses.Add itemName, 0
+2350         primaryFailures(itemName) = primaryFailures(itemName) + 1
     End If
 End Sub
 
 Private Function MitigationText() As String
     Dim itemName As Variant, entries As String
-2094     For Each itemName In mitigations.Keys
-2095         If Len(entries) > 0 Then entries = entries & " "
-2096         entries = entries & CStr(itemName) & "=" & CStr(mitigations(itemName))
-2097         If primaryFailures.Exists(itemName) Then
-2098             entries = entries & ",primary-failed=" & CStr(primaryFailures(itemName)) & ",fallback-ok=" & CStr(fallbackSuccesses(itemName))
+2356     For Each itemName In mitigations.Keys
+2357         If Len(entries) > 0 Then entries = entries & " "
+2358         entries = entries & CStr(itemName) & "=" & CStr(mitigations(itemName))
+2359         If primaryFailures.Exists(itemName) Then
+2360             entries = entries & ",primary-failed=" & CStr(primaryFailures(itemName)) & ",fallback-ok=" & CStr(fallbackSuccesses(itemName))
         End If
     Next itemName
-2101     If Len(entries) = 0 Then entries = "none"
-2102     MitigationText = "mitigations: " & entries
+2363     If Len(entries) = 0 Then entries = "none"
+2364     MitigationText = "mitigations: " & entries
 End Function
 
 Private Function MitigationJson() As String
     Dim itemName As Variant, entries As String, counts As String
-2107     For Each itemName In mitigations.Keys
-2108         If Len(entries) > 0 Then entries = entries & ","
-2109         counts = "{""count"":" & CStr(mitigations(itemName))
-2110         If primaryFailures.Exists(itemName) Then
-2111             counts = counts & ",""primary_failed"":" & CStr(primaryFailures(itemName)) & ",""fallback_ok"":" & CStr(fallbackSuccesses(itemName))
+2369     For Each itemName In mitigations.Keys
+2370         If Len(entries) > 0 Then entries = entries & ","
+2371         counts = "{""count"":" & CStr(mitigations(itemName))
+2372         If primaryFailures.Exists(itemName) Then
+2373             counts = counts & ",""primary_failed"":" & CStr(primaryFailures(itemName)) & ",""fallback_ok"":" & CStr(fallbackSuccesses(itemName))
         End If
-2113         entries = entries & Quote(CStr(itemName)) & ":" & counts & "}"
+2375         entries = entries & Quote(CStr(itemName)) & ":" & counts & "}"
     Next itemName
-2115     MitigationJson = "{" & entries & "}"
+2377     MitigationJson = "{" & entries & "}"
 End Function
 
 Private Function TryTemplate(ByVal path As String, ByRef tried As String) As String
     Dim fs As Object
-2120     Set fs = CreateObject("Scripting.FileSystemObject")
-2121     If Len(tried) > 0 Then tried = tried & "; "
-2122     tried = tried & path
+2382     Set fs = CreateObject("Scripting.FileSystemObject")
+2383     If Len(tried) > 0 Then tried = tried & "; "
+2384     tried = tried & path
     stepLabel = currentIdentity & ": TryTemplate FileExists"
-2124     If fs.FileExists(path) Then TryTemplate = path
+2386     If fs.FileExists(path) Then TryTemplate = path
 End Function
 
 Private Function ResolveTemplate(ByVal kind As String) As String
     Dim override As String, preference As Long, filename As String, extension As String
     Dim tried As String, candidate As String, defaultTemplate As String, folders As String
     Dim fs As Object, install As String, language As String, folder As Variant, match As String
-2131     Set fs = CreateObject("Scripting.FileSystemObject")
-2132     Select Case kind
+2393     Set fs = CreateObject("Scripting.FileSystemObject")
+2394     Select Case kind
         Case "part"
-2134             override = TEMPLATE_PART: preference = swDefaultTemplatePart: filename = "part.prtdot"
+2396             override = TEMPLATE_PART: preference = swDefaultTemplatePart: filename = "part.prtdot"
         Case "assembly"
-2136             override = TEMPLATE_ASSEMBLY: preference = swDefaultTemplateAssembly: filename = "assem.asmdot"
+2398             override = TEMPLATE_ASSEMBLY: preference = swDefaultTemplateAssembly: filename = "assem.asmdot"
         Case "drawing"
-2138             override = TEMPLATE_DRAWING: preference = swDefaultTemplateDrawing: filename = "drawing.drwdot"
+2400             override = TEMPLATE_DRAWING: preference = swDefaultTemplateDrawing: filename = "drawing.drwdot"
     End Select
-2140     If Len(override) > 0 Then
-2141         candidate = TryTemplate(override, tried)
-2142         If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
+2402     If Len(override) > 0 Then
+2403         candidate = TryTemplate(override, tried)
+2404         If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
     End If
     stepLabel = currentIdentity & ": ResolveTemplate GetUserPreferenceStringValue"
-2145     defaultTemplate = app.GetUserPreferenceStringValue(preference)
-2146     If Len(defaultTemplate) > 0 Then
-2147         candidate = TryTemplate(defaultTemplate, tried)
-2148         If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
+2407     defaultTemplate = app.GetUserPreferenceStringValue(preference)
+2408     If Len(defaultTemplate) > 0 Then
+2409         candidate = TryTemplate(defaultTemplate, tried)
+2410         If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
     End If
     stepLabel = currentIdentity & ": ResolveTemplate GetUserPreferenceStringValue"
-2151     folders = app.GetUserPreferenceStringValue(swFileLocationsDocumentTemplates)
+2413     folders = app.GetUserPreferenceStringValue(swFileLocationsDocumentTemplates)
     stepLabel = currentIdentity & ": ResolveTemplate GetExecutablePath"
-2153     install = app.GetExecutablePath()
+2415     install = app.GetExecutablePath()
     stepLabel = currentIdentity & ": ResolveTemplate GetExtensionName"
-2155     If LCase$(fs.GetExtensionName(install)) = "exe" Then install = fs.GetParentFolderName(install)
+2417     If LCase$(fs.GetExtensionName(install)) = "exe" Then install = fs.GetParentFolderName(install)
     stepLabel = currentIdentity & ": ResolveTemplate BuildPath"
-2157     language = fs.BuildPath(fs.BuildPath(install, "lang"), app.GetCurrentLanguage())
+2419     language = fs.BuildPath(fs.BuildPath(install, "lang"), app.GetCurrentLanguage())
     stepLabel = currentIdentity & ": ResolveTemplate BuildPath"
-2159     folders = folders & ";" & language & ";" & fs.BuildPath(language, "Tutorial")
+2421     folders = folders & ";" & language & ";" & fs.BuildPath(language, "Tutorial")
     stepLabel = currentIdentity & ": ResolveTemplate GetExtensionName"
-2161     extension = fs.GetExtensionName(filename)
-2162     For Each folder In Split(folders, ";")
-2163         folder = Trim$(CStr(folder))
-2164         If Len(folder) > 0 Then
+2423     extension = fs.GetExtensionName(filename)
+2424     For Each folder In Split(folders, ";")
+2425         folder = Trim$(CStr(folder))
+2426         If Len(folder) > 0 Then
     stepLabel = currentIdentity & ": ResolveTemplate BuildPath"
-2166             candidate = TryTemplate(fs.BuildPath(folder, filename), tried)
-2167             If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
+2428             candidate = TryTemplate(fs.BuildPath(folder, filename), tried)
+2429             If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
     stepLabel = currentIdentity & ": ResolveTemplate BuildPath"
-2169             match = fs.BuildPath(folder, "*." & extension)
-2170             If Len(tried) > 0 Then tried = tried & "; "
-2171             tried = tried & match
+2431             match = fs.BuildPath(folder, "*." & extension)
+2432             If Len(tried) > 0 Then tried = tried & "; "
+2433             tried = tried & match
     stepLabel = currentIdentity & ": ResolveTemplate FolderExists"
-2173             If fs.FolderExists(folder) Then
-2174                 match = Dir$(match)
-2175                 Do While Len(match) > 0
+2435             If fs.FolderExists(folder) Then
+2436                 match = Dir$(match)
+2437                 Do While Len(match) > 0
     stepLabel = currentIdentity & ": ResolveTemplate BuildPath"
-2177                     candidate = TryTemplate(fs.BuildPath(folder, match), tried)
-2178                     If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
-2179                     match = Dir$()
+2439                     candidate = TryTemplate(fs.BuildPath(folder, match), tried)
+2440                     If Len(candidate) > 0 Then ResolveTemplate = candidate: Exit Function
+2441                     match = Dir$()
                 Loop
             End If
         End If
     Next folder
-2184     Err.Raise 5, , kind & " template unavailable. Paths tried: " & tried
+2446     Err.Raise 5, , kind & " template unavailable. Paths tried: " & tried
 End Function
 
 Private Sub Require(ByVal value As Object, ByVal message As String)
-2188     If value Is Nothing Then Err.Raise 5, , message
+2450     If value Is Nothing Then Err.Raise 5, , message
 End Sub
 
 Private Sub SaveFile(ByVal path As String)
     Dim errors As Long, warnings As Long, success As Boolean
     stepLabel = currentIdentity & ": SaveFile SaveAs"
-2194     success = doc.Extension.SaveAs(path, 0, 1, Nothing, errors, warnings)
-2195     If Not success Or errors <> 0 Then Err.Raise 5, , "SolidWorks SaveAs error " & CStr(errors)
-2196     ExportGuard path
-2197     RecordReadback
+2456     success = doc.Extension.SaveAs(path, 0, 1, Nothing, errors, warnings)
+2457     If Not success Or errors <> 0 Then Err.Raise 5, , "SolidWorks SaveAs error " & CStr(errors)
+2458     ExportGuard path
+2459     RecordReadback
 End Sub
 
 Private Sub ExportGuard(ByVal path As String)
@@ -2202,128 +2464,133 @@ Private Sub ExportGuard(ByVal path As String)
     ' rewritten). A PDF with a name in it, a file over 4 MB (too large to check) or one that cannot be read is deleted and the row fails. The
     ' .sld* files are compressed and are not scanned (the stamp in them is documented); a STEP file has its own guard.
     Dim fs As Object, ext As String, text As String, cleaned As String, problem As String
-2205     Set fs = CreateObject("Scripting.FileSystemObject")
+2467     Set fs = CreateObject("Scripting.FileSystemObject")
     stepLabel = currentIdentity & ": ExportGuard GetExtensionName"
-2207     ext = LCase$(fs.GetExtensionName(path))
-2208     If ext <> "dxf" And ext <> "pdf" Then Exit Sub
+2469     ext = LCase$(fs.GetExtensionName(path))
+2470     If ext <> "dxf" And ext <> "pdf" Then Exit Sub
     stepLabel = currentIdentity & ": ExportGuard FileExists"
-2210     If Not fs.FileExists(path) Then Exit Sub
-2211     On Error Resume Next
-2212     If ext = "dxf" Then
-2213         text = SweepRead(path)
-2214         If Err.Number = 0 Then
-2215             cleaned = PrivacyScrub(text)
-2216             If cleaned <> text Then SweepWrite path, cleaned
+2472     If Not fs.FileExists(path) Then Exit Sub
+2473     On Error Resume Next
+2474     If ext = "dxf" Then
+2475         text = SweepRead(path)
+2476         If Err.Number = 0 Then
+2477             cleaned = PrivacyScrub(text)
+2478             If cleaned <> text Then SweepWrite path, cleaned
         End If
     ElseIf StrayHasNeedle(path) Then
-2219         problem = "carried a personal name"
+2481         problem = "carried a personal name"
     End If
-2221     If Err.Number <> 0 Then
-2222         problem = "could not be checked"
-2223         If InStr(Err.Description, "size cap") > 0 Then problem = "too large to check (over 4 MB)"
+2483     If Err.Number <> 0 Then
+2484         problem = "could not be checked"
+2485         If InStr(Err.Description, "size cap") > 0 Then problem = "too large to check (over 4 MB)"
     End If
-2225     Err.Clear
-2226     On Error GoTo 0
-2227     If Len(problem) > 0 Then
-2228         If Not SweepDelete(fs, path) Then SweepTruncate fs, path
-2229         Err.Raise 5, , "privacy: " & ext & " " & problem
+2487     Err.Clear
+2488     On Error GoTo 0
+2489     If Len(problem) > 0 Then
+2490         If privateRun And ext = "pdf" And problem = "carried a personal name" Then
+            ' Agreed at the run folder box (drawings package): the drawing stays, private.
+2492             privateKept = True
+2493             Exit Sub
+        End If
+2495         If Not SweepDelete(fs, path) Then SweepTruncate fs, path
+2496         Err.Raise 5, , "privacy: " & ext & " " & problem
     End If
 End Sub
 
 Private Function SummaryStatus(ByVal field As Long) As String
     ' Ours (Fixture Builder), blank, or written by SolidWorks. Never a value that is not ours.
     Dim value As String, result As String
-2236     On Error Resume Next
+2503     On Error Resume Next
     stepLabel = currentIdentity & ": SummaryStatus SummaryInfo"
-2238     value = CStr(doc.SummaryInfo(field))
-2239     If Err.Number <> 0 Then
-2240         Err.Clear
-2241         result = "not read"
+2505     value = CStr(doc.SummaryInfo(field))
+2506     If Err.Number <> 0 Then
+2507         Err.Clear
+2508         result = "not read"
     ElseIf Len(Trim$(value)) = 0 Then
-2243         result = "blank"
+2510         result = "blank"
     ElseIf value = NEUTRAL_VALUE Then
-2245         result = NEUTRAL_VALUE
+2512         result = NEUTRAL_VALUE
     Else
-2247         result = "set by SolidWorks (redacted)"
+2514         result = "set by SolidWorks (redacted)"
     End If
-2249     SummaryStatus = result
+2516     SummaryStatus = result
 End Function
 
 Private Function StatusRank(ByVal status As String) As Long
     Dim rank As Long
-2254     Select Case status
+2521     Select Case status
         Case "blank": rank = 1
         Case NEUTRAL_VALUE: rank = 2
         Case "set by SolidWorks (redacted)": rank = 3
         Case Else: rank = 0
     End Select
-2260     StatusRank = rank
+2527     StatusRank = rank
 End Function
 
 Private Sub RecordReadback()
     Dim field As Long, status As String
-2265     For field = 2 To 5
-2266         status = SummaryStatus(field)
-2267         If StatusRank(status) > StatusRank(rbStatus(field)) Then rbStatus(field) = status
+2532     For field = 2 To 5
+2533         status = SummaryStatus(field)
+2534         If StatusRank(status) > StatusRank(rbStatus(field)) Then rbStatus(field) = status
     Next field
 End Sub
 
 Private Function ReadbackText() As String
     Dim field As Long, labels As Variant, text As String, status As String
-2273     labels = Array("author", "keywords", "comment", "savedby")
-2274     For field = 2 To 5
-2275         status = rbStatus(field)
-2276         If Len(status) = 0 Then status = "not read"
-2277         text = text & " " & CStr(labels(field - 2)) & "=" & status
+2540     labels = Array("author", "keywords", "comment", "savedby")
+2541     For field = 2 To 5
+2542         status = rbStatus(field)
+2543         If Len(status) = 0 Then status = "not read"
+2544         text = text & " " & CStr(labels(field - 2)) & "=" & status
     Next field
-2279     ReadbackText = "summary info read-back after save:" & text
+2546     ReadbackText = "summary info read-back after save:" & text
 End Function
 
 Private Function NoticeStep(ByVal launched As Boolean) As String
     ' "" means Cancel: nothing is built. Otherwise the line for the log: whether the notice was shown, and the answer.
     Dim note As String
-2285     If launched Then
-2286         note = "user name notice: shown by the launcher, answer " & GetSetting("DutchmanFixtures", "SolidWorksBuilder", "NoticeAnswer", "OK")
+2552     If launched Then
+2553         note = "user name notice: shown by the launcher, answer " & GetSetting("DutchmanFixtures", "SolidWorksBuilder", "NoticeAnswer", "OK")
     ElseIf IsUnattended() Then
-2288         note = "user name notice: not shown (unattended run)"
+2555         note = "user name notice: not shown (unattended run)"
     ElseIf MsgBox(UserNameNotice(), vbOKCancel + vbInformation, "SolidWorks fixtures") = vbOK Then
-2290         note = "user name notice: shown, answer OK"
+2557         note = "user name notice: shown, answer OK"
     End If
-2292     NoticeStep = note
+2559     NoticeStep = note
 End Function
 
 Private Function SweepText(ByVal path As String, ByVal charset As String) As String
     Dim stream As Object, text As String
-2297     Set stream = CreateObject("ADODB.Stream")
-2298     stream.Type = 2
-2299     stream.Charset = charset
-2300     stream.Open
-2301     stream.LoadFromFile path
-2302     text = stream.ReadText
-2303     stream.Close
-2304     SweepText = text
+2564     Set stream = CreateObject("ADODB.Stream")
+2565     stream.Type = 2
+2566     stream.Charset = charset
+2567     stream.Open
+2568     stream.LoadFromFile path
+2569     text = stream.ReadText
+2570     stream.Close
+2571     SweepText = text
 End Function
 
 Private Function SweepReencodes(ByVal text As String, ByRef bytes As Variant) As Boolean
     ' True when the text, encoded as UTF-8, is byte for byte the file: the file really was UTF-8.
     Dim stream As Object, again As Variant, i As Long, same As Boolean
-2310     Set stream = CreateObject("ADODB.Stream")
-2311     stream.Type = 2
-2312     stream.Charset = "utf-8"
-2313     stream.Open
-2314     stream.WriteText text
-2315     stream.Position = 0
-2316     stream.Type = 1
-2317     stream.Position = 3
-2318     again = stream.Read
-2319     stream.Close
-2320     same = (UBound(again) = UBound(bytes))
-2321     If same Then
-2322         For i = 0 To UBound(bytes)
-2323             If again(i) <> bytes(i) Then same = False: Exit For
+2577     Set stream = CreateObject("ADODB.Stream")
+2578     stream.Type = 2
+2579     stream.Charset = "utf-8"
+2580     stream.Open
+2581     stream.WriteText text
+2582     stream.Position = 0
+2583     stream.Type = 1
+2584     stream.Position = 3
+2585     again = stream.Read
+2586     stream.Close
+2587     same = (UBound(again) = UBound(bytes))
+2588     If same Then
+2589         For i = 0 To UBound(bytes)
+2590             If again(i) <> bytes(i) Then same = False: Exit For
         Next i
     End If
-2326     SweepReencodes = same
+2593     SweepReencodes = same
 End Function
 
 Private Function SweepRead(ByVal path As String) As String
@@ -2331,161 +2598,161 @@ Private Function SweepRead(ByVal path As String) As String
     ' one, else the ANSI codepage the builder's own log is written in. A file over 4 MB, NUL bytes without a UTF-16 mark, or any decode
     ' error raises: the caller counts that as a hit (truncate or delete), never as clean.
     Dim stream As Object, bytes As Variant, size As Long, text As String, i As Long, channel As Integer
-2334     Set stream = CreateObject("ADODB.Stream")
-2335     stream.Type = 1
-2336     stream.Open
-2337     stream.LoadFromFile path
-2338     size = stream.Size
-2339     If size > 4194304 Then Err.Raise 5, , "over the sweep size cap"
-2340     If size = 0 Then
-2341         stream.Close
-2342         sweepEncoding = "utf-8"
-2343         SweepRead = ""
-2344         Exit Function
+2601     Set stream = CreateObject("ADODB.Stream")
+2602     stream.Type = 1
+2603     stream.Open
+2604     stream.LoadFromFile path
+2605     size = stream.Size
+2606     If size > 4194304 Then Err.Raise 5, , "over the sweep size cap"
+2607     If size = 0 Then
+2608         stream.Close
+2609         sweepEncoding = "utf-8"
+2610         SweepRead = ""
+2611         Exit Function
     End If
-2346     bytes = stream.Read
-2347     stream.Close
-2348     If size >= 2 And bytes(0) = 255 And bytes(1) = 254 Then
-2349         sweepEncoding = "utf-16-le-bom"
-2350         SweepRead = SweepText(path, "unicode")
-2351         Exit Function
+2613     bytes = stream.Read
+2614     stream.Close
+2615     If size >= 2 And bytes(0) = 255 And bytes(1) = 254 Then
+2616         sweepEncoding = "utf-16-le-bom"
+2617         SweepRead = SweepText(path, "unicode")
+2618         Exit Function
     End If
-2353     If size >= 2 And bytes(0) = 254 And bytes(1) = 255 Then
-2354         sweepEncoding = "utf-16-be-bom"
-2355         SweepRead = SweepText(path, "unicodeFFFE")
-2356         Exit Function
+2620     If size >= 2 And bytes(0) = 254 And bytes(1) = 255 Then
+2621         sweepEncoding = "utf-16-be-bom"
+2622         SweepRead = SweepText(path, "unicodeFFFE")
+2623         Exit Function
     End If
-2358     If size >= 3 Then
-2359         If bytes(0) = 239 And bytes(1) = 187 And bytes(2) = 191 Then
-2360             sweepEncoding = "utf-8-bom"
-2361             SweepRead = SweepText(path, "utf-8")
-2362             Exit Function
+2625     If size >= 3 Then
+2626         If bytes(0) = 239 And bytes(1) = 187 And bytes(2) = 191 Then
+2627             sweepEncoding = "utf-8-bom"
+2628             SweepRead = SweepText(path, "utf-8")
+2629             Exit Function
         End If
     End If
-2365     For i = 0 To UBound(bytes)
-2366         If bytes(i) = 0 Then Err.Raise 5, , "NUL bytes without a UTF-16 byte-order mark"
+2632     For i = 0 To UBound(bytes)
+2633         If bytes(i) = 0 Then Err.Raise 5, , "NUL bytes without a UTF-16 byte-order mark"
     Next i
-2368     text = SweepText(path, "utf-8")
-2369     If SweepReencodes(text, bytes) Then
-2370         sweepEncoding = "utf-8"
-2371         SweepRead = text
-2372         Exit Function
+2635     text = SweepText(path, "utf-8")
+2636     If SweepReencodes(text, bytes) Then
+2637         sweepEncoding = "utf-8"
+2638         SweepRead = text
+2639         Exit Function
     End If
-2374     sweepEncoding = "ansi"
-2375     channel = FreeFile
-2376     Open path For Binary Access Read As #channel
-2377     text = Space$(LOF(channel))
-2378     Get #channel, , text
-2379     Close #channel
-2380     SweepRead = text
+2641     sweepEncoding = "ansi"
+2642     channel = FreeFile
+2643     Open path For Binary Access Read As #channel
+2644     text = Space$(LOF(channel))
+2645     Get #channel, , text
+2646     Close #channel
+2647     SweepRead = text
 End Function
 
 Private Sub SweepWrite(ByVal path As String, ByVal text As String)
     ' Back in the encoding SweepRead found (never a different one).
     Dim stream As Object, channel As Integer, fs As Object
-2386     Select Case sweepEncoding
+2653     Select Case sweepEncoding
         Case "utf-8"
-2388             WriteUtf8 path, text
+2655             WriteUtf8 path, text
         Case "utf-8-bom", "utf-16-le-bom", "utf-16-be-bom"
-2390             Set stream = CreateObject("ADODB.Stream")
-2391             stream.Type = 2
-2392             If sweepEncoding = "utf-16-le-bom" Then
-2393                 stream.Charset = "unicode"
+2657             Set stream = CreateObject("ADODB.Stream")
+2658             stream.Type = 2
+2659             If sweepEncoding = "utf-16-le-bom" Then
+2660                 stream.Charset = "unicode"
             ElseIf sweepEncoding = "utf-16-be-bom" Then
-2395                 stream.Charset = "unicodeFFFE"
+2662                 stream.Charset = "unicodeFFFE"
             Else
-2397                 stream.Charset = "utf-8"
+2664                 stream.Charset = "utf-8"
             End If
-2399             stream.Open
-2400             stream.WriteText text
-2401             stream.SaveToFile path, 2
-2402             stream.Close
+2666             stream.Open
+2667             stream.WriteText text
+2668             stream.SaveToFile path, 2
+2669             stream.Close
         Case Else
-2404             Set fs = CreateObject("Scripting.FileSystemObject")
-2405             If fs.FileExists(path) Then fs.DeleteFile path, True
-2406             channel = FreeFile
-2407             Open path For Binary Access Write As #channel
-2408             Put #channel, , text
-2409             Close #channel
+2671             Set fs = CreateObject("Scripting.FileSystemObject")
+2672             If fs.FileExists(path) Then fs.DeleteFile path, True
+2673             channel = FreeFile
+2674             Open path For Binary Access Write As #channel
+2675             Put #channel, , text
+2676             Close #channel
     End Select
 End Sub
 
 Private Function ReadLatin1(ByVal path As String, ByVal cap As Long) As String
     ' Latin-1 maps one byte to one character: the text is the file's bytes (searched, or rewritten byte for byte). Over the cap raises.
     Dim stream As Object, text As String
-2416     Set stream = CreateObject("ADODB.Stream")
+2683     Set stream = CreateObject("ADODB.Stream")
     stepLabel = currentIdentity & ": ReadLatin1 Type"
-2418     stream.Type = 2
+2685     stream.Type = 2
     stepLabel = currentIdentity & ": ReadLatin1 Charset"
-2420     stream.Charset = "iso-8859-1"
+2687     stream.Charset = "iso-8859-1"
     stepLabel = currentIdentity & ": ReadLatin1 Open"
-2422     stream.Open
+2689     stream.Open
     stepLabel = currentIdentity & ": ReadLatin1 LoadFromFile"
-2424     stream.LoadFromFile path
+2691     stream.LoadFromFile path
     stepLabel = currentIdentity & ": ReadLatin1 Size"
-2426     If stream.Size > cap Then Err.Raise 5, , "over the size cap"
+2693     If stream.Size > cap Then Err.Raise 5, , "over the size cap"
     stepLabel = currentIdentity & ": ReadLatin1 ReadText"
-2428     text = stream.ReadText
+2695     text = stream.ReadText
     stepLabel = currentIdentity & ": ReadLatin1 Close"
-2430     stream.Close
-2431     ReadLatin1 = text
+2697     stream.Close
+2698     ReadLatin1 = text
 End Function
 
 Private Function BytesAsLatin1(ByVal text As String, ByVal charset As String) As String
     ' The text encoded in the charset (utf-8 or unicode = UTF-16-LE), one character per byte; any byte-order mark dropped.
     Dim stream As Object, bytes As Variant, i As Long, skip As Long, result As String
-2437     Set stream = CreateObject("ADODB.Stream")
+2704     Set stream = CreateObject("ADODB.Stream")
     stepLabel = currentIdentity & ": BytesAsLatin1 Type"
-2439     stream.Type = 2
+2706     stream.Type = 2
     stepLabel = currentIdentity & ": BytesAsLatin1 Charset"
-2441     stream.Charset = charset
+2708     stream.Charset = charset
     stepLabel = currentIdentity & ": BytesAsLatin1 Open"
-2443     stream.Open
+2710     stream.Open
     stepLabel = currentIdentity & ": BytesAsLatin1 WriteText"
-2445     stream.WriteText text
+2712     stream.WriteText text
     stepLabel = currentIdentity & ": BytesAsLatin1 Position"
-2447     stream.Position = 0
+2714     stream.Position = 0
     stepLabel = currentIdentity & ": BytesAsLatin1 Type"
-2449     stream.Type = 1
-2450     If charset = "utf-8" Then skip = 3
-2451     If charset = "unicode" Then skip = 2
+2716     stream.Type = 1
+2717     If charset = "utf-8" Then skip = 3
+2718     If charset = "unicode" Then skip = 2
     stepLabel = currentIdentity & ": BytesAsLatin1 Position"
-2453     stream.Position = skip
+2720     stream.Position = skip
     stepLabel = currentIdentity & ": BytesAsLatin1 Size"
-2455     If stream.Size > skip Then
+2722     If stream.Size > skip Then
     stepLabel = currentIdentity & ": BytesAsLatin1 Read"
-2457         bytes = stream.Read
-2458         For i = 0 To UBound(bytes)
-2459             result = result & ChrW(bytes(i))
+2724         bytes = stream.Read
+2725         For i = 0 To UBound(bytes)
+2726             result = result & ChrW(bytes(i))
         Next i
     End If
     stepLabel = currentIdentity & ": BytesAsLatin1 Close"
-2463     stream.Close
-2464     BytesAsLatin1 = result
+2730     stream.Close
+2731     BytesAsLatin1 = result
 End Function
 
 Private Function AnsiAsLatin1(ByVal text As String) As String
     ' The single-byte ANSI form (empty when a character does not fit in one byte).
     Dim i As Long, result As String, ok As Boolean
-2470     ok = True
-2471     For i = 1 To Len(text)
-2472         If AscW(Mid$(text, i, 1)) < 0 Or AscW(Mid$(text, i, 1)) > 255 Then ok = False
+2737     ok = True
+2738     For i = 1 To Len(text)
+2739         If AscW(Mid$(text, i, 1)) < 0 Or AscW(Mid$(text, i, 1)) > 255 Then ok = False
     Next i
-2474     If ok Then
-2475         For i = 1 To Len(text)
-2476             result = result & ChrW(Asc(Mid$(text, i, 1)) And 255)
+2741     If ok Then
+2742         For i = 1 To Len(text)
+2743             result = result & ChrW(Asc(Mid$(text, i, 1)) And 255)
         Next i
     End If
-2479     AnsiAsLatin1 = result
+2746     AnsiAsLatin1 = result
 End Function
 
 Private Function AsciiLower(ByVal text As String) As String
     ' Only A-Z become a-z (LCase$ on the bytes of a file would also change the bytes C0 to DE, which are parts of other characters).
     Dim code As Long
-2485     For code = 65 To 90
-2486         text = Replace(text, Chr$(code), Chr$(code + 32), 1, -1, vbBinaryCompare)
+2752     For code = 65 To 90
+2753         text = Replace(text, Chr$(code), Chr$(code + 32), 1, -1, vbBinaryCompare)
     Next code
-2488     AsciiLower = text
+2755     AsciiLower = text
 End Function
 
 Private Function NeedleInBytes(ByVal data As String, ByVal needle As String, ByVal wide As Boolean, ByVal word As Boolean) As Boolean
@@ -2493,24 +2760,24 @@ Private Function NeedleInBytes(ByVal data As String, ByVal needle As String, ByV
     ' on the DECODED name, never on its encoded bytes) with no ASCII letter or digit next to it, any other with a path separator on both sides.
     ' A UTF-16 character is two bytes, so "next to" is two bytes there.
     Dim pos As Long, unit As Long, before As String, after As String, found As Boolean
-2496     unit = 1
-2497     If wide Then unit = 2
-2498     If Len(needle) > 0 Then
-2499         pos = InStr(1, data, needle, vbBinaryCompare)
-2500         Do While pos > 0 And Not found
-2501             before = ""
-2502             after = ""
-2503             If pos > unit Then before = Mid$(data, pos - unit, 1)
-2504             If pos + Len(needle) <= Len(data) Then after = Mid$(data, pos + Len(needle), 1)
-2505             If word Then
-2506                 If (Len(before) = 0 Or Not IsAsciiAlnum(before)) And (Len(after) = 0 Or Not IsAsciiAlnum(after)) Then found = True
+2763     unit = 1
+2764     If wide Then unit = 2
+2765     If Len(needle) > 0 Then
+2766         pos = InStr(1, data, needle, vbBinaryCompare)
+2767         Do While pos > 0 And Not found
+2768             before = ""
+2769             after = ""
+2770             If pos > unit Then before = Mid$(data, pos - unit, 1)
+2771             If pos + Len(needle) <= Len(data) Then after = Mid$(data, pos + Len(needle), 1)
+2772             If word Then
+2773                 If (Len(before) = 0 Or Not IsAsciiAlnum(before)) And (Len(after) = 0 Or Not IsAsciiAlnum(after)) Then found = True
             Else
-2508                 If (before = "\" Or before = "/") And (after = "\" Or after = "/") Then found = True
+2775                 If (before = "\" Or before = "/") And (after = "\" Or after = "/") Then found = True
             End If
-2510             pos = InStr(pos + 1, data, needle, vbBinaryCompare)
+2777             pos = InStr(pos + 1, data, needle, vbBinaryCompare)
         Loop
     End If
-2513     NeedleInBytes = found
+2780     NeedleInBytes = found
 End Function
 
 Private Function StrayHasNeedle(ByVal path As String) As Boolean
@@ -2518,66 +2785,66 @@ Private Function StrayHasNeedle(ByVal path As String) As Boolean
     ' UTF-8, UTF-16-LE or ANSI. A file over 4 MB or one that cannot be read raises.
     ' Each name is tried as written, lower-cased and upper-cased (Unicode-aware), so a Cyrillic name in another case is found too.
     Dim data As String, words(0 To 4) As String, k As Long, hit As Boolean, word As String, forms(0 To 2) As String, f As Long, isWord As Boolean
-2521     data = AsciiLower(ReadLatin1(path, 4194304))
-2522     words(0) = EnvText("USERNAME")
-2523     words(1) = LeafOf(Replace(EnvText("USERPROFILE"), "/", "\"))
-2524     words(2) = EnvText("COMPUTERNAME")
-2525     words(3) = EnvText("USERDOMAIN")
-2526     words(4) = Replace(EnvText("LOGONSERVER"), "\", "")
-2527     For k = 0 To 4
-2528         word = words(k)
-2529         If Len(word) > 0 Then
-2530             isWord = NameInsideComponents(LCase$(word))
-2531             forms(0) = word
-2532             forms(1) = LCase$(word)
-2533             forms(2) = UCase$(word)
-2534             For f = 0 To 2
-2535                 If NeedleInBytes(data, AsciiLower(BytesAsLatin1(forms(f), "utf-8")), False, isWord) Then hit = True
-2536                 If NeedleInBytes(data, AsciiLower(BytesAsLatin1(forms(f), "unicode")), True, isWord) Then hit = True
-2537                 If Len(AnsiAsLatin1(forms(f))) > 0 Then
-2538                     If NeedleInBytes(data, AsciiLower(AnsiAsLatin1(forms(f))), False, isWord) Then hit = True
+2788     data = AsciiLower(ReadLatin1(path, 4194304))
+2789     words(0) = EnvText("USERNAME")
+2790     words(1) = LeafOf(Replace(EnvText("USERPROFILE"), "/", "\"))
+2791     words(2) = EnvText("COMPUTERNAME")
+2792     words(3) = EnvText("USERDOMAIN")
+2793     words(4) = Replace(EnvText("LOGONSERVER"), "\", "")
+2794     For k = 0 To 4
+2795         word = words(k)
+2796         If Len(word) > 0 Then
+2797             isWord = NameInsideComponents(LCase$(word))
+2798             forms(0) = word
+2799             forms(1) = LCase$(word)
+2800             forms(2) = UCase$(word)
+2801             For f = 0 To 2
+2802                 If NeedleInBytes(data, AsciiLower(BytesAsLatin1(forms(f), "utf-8")), False, isWord) Then hit = True
+2803                 If NeedleInBytes(data, AsciiLower(BytesAsLatin1(forms(f), "unicode")), True, isWord) Then hit = True
+2804                 If Len(AnsiAsLatin1(forms(f))) > 0 Then
+2805                     If NeedleInBytes(data, AsciiLower(AnsiAsLatin1(forms(f))), False, isWord) Then hit = True
                 Else
-2540                     sweepAnsiSkipped = True        ' the codepage cannot hold it: never read as "matches nothing" in silence (PrivacySweep notes it)
+2807                     sweepAnsiSkipped = True        ' the codepage cannot hold it: never read as "matches nothing" in silence (PrivacySweep notes it)
                 End If
             Next f
         End If
     Next k
-2545     StrayHasNeedle = hit
+2812     StrayHasNeedle = hit
 End Function
 
 Private Function SweepDelete(ByVal fs As Object, ByVal path As String) As Boolean
     Dim attempt As Long, done As Boolean
-2550     For attempt = 1 To 3
-2551         If Not done Then
-2552             On Error Resume Next
-2553             Err.Clear
-2554             If fs.FileExists(path) Then fs.DeleteFile path, True
-2555             done = (Err.Number = 0 And Not fs.FileExists(path))
-2556             Err.Clear
-2557             On Error GoTo 0
+2817     For attempt = 1 To 3
+2818         If Not done Then
+2819             On Error Resume Next
+2820             Err.Clear
+2821             If fs.FileExists(path) Then fs.DeleteFile path, True
+2822             done = (Err.Number = 0 And Not fs.FileExists(path))
+2823             Err.Clear
+2824             On Error GoTo 0
         End If
     Next attempt
-2560     SweepDelete = done
+2827     SweepDelete = done
 End Function
 
 Private Function SweepTruncate(ByVal fs As Object, ByVal path As String) As Boolean
     Dim attempt As Long, done As Boolean
-2565     For attempt = 1 To 3
-2566         If Not done Then
-2567             On Error Resume Next
-2568             Err.Clear
-2569             fs.CreateTextFile(path, True).Close
-2570             done = (Err.Number = 0)
-2571             Err.Clear
-2572             On Error GoTo 0
+2832     For attempt = 1 To 3
+2833         If Not done Then
+2834             On Error Resume Next
+2835             Err.Clear
+2836             fs.CreateTextFile(path, True).Close
+2837             done = (Err.Number = 0)
+2838             Err.Clear
+2839             On Error GoTo 0
         End If
     Next attempt
-2575     SweepTruncate = done
+2842     SweepTruncate = done
 End Function
 
 Private Sub SweepNote(ByRef notes As String, ByVal note As String)
-2579     If Len(notes) > 0 Then notes = notes & " | "
-2580     notes = notes & note
+2846     If Len(notes) > 0 Then notes = notes & " | "
+2847     notes = notes & note
 End Sub
 
 Private Sub SweepStray(ByVal fs As Object, ByVal path As String, ByVal fileName As String, ByVal ext As String, ByRef notes As String)
@@ -2586,25 +2853,26 @@ Private Sub SweepStray(ByVal fs As Object, ByVal path As String, ByVal fileName 
     Dim hit As Boolean, why As String
     ' Case-insensitive: SolidWorks writes .SLDPRT where the row says .sldprt, and that is still the builder's own file. Its own PDF is still
     ' scanned (never rewritten); the .sld* files are compressed and are not.
-2589     If InStr(1, resultRows, Chr$(34) & fileName & Chr$(34), vbTextCompare) > 0 And ext <> "pdf" Then Exit Sub
-2590     If InStr("|sldprt|sldasm|slddrw|step|dxf|zip|", "|" & ext & "|") > 0 And Len(resultRows) = 0 Then Exit Sub
-2591     why = "stray file, name found"
-2592     On Error Resume Next
-2593     hit = StrayHasNeedle(path)
-2594     If Err.Number <> 0 Then
-2595         hit = True
-2596         why = "stray file, unreadable"
-2597         If InStr(Err.Description, "size cap") > 0 Then why = "stray file, too large to check (over 4 MB)"
+2856     If InStr(1, resultRows, Chr$(34) & fileName & Chr$(34), vbTextCompare) > 0 And ext <> "pdf" Then Exit Sub
+2857     If InStr("|sldprt|sldasm|slddrw|step|dxf|zip|", "|" & ext & "|") > 0 And Len(resultRows) = 0 Then Exit Sub
+2858     why = "stray file, name found"
+2859     On Error Resume Next
+2860     hit = StrayHasNeedle(path)
+2861     If Err.Number <> 0 Then
+2862         hit = True
+2863         why = "stray file, unreadable"
+2864         If InStr(Err.Description, "size cap") > 0 Then why = "stray file, too large to check (over 4 MB)"
     End If
-2599     Err.Clear
-2600     On Error GoTo 0
-2601     If Not hit Then Exit Sub
-2602     If SweepDelete(fs, path) Then
-2603         SweepNote notes, "privacy sweep: " & fileName & " removed (" & why & ")"
+2866     Err.Clear
+2867     On Error GoTo 0
+2868     If Not hit Then Exit Sub
+2869     If SweepDelete(fs, path) Then
+2870         SweepNote notes, "privacy sweep: " & fileName & " removed (" & why & ")"
     ElseIf SweepTruncate(fs, path) Then
-2605         SweepNote notes, "privacy sweep: " & fileName & " truncated (" & why & ")"
+2872         SweepNote notes, "privacy sweep: " & fileName & " truncated (" & why & ")"
     Else
-2607         SweepNote notes, "privacy sweep: " & fileName & " could not be cleaned or removed"
+2874         sweepListFailed = True        ' neither clean nor gone: no zip (fail closed)
+2875         SweepNote notes, "privacy sweep: " & fileName & " could not be cleaned or removed"
     End If
 End Sub
 
@@ -2612,100 +2880,101 @@ Private Sub SweepFile(ByVal fs As Object, ByVal path As String, ByRef notes As S
     ' Scrub one file. A text file that cannot be read or written (a lock, no permission) is retried, then truncated to zero bytes, then
     ' deleted; the note says which. Lock files (~$*) and temporary files are deleted. Never raises, so the whole list is always finished.
     Dim fileName As String, ext As String, text As String, cleaned As String, attempt As Long, done As Boolean, reason As String, capped As Boolean
-2615     fileName = fs.GetFileName(path)
-2616     ext = LCase$(fs.GetExtensionName(path))
-2617     If Left$(fileName, 2) = "~$" Or ext = "tmp" Or ext = "temp" Or ext = "partial" Then
-2618         If Not SweepDelete(fs, path) Then
-2619             If SweepTruncate(fs, path) Then
-2620                 SweepNote notes, "privacy sweep: " & fileName & " truncated (could not be removed)"
+2883     fileName = fs.GetFileName(path)
+2884     ext = LCase$(fs.GetExtensionName(path))
+2885     If Left$(fileName, 2) = "~$" Or ext = "tmp" Or ext = "temp" Or ext = "partial" Then
+2886         If Not SweepDelete(fs, path) Then
+2887             If SweepTruncate(fs, path) Then
+2888                 SweepNote notes, "privacy sweep: " & fileName & " truncated (could not be removed)"
             Else
-2622                 SweepNote notes, "privacy sweep: " & fileName & " could not be removed"
+2890                 SweepNote notes, "privacy sweep: " & fileName & " could not be removed"
             End If
         End If
-2625         Exit Sub
+2893         Exit Sub
     End If
-2627     If InStr("|log|json|txt|csv|tsv|xml|html|htm|md|ini|cfg|yaml|yml|dxf|", "|" & ext & "|") = 0 Then
-2628         SweepStray fs, path, fileName, ext, notes
-2629         Exit Sub
+2895     If InStr("|log|json|txt|csv|tsv|xml|html|htm|md|ini|cfg|yaml|yml|dxf|", "|" & ext & "|") = 0 Then
+2896         SweepStray fs, path, fileName, ext, notes
+2897         Exit Sub
     End If
-2631     For attempt = 1 To 3
-2632         If Not done Then
-2633             On Error Resume Next
-2634             Err.Clear
-2635             text = SweepRead(path)
-2636             If Err.Number = 0 Then
-2637                 cleaned = PrivacyScrub(text)
-2638                 If cleaned <> text Then SweepWrite path, cleaned
+2899     For attempt = 1 To 3
+2900         If Not done Then
+2901             On Error Resume Next
+2902             Err.Clear
+2903             text = SweepRead(path)
+2904             If Err.Number = 0 Then
+2905                 cleaned = PrivacyScrub(text)
+2906                 If cleaned <> text Then SweepWrite path, cleaned
             End If
-2640             done = (Err.Number = 0)
-2641             If InStr(Err.Description, "over the sweep size cap") > 0 Then capped = True
-2642             Err.Clear
-2643             On Error GoTo 0
+2908             done = (Err.Number = 0)
+2909             If InStr(Err.Description, "over the sweep size cap") > 0 Then capped = True
+2910             Err.Clear
+2911             On Error GoTo 0
         End If
     Next attempt
-2646     If done Then Exit Sub
-2647     reason = "unreadable"
-2648     If capped Then reason = "too large to check (over 4 MB)"
-2649     sweepEmptiedCount = sweepEmptiedCount + 1
-2650     If Len(sweepEmptied) > 0 Then sweepEmptied = sweepEmptied & ", "
-2651     sweepEmptied = sweepEmptied & fileName
-2652     If SweepTruncate(fs, path) Then
-2653         SweepNote notes, "privacy sweep: " & fileName & " truncated (" & reason & ")"
+2914     If done Then Exit Sub
+2915     reason = "unreadable"
+2916     If capped Then reason = "too large to check (over 4 MB)"
+2917     sweepEmptiedCount = sweepEmptiedCount + 1
+2918     If Len(sweepEmptied) > 0 Then sweepEmptied = sweepEmptied & ", "
+2919     sweepEmptied = sweepEmptied & fileName
+2920     If SweepTruncate(fs, path) Then
+2921         SweepNote notes, "privacy sweep: " & fileName & " truncated (" & reason & ")"
     ElseIf SweepDelete(fs, path) Then
-2655         SweepNote notes, "privacy sweep: " & fileName & " removed (" & reason & ")"
+2923         SweepNote notes, "privacy sweep: " & fileName & " removed (" & reason & ")"
     Else
-2657         SweepNote notes, "privacy sweep: " & fileName & " could not be cleaned or removed"
+2925         sweepListFailed = True        ' neither clean nor gone: no zip (fail closed)
+2926         SweepNote notes, "privacy sweep: " & fileName & " could not be cleaned or removed"
     End If
 End Sub
 
 Private Sub SweepListFailure(ByVal dirPath As String, ByRef notes As String)
     ' Any error listing a folder (access denied, a path too long): noted with the scrubbed folder name, and no zip is made (fail closed).
-2663     sweepListFailed = True
-2664     SweepNote notes, "privacy sweep: could not list " & PrivacyScrub(Mid$(dirPath, InStrRev(dirPath, "\") + 1))
-2665     Err.Clear
+2932     sweepListFailed = True
+2933     SweepNote notes, "privacy sweep: could not list " & PrivacyScrub(Mid$(dirPath, InStrRev(dirPath, "\") + 1))
+2934     Err.Clear
 End Sub
 
 Private Sub SweepFolder(ByVal fs As Object, ByVal dirPath As String, ByRef notes As String)
     Dim item As Object, list As String, entries As Variant, i As Long, here As Object, children As Object
-2670     On Error Resume Next
-2671     Err.Clear
-2672     Set here = fs.GetFolder(dirPath)
-2673     If Err.Number = 0 Then Set children = here.Files
-2674     If Err.Number = 0 Then
-2675         For Each item In children
-2676             list = list & item.Path & vbLf
+2939     On Error Resume Next
+2940     Err.Clear
+2941     Set here = fs.GetFolder(dirPath)
+2942     If Err.Number = 0 Then Set children = here.Files
+2943     If Err.Number = 0 Then
+2944         For Each item In children
+2945             list = list & item.Path & vbLf
         Next item
     End If
-2679     If Err.Number <> 0 Then SweepListFailure dirPath, notes
-2680     entries = Split(list, vbLf)
-2681     For i = 0 To UBound(entries)
-2682         If Len(entries(i)) > 0 Then SweepFile fs, CStr(entries(i)), notes
+2948     If Err.Number <> 0 Then SweepListFailure dirPath, notes
+2949     entries = Split(list, vbLf)
+2950     For i = 0 To UBound(entries)
+2951         If Len(entries(i)) > 0 Then SweepFile fs, CStr(entries(i)), notes
     Next i
-2684     list = ""
-2685     If Not here Is Nothing Then Set children = here.SubFolders
-2686     If Err.Number = 0 And Not here Is Nothing Then
-2687         For Each item In children
-2688             list = list & item.Path & vbLf
+2953     list = ""
+2954     If Not here Is Nothing Then Set children = here.SubFolders
+2955     If Err.Number = 0 And Not here Is Nothing Then
+2956         For Each item In children
+2957             list = list & item.Path & vbLf
         Next item
     End If
-2691     If Err.Number <> 0 Then SweepListFailure dirPath, notes
-2692     entries = Split(list, vbLf)
-2693     For i = 0 To UBound(entries)
-2694         If Len(entries(i)) > 0 Then SweepFolder fs, CStr(entries(i)), notes
+2960     If Err.Number <> 0 Then SweepListFailure dirPath, notes
+2961     entries = Split(list, vbLf)
+2962     For i = 0 To UBound(entries)
+2963         If Len(entries(i)) > 0 Then SweepFolder fs, CStr(entries(i)), notes
     Next i
 End Sub
 
 Private Function PrivacySweep(ByVal folder As String) As String
     ' Before the zip: EVERY file in the output folder, listed in results.json or not. Returns the notes (files truncated or removed).
     Dim fs As Object, notes As String
-2701     Set fs = CreateObject("Scripting.FileSystemObject")
-2702     SweepFolder fs, folder, notes
-2703     If Not fs.FolderExists(folder) Then SweepListFailure folder, notes
-2704     If sweepAnsiSkipped Then
-2705         SweepNote notes, "privacy sweep: ansi form not applicable (a name has characters the ANSI codepage cannot hold); UTF-8 and UTF-16 searched"
-2706         sweepAnsiSkipped = False
+2970     Set fs = CreateObject("Scripting.FileSystemObject")
+2971     SweepFolder fs, folder, notes
+2972     If Not fs.FolderExists(folder) Then SweepListFailure folder, notes
+2973     If sweepAnsiSkipped Then
+2974         SweepNote notes, "privacy sweep: ansi form not applicable (a name has characters the ANSI codepage cannot hold); UTF-8 and UTF-16 searched"
+2975         sweepAnsiSkipped = False
     End If
-2708     PrivacySweep = notes
+2977     PrivacySweep = notes
 End Function
 
 Private Sub BlankProperties()
@@ -2713,35 +2982,35 @@ Private Sub BlankProperties()
     ' swSummInfoField_e: author 2, keywords 3, comment 4, saved-by 5. The neutral name goes into author and (if SolidWorks lets a macro
     ' write it) saved-by; keywords and comment are blank. SolidWorks stamps the saving user again at SaveAs: see RecordReadback.
     stepLabel = currentIdentity & ": BlankProperties SummaryInfo"
-2716     doc.SummaryInfo(2) = NEUTRAL_VALUE
+2985     doc.SummaryInfo(2) = NEUTRAL_VALUE
     stepLabel = currentIdentity & ": BlankProperties SummaryInfo"
-2718     doc.SummaryInfo(3) = ""
+2987     doc.SummaryInfo(3) = ""
     stepLabel = currentIdentity & ": BlankProperties SummaryInfo"
-2720     doc.SummaryInfo(4) = ""
-2721     On Error Resume Next
+2989     doc.SummaryInfo(4) = ""
+2990     On Error Resume Next
     stepLabel = currentIdentity & ": BlankProperties SummaryInfo"
-2723     doc.SummaryInfo(5) = NEUTRAL_VALUE
-2724     Err.Clear
-2725     On Error GoTo 0
+2992     doc.SummaryInfo(5) = NEUTRAL_VALUE
+2993     Err.Clear
+2994     On Error GoTo 0
     stepLabel = currentIdentity & ": BlankProperties CustomPropertyManager"
-2727     Set manager = doc.Extension.CustomPropertyManager("")
-2728     For Each itemName In Array("Author", "Company", "DrawnBy", "CheckedBy")
+2996     Set manager = doc.Extension.CustomPropertyManager("")
+2997     For Each itemName In Array("Author", "Company", "DrawnBy", "CheckedBy")
     stepLabel = currentIdentity & ": BlankProperties Delete2"
-2730         manager.Delete2 CStr(itemName)
+2999         manager.Delete2 CStr(itemName)
     stepLabel = currentIdentity & ": BlankProperties Add3"
-2732         If manager.Add3(CStr(itemName), 30, "", 2) <> 0 Then Err.Raise 5, , "Custom property blanking failed"
+3001         If manager.Add3(CStr(itemName), 30, "", 2) <> 0 Then Err.Raise 5, , "Custom property blanking failed"
     Next itemName
     stepLabel = currentIdentity & ": BlankProperties GetConfigurationNames"
-2735     configs = doc.GetConfigurationNames()
-2736     If Not IsEmpty(configs) Then
-2737         For Each config In configs
+3004     configs = doc.GetConfigurationNames()
+3005     If Not IsEmpty(configs) Then
+3006         For Each config In configs
     stepLabel = currentIdentity & ": BlankProperties CustomPropertyManager"
-2739             Set manager = doc.Extension.CustomPropertyManager(CStr(config))
-2740             For Each itemName In Array("Author", "Company", "DrawnBy", "CheckedBy")
+3008             Set manager = doc.Extension.CustomPropertyManager(CStr(config))
+3009             For Each itemName In Array("Author", "Company", "DrawnBy", "CheckedBy")
     stepLabel = currentIdentity & ": BlankProperties Delete2"
-2742                 manager.Delete2 CStr(itemName)
+3011                 manager.Delete2 CStr(itemName)
     stepLabel = currentIdentity & ": BlankProperties Add3"
-2744                 If manager.Add3(CStr(itemName), 30, "", 2) <> 0 Then Err.Raise 5, , "Custom property blanking failed"
+3013                 If manager.Add3(CStr(itemName), 30, "", 2) <> 0 Then Err.Raise 5, , "Custom property blanking failed"
             Next itemName
         Next config
     End If
@@ -2749,120 +3018,120 @@ End Sub
 
 Private Function Quote(ByVal text As String) As String
     Dim code As Long
-2752     text = Replace(text, "\", "\\")
-2753     text = Replace(text, Chr$(34), "\" & Chr$(34))
-2754     text = Replace(text, vbCr, "\r")
-2755     text = Replace(text, vbLf, "\n")
-2756     text = Replace(text, vbTab, "\t")
-2757     For code = 0 To 31
-2758         text = Replace(text, Chr$(code), "\u" & Right$("0000" & Hex$(code), 4))
+3021     text = Replace(text, "\", "\\")
+3022     text = Replace(text, Chr$(34), "\" & Chr$(34))
+3023     text = Replace(text, vbCr, "\r")
+3024     text = Replace(text, vbLf, "\n")
+3025     text = Replace(text, vbTab, "\t")
+3026     For code = 0 To 31
+3027         text = Replace(text, Chr$(code), "\u" & Right$("0000" & Hex$(code), 4))
     Next code
-2760     Quote = Chr$(34) & text & Chr$(34)
+3029     Quote = Chr$(34) & text & Chr$(34)
 End Function
 
 Private Function CleanError(ByVal text As String) As String
     Dim regex As Object
-2765     If InStr(text, "Paths tried: ") > 0 Then CleanError = PrivacyScrub(text): Exit Function
-2766     Set regex = CreateObject("VBScript.RegExp")
-2767     regex.Global = True
+3034     If InStr(text, "Paths tried: ") > 0 Then CleanError = PrivacyScrub(text): Exit Function
+3035     Set regex = CreateObject("VBScript.RegExp")
+3036     regex.Global = True
     ' A drive path, a UNC path, or a "/" that begins a word ("mid/pair/block", an instance path in a placement report, is not one).
     ' The privacy scrub runs FIRST (it knows where a personal path ends, spaces and all); the generic strip then takes a drive path to the end of
     ' the line or a quote, like the privacy tail.
-2771     text = PrivacyScrub(text)
-2772     regex.Pattern = "[A-Za-z]:[\\/][^""'\r\n]*"
-2773     text = regex.Replace(text, "<path>")
-2774     regex.Pattern = "\\\\[^\s""']+"
-2775     text = regex.Replace(text, "<path>")
-2776     regex.Pattern = "(^|[\s""'(\[=,;:])/[^\s""']+"
-2777     CleanError = PrivacyScrub(regex.Replace(text, "$1<path>"))
+3040     text = PrivacyScrub(text)
+3041     regex.Pattern = "[A-Za-z]:[\\/][^""'\r\n]*"
+3042     text = regex.Replace(text, "<path>")
+3043     regex.Pattern = "\\\\[^\s""']+"
+3044     text = regex.Replace(text, "<path>")
+3045     regex.Pattern = "(^|[\s""'(\[=,;:])/[^\s""']+"
+3046     CleanError = PrivacyScrub(regex.Replace(text, "$1<path>"))
 End Function
 
 Private Sub WriteUtf8(ByVal path As String, ByVal text As String)
     Dim stream As Object, binaryStream As Object
-2782     Set stream = CreateObject("ADODB.Stream")
-2783     stream.Type = 2
-2784     stream.Charset = "utf-8"
-2785     stream.Open
-2786     stream.WriteText text
-2787     stream.Position = 0
-2788     stream.Type = 1
-2789     stream.Position = 3
-2790     Set binaryStream = CreateObject("ADODB.Stream")
-2791     binaryStream.Type = 1
-2792     binaryStream.Open
-2793     stream.CopyTo binaryStream
-2794     binaryStream.SaveToFile path, 2
-2795     binaryStream.Close
-2796     stream.Close
+3051     Set stream = CreateObject("ADODB.Stream")
+3052     stream.Type = 2
+3053     stream.Charset = "utf-8"
+3054     stream.Open
+3055     stream.WriteText text
+3056     stream.Position = 0
+3057     stream.Type = 1
+3058     stream.Position = 3
+3059     Set binaryStream = CreateObject("ADODB.Stream")
+3060     binaryStream.Type = 1
+3061     binaryStream.Open
+3062     stream.CopyTo binaryStream
+3063     binaryStream.SaveToFile path, 2
+3064     binaryStream.Close
+3065     stream.Close
 End Sub
 
 Private Sub Pick(ByVal entity As Object, ByVal appendSelection As Boolean, ByVal mark As Long)
     Dim data As Object, topology As SldWorks.Entity, sketchSegment As SldWorks.SketchSegment
     Dim selected As Boolean, before As Long, afterSelect As Long
-2802     If Not replayingPicks Then RememberPick entity, appendSelection, mark
-2803     callInputs = callInputs & " append=" & CStr(appendSelection) & " mark=" & CStr(mark)
+3071     If Not replayingPicks Then RememberPick entity, appendSelection, mark
+3072     callInputs = callInputs & " append=" & CStr(appendSelection) & " mark=" & CStr(mark)
     stepLabel = currentIdentity & ": Pick CreateSelectData" & " " & apiInputs & " " & callInputs
-2805     Set data = doc.SelectionManager.CreateSelectData()
+3074     Set data = doc.SelectionManager.CreateSelectData()
     stepLabel = currentIdentity & ": Pick Mark"
-2807     data.Mark = mark
+3076     data.Mark = mark
     ' An edge of a drawing view is selected in that view (ISelectData.View).
     stepLabel = currentIdentity & ": Pick View"
-2810     If Not pickView Is Nothing Then Set data.View = pickView
+3079     If Not pickView Is Nothing Then Set data.View = pickView
     stepLabel = currentIdentity & ": Pick SketchSegment"
-2812     If TypeOf entity Is SldWorks.SketchSegment Then
-2813         Set sketchSegment = entity
+3081     If TypeOf entity Is SldWorks.SketchSegment Then
+3082         Set sketchSegment = entity
     stepLabel = currentIdentity & ": Pick Select4" & " " & apiInputs & " " & callInputs
-2815         If Not sketchSegment.Select4(appendSelection, data) Then Err.Raise 5, , "Sketch segment selection failed"
+3084         If Not sketchSegment.Select4(appendSelection, data) Then Err.Raise 5, , "Sketch segment selection failed"
     Else
-2817         Set topology = entity
+3086         Set topology = entity
         ' Baseline BEFORE Select4: round 3 measured it after a Select4 that
         ' returned False yet selected, and the fallback then selected twice.
     stepLabel = currentIdentity & ": Pick GetSelectedObjectCount2"
-2821         before = doc.SelectionManager.GetSelectedObjectCount2(-1)
-2822         selected = TryTopologySelect(topology, appendSelection, data)
-2823         afterSelect = before
-2824         If Not selected Then
+3090         before = doc.SelectionManager.GetSelectedObjectCount2(-1)
+3091         selected = TryTopologySelect(topology, appendSelection, data)
+3092         afterSelect = before
+3093         If Not selected Then
     stepLabel = currentIdentity & ": Pick GetSelectedObjectCount2"
-2826             afterSelect = doc.SelectionManager.GetSelectedObjectCount2(-1)
-2827             callInputs = callInputs & " select4=False selected-before=" & CStr(before) & " after-select4=" & CStr(afterSelect)
-2828             If Select4Grew(appendSelection, before, afterSelect) Then
-2829                 RecordMitigation "select4-false-but-selected", True
-2830                 fallbackSuccesses("select4-false-but-selected") = fallbackSuccesses("select4-false-but-selected") + 1
-2831                 selected = True
+3095             afterSelect = doc.SelectionManager.GetSelectedObjectCount2(-1)
+3096             callInputs = callInputs & " select4=False selected-before=" & CStr(before) & " after-select4=" & CStr(afterSelect)
+3097             If Select4Grew(appendSelection, before, afterSelect) Then
+3098                 RecordMitigation "select4-false-but-selected", True
+3099                 fallbackSuccesses("select4-false-but-selected") = fallbackSuccesses("select4-false-but-selected") + 1
+3100                 selected = True
             End If
         End If
-2834         If Not selected Then
-2835             RecordMitigation "select4->multiselect2", True
+3103         If Not selected Then
+3104             RecordMitigation "select4->multiselect2", True
     stepLabel = currentIdentity & ": Pick MultiSelect2" & " " & apiInputs & " " & callInputs
-2837             If doc.Extension.MultiSelect2(Array(entity), appendSelection, data) <> 1 Then
-2838                 If Not AppendCountConfirms(appendSelection, before, afterSelect) Then Err.Raise 5, , "Entity selection failed (Select4 and MultiSelect2)"
+3106             If doc.Extension.MultiSelect2(Array(entity), appendSelection, data) <> 1 Then
+3107                 If Not AppendCountConfirms(appendSelection, before, afterSelect) Then Err.Raise 5, , "Entity selection failed (Select4 and MultiSelect2)"
             End If
-2840             fallbackSuccesses("select4->multiselect2") = fallbackSuccesses("select4->multiselect2") + 1
+3109             fallbackSuccesses("select4->multiselect2") = fallbackSuccesses("select4->multiselect2") + 1
         End If
     End If
 End Sub
 
 Private Sub RememberPick(ByVal entity As Object, ByVal appendSelection As Boolean, ByVal mark As Long)
     ' Keep what Pick selected, for ReplayPicks. A selection that is not appended to starts a new list; more than four entities cannot be kept.
-2847     If Not appendSelection Then pickCount = 0
-2848     If pickCount < 0 Then Exit Sub
-2849     If pickCount > 3 Then
-2850         pickCount = -1
-2851         Exit Sub
+3116     If Not appendSelection Then pickCount = 0
+3117     If pickCount < 0 Then Exit Sub
+3118     If pickCount > 3 Then
+3119         pickCount = -1
+3120         Exit Sub
     End If
-2853     Set pickEntities(pickCount) = entity
-2854     pickAppends(pickCount) = appendSelection
-2855     pickMarks(pickCount) = mark
-2856     pickCount = pickCount + 1
+3122     Set pickEntities(pickCount) = entity
+3123     pickAppends(pickCount) = appendSelection
+3124     pickMarks(pickCount) = mark
+3125     pickCount = pickCount + 1
 End Sub
 
 Private Function Select4Grew(ByVal appendSelection As Boolean, ByVal before As Long, ByVal after As Long) As Boolean
     ' Did a Select4 that returned False select anyway? Appending: grew by one.
     ' Replacing: only from an empty selection to one; otherwise fall back.
-2862     If appendSelection Then
-2863         Select4Grew = (after = before + 1)
+3131     If appendSelection Then
+3132         Select4Grew = (after = before + 1)
     Else
-2865         Select4Grew = (before = 0 And after = 1)
+3134         Select4Grew = (before = 0 And after = 1)
     End If
 End Function
 
@@ -2871,61 +3140,61 @@ Private Function AppendCountConfirms(ByVal appendSelection As Boolean, ByVal bef
     ' first, non-appended entity did. Accept it if the selection grew by one
     ' since before Select4.
     Dim after As Long
-2874     If Not appendSelection Then Exit Function
-2875     RecordMitigation "multiselect2-append-count", True
-2876     after = doc.SelectionManager.GetSelectedObjectCount2(-1)
-2877     callInputs = callInputs & " selected-before=" & CStr(before) & " after-select4=" & CStr(afterSelect) & " after=" & CStr(after)
-2878     stepLabel = stepLabel & " selected-before=" & CStr(before) & " after-select4=" & CStr(afterSelect) & " after=" & CStr(after)
-2879     If after <> before + 1 Then Exit Function
-2880     fallbackSuccesses("multiselect2-append-count") = fallbackSuccesses("multiselect2-append-count") + 1
-2881     AppendCountConfirms = True
+3143     If Not appendSelection Then Exit Function
+3144     RecordMitigation "multiselect2-append-count", True
+3145     after = doc.SelectionManager.GetSelectedObjectCount2(-1)
+3146     callInputs = callInputs & " selected-before=" & CStr(before) & " after-select4=" & CStr(afterSelect) & " after=" & CStr(after)
+3147     stepLabel = stepLabel & " selected-before=" & CStr(before) & " after-select4=" & CStr(afterSelect) & " after=" & CStr(after)
+3148     If after <> before + 1 Then Exit Function
+3149     fallbackSuccesses("multiselect2-append-count") = fallbackSuccesses("multiselect2-append-count") + 1
+3150     AppendCountConfirms = True
 End Function
 
 Private Function MatrixUsable(ByVal matrix As Variant) As Boolean
     ' IMathTransform.ArrayData: rotation 0-8, translation 9-11, scale 12.
     Dim i As Long, j As Long, k As Long, first As Long, dot As Double, expected As Double
-2887     If Not IsArray(matrix) Then Exit Function
-2888     first = LBound(matrix)
-2889     If UBound(matrix) - first < 12 Then Exit Function
-2890     For i = 0 To 12
-2891         If Not IsNumeric(matrix(first + i)) Then Exit Function
+3156     If Not IsArray(matrix) Then Exit Function
+3157     first = LBound(matrix)
+3158     If UBound(matrix) - first < 12 Then Exit Function
+3159     For i = 0 To 12
+3160         If Not IsNumeric(matrix(first + i)) Then Exit Function
     Next i
-2893     For i = 0 To 2
-2894         For j = 0 To 2
-2895             dot = 0#
-2896             For k = 0 To 2
-2897                 dot = dot + CDbl(matrix(first + 3 * i + k)) * CDbl(matrix(first + 3 * j + k))
+3162     For i = 0 To 2
+3163         For j = 0 To 2
+3164             dot = 0#
+3165             For k = 0 To 2
+3166                 dot = dot + CDbl(matrix(first + 3 * i + k)) * CDbl(matrix(first + 3 * j + k))
             Next k
-2899             expected = 0#
-2900             If i = j Then expected = 1#
-2901             If Abs(dot - expected) > 0.000001 Then Exit Function
+3168             expected = 0#
+3169             If i = j Then expected = 1#
+3170             If Abs(dot - expected) > 0.000001 Then Exit Function
         Next j
     Next i
-2904     MatrixUsable = Abs(CDbl(matrix(first + 12))) > 0.000000001
+3173     MatrixUsable = Abs(CDbl(matrix(first + 12))) > 0.000000001
 End Function
 
 Private Function MatrixPoint(ByVal matrix As Variant, ByVal x As Double, ByVal y As Double, ByVal z As Double) As Variant
     ' Row-vector convention: local = (p x R) * scale + translation.
     Dim first As Long, scaleFactor As Double, result(2) As Double, j As Long
-2910     first = LBound(matrix)
-2911     scaleFactor = CDbl(matrix(first + 12))
-2912     For j = 0 To 2
-2913         result(j) = (x * CDbl(matrix(first + j)) + y * CDbl(matrix(first + 3 + j)) + z * CDbl(matrix(first + 6 + j))) * scaleFactor + CDbl(matrix(first + 9 + j))
+3179     first = LBound(matrix)
+3180     scaleFactor = CDbl(matrix(first + 12))
+3181     For j = 0 To 2
+3182         result(j) = (x * CDbl(matrix(first + j)) + y * CDbl(matrix(first + 3 + j)) + z * CDbl(matrix(first + 6 + j))) * scaleFactor + CDbl(matrix(first + 9 + j))
     Next j
-2915     MatrixPoint = Array(result(0), result(1), result(2))
+3184     MatrixPoint = Array(result(0), result(1), result(2))
 End Function
 
 Private Function NumberList(ByVal values As Variant) As String
     Dim i As Long, text As String
-2920     For i = LBound(values) To UBound(values)
-2921         If i > LBound(values) Then text = text & ","
-2922         text = text & Replace(CStr(values(i)), ",", ".")
+3189     For i = LBound(values) To UBound(values)
+3190         If i > LBound(values) Then text = text & ","
+3191         text = text & Replace(CStr(values(i)), ",", ".")
     Next i
-2924     NumberList = text
+3193     NumberList = text
 End Function
 
 Private Function DrawingDocument(ByVal model As Object) As SldWorks.DrawingDoc
-2928     Set DrawingDocument = model
+3197     Set DrawingDocument = model
 End Function
 
 Private Function ViewDrop(ByVal view As Object) As Long
@@ -2935,57 +3204,57 @@ Private Function ViewDrop(ByVal view As Object) As Long
     ' permutation (one +-1 and two zeros in every row and column, within 1e-9). A tilted view fails.
     Dim matrix As Variant, i As Long, j As Long, first As Long, ones As Long, zeros As Long, value As Double
     stepLabel = currentIdentity & ": ViewDrop ArrayData"
-2938     matrix = view.ModelToViewTransform.ArrayData
-2939     If Not MatrixUsable(matrix) Then Err.Raise 5, , "The drawing view transform is not a rotation"
-2940     first = LBound(matrix)
-2941     For i = 0 To 5
-2942         ones = 0
-2943         zeros = 0
-2944         For j = 0 To 2
-2945             If i < 3 Then
-2946                 value = CDbl(matrix(first + 3 * i + j))
+3207     matrix = view.ModelToViewTransform.ArrayData
+3208     If Not MatrixUsable(matrix) Then Err.Raise 5, , "The drawing view transform is not a rotation"
+3209     first = LBound(matrix)
+3210     For i = 0 To 5
+3211         ones = 0
+3212         zeros = 0
+3213         For j = 0 To 2
+3214             If i < 3 Then
+3215                 value = CDbl(matrix(first + 3 * i + j))
             Else
-2948                 value = CDbl(matrix(first + 3 * j + (i - 3)))
+3217                 value = CDbl(matrix(first + 3 * j + (i - 3)))
             End If
-2950             If Abs(Abs(value) - 1#) <= 0.000000001 Then ones = ones + 1
-2951             If Abs(value) <= 0.000000001 Then zeros = zeros + 1
+3219             If Abs(Abs(value) - 1#) <= 0.000000001 Then ones = ones + 1
+3220             If Abs(value) <= 0.000000001 Then zeros = zeros + 1
         Next j
-2953         If ones <> 1 Or zeros <> 2 Then Err.Raise 5, , "The drawing view is not an axis-aligned view: its rotation is not a signed axis permutation: " & NumberList(matrix)
+3222         If ones <> 1 Or zeros <> 2 Then Err.Raise 5, , "The drawing view is not an axis-aligned view: its rotation is not a signed axis permutation: " & NumberList(matrix)
     Next i
-2955     For i = 0 To 2
-2956         If Abs(CDbl(matrix(first + 3 * i + 2))) > 0.5 Then ViewDrop = i
+3224     For i = 0 To 2
+3225         If Abs(CDbl(matrix(first + 3 * i + 2))) > 0.5 Then ViewDrop = i
     Next i
 End Function
 
 Private Function ViewToModel(ByVal matrix As Variant, ByVal point As Variant) As Variant
     ' Undo IView.ModelToViewTransform: view = (model x R) * scale + t, R orthonormal.
     Dim first As Long, i As Long, j As Long, v(2) As Double, result(2) As Double
-2963     first = LBound(matrix)
-2964     For j = 0 To 2
-2965         v(j) = (CDbl(point(j)) - CDbl(matrix(first + 9 + j))) / CDbl(matrix(first + 12))
+3232     first = LBound(matrix)
+3233     For j = 0 To 2
+3234         v(j) = (CDbl(point(j)) - CDbl(matrix(first + 9 + j))) / CDbl(matrix(first + 12))
     Next j
-2967     For i = 0 To 2
-2968         For j = 0 To 2
-2969             result(i) = result(i) + v(j) * CDbl(matrix(first + 3 * i + j))
+3236     For i = 0 To 2
+3237         For j = 0 To 2
+3238             result(i) = result(i) + v(j) * CDbl(matrix(first + 3 * i + j))
         Next j
     Next i
-2972     ViewToModel = Array(result(0), result(1), result(2))
+3241     ViewToModel = Array(result(0), result(1), result(2))
 End Function
 
 Private Function RotateToModel(ByVal matrix As Variant, ByVal axis As Variant) As Variant
     ' A direction from view space to model space: the rotation of ViewToModel only, no scale and no translation.
     Dim first As Long, i As Long, j As Long, result(2) As Double
-2978     first = LBound(matrix)
-2979     For i = 0 To 2
-2980         For j = 0 To 2
-2981             result(i) = result(i) + CDbl(axis(j)) * CDbl(matrix(first + 3 * i + j))
+3247     first = LBound(matrix)
+3248     For i = 0 To 2
+3249         For j = 0 To 2
+3250             result(i) = result(i) + CDbl(axis(j)) * CDbl(matrix(first + 3 * i + j))
         Next j
     Next i
-2984     RotateToModel = Array(result(0), result(1), result(2))
+3253     RotateToModel = Array(result(0), result(1), result(2))
 End Function
 
 Private Function FlatPoint(ByVal point As Variant, ByVal drop As Long) As Variant
-2988     Select Case drop
+3257     Select Case drop
         Case 0: FlatPoint = Array(CDbl(point(1)), CDbl(point(2)))
         Case 1: FlatPoint = Array(CDbl(point(0)), CDbl(point(2)))
         Case Else: FlatPoint = Array(CDbl(point(0)), CDbl(point(1)))
@@ -2993,217 +3262,231 @@ Private Function FlatPoint(ByVal point As Variant, ByVal drop As Long) As Varian
 End Function
 
 Private Function NearFlat(ByVal a As Variant, ByVal b As Variant) As Boolean
-2996     NearFlat = Abs(CDbl(a(0)) - CDbl(b(0))) <= 0.000001 And Abs(CDbl(a(1)) - CDbl(b(1))) <= 0.000001
+3265     NearFlat = Abs(CDbl(a(0)) - CDbl(b(0))) <= 0.000001 And Abs(CDbl(a(1)) - CDbl(b(1))) <= 0.000001
 End Function
 
 Private Function InsideBox(ByVal point As Variant, ByVal low As Variant, ByVal high As Variant) As Boolean
     Dim i As Long
-3001     For i = 0 To 2
-3002         If CDbl(point(i)) < CDbl(low(i)) - 0.000001 Or CDbl(point(i)) > CDbl(high(i)) + 0.000001 Then Exit Function
+3270     For i = 0 To 2
+3271         If CDbl(point(i)) < CDbl(low(i)) - 0.000001 Or CDbl(point(i)) > CDbl(high(i)) + 0.000001 Then Exit Function
     Next i
-3004     InsideBox = True
+3273     InsideBox = True
 End Function
 
 Private Function RecordPoint(ByVal record As Object, ByVal key As String, ByVal convert As Long, ByVal matrix As Variant) As Variant
     ' A record's stored point as model meters: as reported (convert = 0) or with the view transform undone (1).
     Dim stored As Variant
-3010     stored = record(key)
-3011     If convert = 0 Then
-3012         RecordPoint = Array(CDbl(stored(0)), CDbl(stored(1)), CDbl(stored(2)))
+3279     stored = record(key)
+3280     If convert = 0 Then
+3281         RecordPoint = Array(CDbl(stored(0)), CDbl(stored(1)), CDbl(stored(2)))
     Else
-3014         RecordPoint = ViewToModel(matrix, stored)
+3283         RecordPoint = ViewToModel(matrix, stored)
     End If
 End Function
 
 Private Sub AddEdgeRecords(ByVal found As Collection, ByVal raw As Variant)
     ' The line and circle records (entity and the points SolidWorks reports) of an array of IEdge.
     Dim entity As Variant, curve As Object, record As Object, parameters As Variant
-3021     For Each entity In raw
+3290     For Each entity In raw
     stepLabel = currentIdentity & ": AddEdgeRecords GetCurve"
-3023         Set curve = entity.GetCurve()
-3024         If Not curve Is Nothing Then
+3292         Set curve = entity.GetCurve()
+3293         If Not curve Is Nothing Then
     stepLabel = currentIdentity & ": AddEdgeRecords IsLine"
-3026             If curve.IsLine() Then
-3027                 Set record = CreateObject("Scripting.Dictionary")
-3028                 record("kind") = "line"
-3029                 Set record("entity") = entity
+3295             If curve.IsLine() Then
+3296                 Set record = CreateObject("Scripting.Dictionary")
+3297                 record("kind") = "line"
+3298                 Set record("entity") = entity
     stepLabel = currentIdentity & ": AddEdgeRecords GetPoint"
-3031                 record("p0") = entity.GetStartVertex().GetPoint()
+3300                 record("p0") = entity.GetStartVertex().GetPoint()
     stepLabel = currentIdentity & ": AddEdgeRecords GetPoint"
-3033                 record("p1") = entity.GetEndVertex().GetPoint()
+3302                 record("p1") = entity.GetEndVertex().GetPoint()
     stepLabel = currentIdentity & ": AddEdgeRecords Add"
-3035                 found.Add record
+3304                 found.Add record
             ElseIf curve.IsCircle() Then
     stepLabel = currentIdentity & ": AddEdgeRecords CircleParams"
-3038                 parameters = curve.CircleParams
-3039                 Set record = CreateObject("Scripting.Dictionary")
-3040                 record("kind") = "circle"
-3041                 Set record("entity") = entity
-3042                 record("p0") = Array(CDbl(parameters(0)), CDbl(parameters(1)), CDbl(parameters(2)))
+3307                 parameters = curve.CircleParams
+3308                 Set record = CreateObject("Scripting.Dictionary")
+3309                 record("kind") = "circle"
+3310                 Set record("entity") = entity
+3311                 record("p0") = Array(CDbl(parameters(0)), CDbl(parameters(1)), CDbl(parameters(2)))
                 ' ICurve.CircleParams: center x, y, z, axis x, y, z, radius.
-3044                 record("axis") = Array(CDbl(parameters(3)), CDbl(parameters(4)), CDbl(parameters(5)))
-3045                 record("radius") = CDbl(parameters(6))
-3046                 record("raw") = Array(CDbl(parameters(0)), CDbl(parameters(1)), CDbl(parameters(2)), CDbl(parameters(3)), CDbl(parameters(4)), CDbl(parameters(5)), CDbl(parameters(6)))
+3313                 record("axis") = Array(CDbl(parameters(3)), CDbl(parameters(4)), CDbl(parameters(5)))
+3314                 record("radius") = CDbl(parameters(6))
+3315                 record("raw") = Array(CDbl(parameters(0)), CDbl(parameters(1)), CDbl(parameters(2)), CDbl(parameters(3)), CDbl(parameters(4)), CDbl(parameters(5)), CDbl(parameters(6)))
     stepLabel = currentIdentity & ": AddEdgeRecords Add"
-3048                 found.Add record
+3317                 found.Add record
             End If
         End If
     Next entity
 End Sub
 
 Private Function ShiftPoint(ByVal point As Variant, ByVal shift As Variant) As Variant
-3055     ShiftPoint = Array(CDbl(point(0)) + CDbl(shift(0)), CDbl(point(1)) + CDbl(shift(1)), CDbl(point(2)) + CDbl(shift(2)))
+3324     ShiftPoint = Array(CDbl(point(0)) + CDbl(shift(0)), CDbl(point(1)) + CDbl(shift(1)), CDbl(point(2)) + CDbl(shift(2)))
 End Function
 
 Private Function ComponentFits(ByVal mine As Collection, ByVal box As Variant, ByVal shift As Variant) As Boolean
     ' Do all the points of one component's edges lie in its box (meters, box(1) low, box(2) high) once moved by `shift`?
     Dim record As Object
-3061     For Each record In mine
-3062         If Not InsideBox(ShiftPoint(record("p0"), shift), box(1), box(2)) Then Exit Function
-3063         If record("kind") = "line" Then
-3064             If Not InsideBox(ShiftPoint(record("p1"), shift), box(1), box(2)) Then Exit Function
+3330     For Each record In mine
+3331         If Not InsideBox(ShiftPoint(record("p0"), shift), box(1), box(2)) Then Exit Function
+3332         If record("kind") = "line" Then
+3333             If Not InsideBox(ShiftPoint(record("p1"), shift), box(1), box(2)) Then Exit Function
         End If
     Next record
-3067     ComponentFits = True
+3336     ComponentFits = True
 End Function
 
-Private Sub AddAssemblyEdges(ByVal view As Object, ByVal components As Variant, ByVal found As Collection)
+Private Sub AddAssemblyEdges(ByVal view As Object, ByVal components As Variant, ByVal found As Collection, ByVal assemblyName As String)
     ' The drawing view of an assembly (D19a): IView.GetVisibleEntities2 takes the component whose edges are wanted (Nothing gives a part's), so each component
     ' the view shows is asked in turn (IView.GetVisibleComponents). components(k) = Array(name, low, high, shift) in meters: the component's box in the assembly
     ' and where its own origin stands there. The reported points are taken as assembly coordinates when they all lie in that box, else as the part's own
     ' coordinates moved by the shift (mitigation drawing-assembly-edges-part-space); when neither fits, the recipe fails naming the component.
     Dim shown As Variant, component As Variant, label As String, k As Long, which As Long, raw As Variant, mine As Collection, record As Object
-    Dim shift As Variant, seen As String, viewName As String, moved As Boolean, box As Variant, size As Long
+    Dim shift As Variant, seen As String, viewName As String, moved As Boolean, box As Variant, size As Long, shownNames As String, shownCount As Long
     stepLabel = currentIdentity & ": AddAssemblyEdges GetName2"
-3078     viewName = view.GetName2()
+3347     viewName = view.GetName2()
     stepLabel = currentIdentity & ": AddAssemblyEdges GetVisibleComponents"
-3080     shown = view.GetVisibleComponents()
-3081     If Not IsArray(shown) Then Err.Raise 5, , viewName & ": GetVisibleComponents returned no components"
-3082     seen = ","
-3083     For Each component In shown
+3349     shown = view.GetVisibleComponents()
+3350     If Not IsArray(shown) Then Err.Raise 5, , viewName & ": GetVisibleComponents returned no components"
+    ' Once per view (the caller keeps the view's edges): what SolidWorks called the components, names only.
+3352     For Each component In shown
+3353         If shownCount > 0 Then shownNames = shownNames & ", "
     stepLabel = currentIdentity & ": AddAssemblyEdges Name2"
-3085         label = CStr(component.Name2)
-3086         size = Len(label)
-3087         Do While size > 0
-3088             If Mid$(label, size, 1) Like "#" Then
-3089                 size = size - 1
+3355         shownNames = shownNames & CStr(component.Name2)
+3356         shownCount = shownCount + 1
+    Next component
+3358     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing: view " & viewName & " shows " & CStr(shownCount) & " component" & IIf(shownCount = 1, "", "s") & ": " & shownNames
+3359     seen = ","
+3360     For Each component In shown
+    stepLabel = currentIdentity & ": AddAssemblyEdges Name2"
+3362         label = CStr(component.Name2)
+3363         If InStr(label, "@") > 0 Then label = Left$(label, InStr(label, "@") - 1)
+        ' Only a prefix that is exactly the assembly's own name is removed: a component under any other prefix (sub-1/pin-1) is not top-level and never matches.
+3365         If InStr(label, "/") > 0 Then
+3366             If StrComp(Left$(label, InStr(label, "/") - 1), assemblyName, vbTextCompare) = 0 And InStr(InStr(label, "/") + 1, label, "/") = 0 Then label = Mid$(label, InStr(label, "/") + 1)
+        End If
+3368         size = Len(label)
+3369         Do While size > 0
+3370             If Mid$(label, size, 1) Like "#" Then
+3371                 size = size - 1
             Else
-3091                 Exit Do
+3373                 Exit Do
             End If
         Loop
-3094         If size > 0 And size < Len(label) Then
-3095             If Mid$(label, size, 1) = "-" Then label = Left$(label, size - 1)
+3376         If size > 0 And size < Len(label) Then
+3377             If Mid$(label, size, 1) = "-" Then label = Left$(label, size - 1)
         End If
-3097         which = -1
-3098         For k = 0 To UBound(components)
-3099             If CStr(components(k)(0)) = label Then which = k
+3379         which = -1
+3380         For k = 0 To UBound(components)
+3381             If StrComp(CStr(components(k)(0)), label, vbTextCompare) = 0 Then which = k
         Next k
-3101         If which >= 0 Then
-3102             box = components(which)
-3103             seen = seen & label & ","
+3383         If which >= 0 Then
+3384             box = components(which)
+3385             label = CStr(components(which)(0))
+3386             seen = seen & label & ","
     stepLabel = currentIdentity & ": AddAssemblyEdges GetVisibleEntities2"
-3105             raw = view.GetVisibleEntities2(component, swViewEntityType_Edge)
-3106             If Not IsArray(raw) Then Err.Raise 5, , viewName & ": GetVisibleEntities2 returned no edges for the component " & label
-3107             Set mine = New Collection
-3108             AddEdgeRecords mine, raw
+3388             raw = view.GetVisibleEntities2(component, swViewEntityType_Edge)
+3389             If Not IsArray(raw) Then Err.Raise 5, , viewName & ": GetVisibleEntities2 returned no edges for the component " & label
+3390             Set mine = New Collection
+3391             AddEdgeRecords mine, raw
     stepLabel = currentIdentity & ": AddAssemblyEdges Count"
-3110             If mine.Count = 0 Then Err.Raise 5, , viewName & ": GetVisibleEntities2 returned no edges for the component " & label
-3111             shift = Array(0#, 0#, 0#)
-3112             moved = False
-3113             If Not ComponentFits(mine, box, shift) Then
-3114                 shift = box(3)
-3115                 moved = True
-3116                 If Not ComponentFits(mine, box, shift) Then Err.Raise 5, , viewName & ": the edge points of the component " & label & " lie outside its box in assembly coordinates and in part coordinates moved to its place"
+3393             If mine.Count = 0 Then Err.Raise 5, , viewName & ": GetVisibleEntities2 returned no edges for the component " & label
+3394             shift = Array(0#, 0#, 0#)
+3395             moved = False
+3396             If Not ComponentFits(mine, box, shift) Then
+3397                 shift = box(3)
+3398                 moved = True
+3399                 If Not ComponentFits(mine, box, shift) Then Err.Raise 5, , viewName & ": the edge points of the component " & label & " lie outside its box in assembly coordinates and in part coordinates moved to its place"
             End If
-3118             If moved Then
-3119                 RecordMitigation "drawing-assembly-edges-part-space", True, True
-3120                 fallbackSuccesses("drawing-assembly-edges-part-space") = fallbackSuccesses("drawing-assembly-edges-part-space") + 1
+3401             If moved Then
+3402                 RecordMitigation "drawing-assembly-edges-part-space", True, True
+3403                 fallbackSuccesses("drawing-assembly-edges-part-space") = fallbackSuccesses("drawing-assembly-edges-part-space") + 1
             End If
-3122             For Each record In mine
-3123                 record("p0") = ShiftPoint(record("p0"), shift)
-3124                 If record("kind") = "line" Then record("p1") = ShiftPoint(record("p1"), shift)
-3125                 If record("kind") = "circle" Then record("raw") = Array(CDbl(record("p0")(0)), CDbl(record("p0")(1)), CDbl(record("p0")(2)), CDbl(record("raw")(3)), CDbl(record("raw")(4)), CDbl(record("raw")(5)), CDbl(record("raw")(6)))
+3405             For Each record In mine
+3406                 record("p0") = ShiftPoint(record("p0"), shift)
+3407                 If record("kind") = "line" Then record("p1") = ShiftPoint(record("p1"), shift)
+3408                 If record("kind") = "circle" Then record("raw") = Array(CDbl(record("p0")(0)), CDbl(record("p0")(1)), CDbl(record("p0")(2)), CDbl(record("raw")(3)), CDbl(record("raw")(4)), CDbl(record("raw")(5)), CDbl(record("raw")(6)))
     stepLabel = currentIdentity & ": AddAssemblyEdges Add"
-3127                 found.Add record
+3410                 found.Add record
             Next record
         End If
     Next component
-3131     For k = 0 To UBound(components)
-3132         If InStr(seen, "," & CStr(components(k)(0)) & ",") = 0 Then Err.Raise 5, , viewName & ": the view shows no edges of the component " & CStr(components(k)(0))
+3414     For k = 0 To UBound(components)
+3415         If InStr(seen, "," & CStr(components(k)(0)) & ",") = 0 Then Err.Raise 5, , viewName & ": the view shows no edges of the component " & CStr(components(k)(0)) & "; the view showed: " & shownNames
     Next k
 End Sub
 
-Private Function DrawingEdges(ByVal view As Object, ByVal low As Variant, ByVal high As Variant, ByRef drop As Long, ByRef spaceName As String, Optional ByVal components As Variant) As Collection
+Private Function DrawingEdges(ByVal view As Object, ByVal low As Variant, ByVal high As Variant, ByRef drop As Long, ByRef spaceName As String, Optional ByVal components As Variant, Optional ByVal assemblyName As String) As Collection
     ' The view's visible line and circle edges, flattened along its axis, in model meters. Entity
     ' coordinates are taken as model coordinates; if they do not all lie inside the model's box they
     ' are tried as view coordinates, and if that fails too the recipe fails. An assembly's view is read component by component (AddAssemblyEdges).
     Dim matrix As Variant, raw As Variant, found As Collection, record As Object
     Dim convert As Long, ok As Boolean, chosen As Long, viewName As String, axis As Variant, size As Double
     stepLabel = currentIdentity & ": DrawingEdges GetName2"
-3143     viewName = view.GetName2()
+3426     viewName = view.GetName2()
     stepLabel = currentIdentity & ": DrawingEdges ArrayData"
-3145     matrix = view.ModelToViewTransform.ArrayData
-3146     drop = ViewDrop(view)
-3147     Set found = New Collection
-3148     If IsArray(components) Then
-3149         AddAssemblyEdges view, components, found
+3428     matrix = view.ModelToViewTransform.ArrayData
+3429     drop = ViewDrop(view)
+3430     Set found = New Collection
+3431     If IsArray(components) Then
+3432         AddAssemblyEdges view, components, found, assemblyName
     Else
     stepLabel = currentIdentity & ": DrawingEdges GetVisibleEntities2"
-3152         raw = view.GetVisibleEntities2(Nothing, swViewEntityType_Edge)
-3153         If Not IsArray(raw) Then Err.Raise 5, , viewName & ": GetVisibleEntities2 returned no edges"
-3154         AddEdgeRecords found, raw
+3435         raw = view.GetVisibleEntities2(Nothing, swViewEntityType_Edge)
+3436         If Not IsArray(raw) Then Err.Raise 5, , viewName & ": GetVisibleEntities2 returned no edges"
+3437         AddEdgeRecords found, raw
     End If
     stepLabel = currentIdentity & ": DrawingEdges Count"
-3157     If found.Count = 0 Then Err.Raise 5, , viewName & ": none of its visible edges is a line or a circle"
-3158     chosen = -1
-3159     For convert = 0 To 1
-3160         ok = True
-3161         For Each record In found
-3162             If Not InsideBox(RecordPoint(record, "p0", convert, matrix), low, high) Then ok = False
-3163             If record("kind") = "line" Then
-3164                 If Not InsideBox(RecordPoint(record, "p1", convert, matrix), low, high) Then ok = False
+3440     If found.Count = 0 Then Err.Raise 5, , viewName & ": none of its visible edges is a line or a circle"
+3441     chosen = -1
+3442     For convert = 0 To 1
+3443         ok = True
+3444         For Each record In found
+3445             If Not InsideBox(RecordPoint(record, "p0", convert, matrix), low, high) Then ok = False
+3446             If record("kind") = "line" Then
+3447                 If Not InsideBox(RecordPoint(record, "p1", convert, matrix), low, high) Then ok = False
             End If
         Next record
-3167         If ok Then
-3168             chosen = convert
-3169             Exit For
+3450         If ok Then
+3451             chosen = convert
+3452             Exit For
         End If
     Next convert
-3172     If chosen < 0 Then Err.Raise 5, , viewName & ": the visible edge points lie outside the model box as model coordinates and as view coordinates (transform " & NumberList(matrix) & ")"
-3173     spaceName = IIf(chosen = 0, "model", "view")
-3174     For Each record In found
-3175         record("a") = FlatPoint(RecordPoint(record, "p0", chosen, matrix), drop)
-3176         If record("kind") = "line" Then record("b") = FlatPoint(RecordPoint(record, "p1", chosen, matrix), drop)
-3177         If record("kind") = "circle" Then
+3455     If chosen < 0 Then Err.Raise 5, , viewName & ": the visible edge points lie outside the model box as model coordinates and as view coordinates (transform " & NumberList(matrix) & ")"
+3456     spaceName = IIf(chosen = 0, "model", "view")
+3457     For Each record In found
+3458         record("a") = FlatPoint(RecordPoint(record, "p0", chosen, matrix), drop)
+3459         If record("kind") = "line" Then record("b") = FlatPoint(RecordPoint(record, "p1", chosen, matrix), drop)
+3460         If record("kind") = "circle" Then
             ' The circle's axis in model space (a view-space axis is only rotated), and whether the view looks straight down it: then it shows as a
             ' circle; otherwise (edge-on) as a straight line through its center, 2 x radius long.
-3180             axis = record("axis")
-3181             If chosen = 1 Then axis = RotateToModel(matrix, axis)
+3463             axis = record("axis")
+3464             If chosen = 1 Then axis = RotateToModel(matrix, axis)
             ' faceOn: 1 the view looks down the axis, 0 the axis lies across the view, -1 unknown (a zero or non-unit axis, or one at an angle).
-3183             size = Sqr(CDbl(axis(0)) * CDbl(axis(0)) + CDbl(axis(1)) * CDbl(axis(1)) + CDbl(axis(2)) * CDbl(axis(2)))
-3184             If Abs(size - 1#) > 0.000001 Then
-3185                 record("faceOn") = -1
+3466             size = Sqr(CDbl(axis(0)) * CDbl(axis(0)) + CDbl(axis(1)) * CDbl(axis(1)) + CDbl(axis(2)) * CDbl(axis(2)))
+3467             If Abs(size - 1#) > 0.000001 Then
+3468                 record("faceOn") = -1
             ElseIf Abs(Abs(CDbl(axis(drop))) - 1#) <= 0.000001 Then
-3187                 record("faceOn") = 1
+3470                 record("faceOn") = 1
             ElseIf Abs(CDbl(axis(drop))) <= 0.000001 Then
-3189                 record("faceOn") = 0
+3472                 record("faceOn") = 0
             Else
-3191                 record("faceOn") = -1
+3474                 record("faceOn") = -1
             End If
-3193             record("flatAxis") = FlatPoint(axis, drop)
+3476             record("flatAxis") = FlatPoint(axis, drop)
         End If
     Next record
-3196     Set DrawingEdges = found
+3479     Set DrawingEdges = found
 End Function
 
 Private Function PlanSingle(ByVal records As Collection, ByVal first As Variant, ByVal second As Variant) As Object
     ' A line whose two ends are the two points: selecting it alone dimensions its length.
     Dim record As Object
-3202     For Each record In records
-3203         If record("kind") = "line" Then
-3204             If (NearFlat(record("a"), first) And NearFlat(record("b"), second)) Or (NearFlat(record("a"), second) And NearFlat(record("b"), first)) Then
-3205                 Set PlanSingle = record
-3206                 Exit Function
+3485     For Each record In records
+3486         If record("kind") = "line" Then
+3487             If (NearFlat(record("a"), first) And NearFlat(record("b"), second)) Or (NearFlat(record("a"), second) And NearFlat(record("b"), first)) Then
+3488                 Set PlanSingle = record
+3489                 Exit Function
             End If
         End If
     Next record
@@ -3212,30 +3495,30 @@ End Function
 Private Function CloneRecord(ByVal record As Object, ByVal rung As String) As Object
     ' A copy of an edge record marked with the mitigation name of the plan form that uses it (the cached record itself stays unmarked).
     Dim copy As Object, key As Variant
-3215     Set copy = CreateObject("Scripting.Dictionary")
+3498     Set copy = CreateObject("Scripting.Dictionary")
     stepLabel = currentIdentity & ": CloneRecord Keys"
-3217     For Each key In record.Keys
-3218         If IsObject(record(key)) Then
-3219             Set copy(key) = record(key)
+3500     For Each key In record.Keys
+3501         If IsObject(record(key)) Then
+3502             Set copy(key) = record(key)
         Else
-3221             copy(key) = record(key)
+3504             copy(key) = record(key)
         End If
     Next key
-3224     copy("rung") = rung
-3225     Set CloneRecord = copy
+3507     copy("rung") = rung
+3508     Set CloneRecord = copy
 End Function
 
 Private Function PlanDiameter(ByVal records As Collection, ByVal first As Variant, ByVal second As Variant, ByVal length As Double) As Object
     ' A circle seen face-on whose diameter the two points are the ends of: selecting it alone makes IModelDoc2.AddDimension2 add a diameter dimension.
     Dim record As Object, centre As Variant
-3231     For Each record In records
-3232         If record("kind") = "circle" Then
-3233             If record("faceOn") = 1 Then
-3234                 centre = record("a")
-3235                 If Abs(2# * CDbl(record("radius")) - length) <= 0.000001 And Abs(CDbl(centre(0)) - (first(0) + second(0)) / 2#) <= 0.000001 _
+3514     For Each record In records
+3515         If record("kind") = "circle" Then
+3516             If record("faceOn") = 1 Then
+3517                 centre = record("a")
+3518                 If Abs(2# * CDbl(record("radius")) - length) <= 0.000001 And Abs(CDbl(centre(0)) - (first(0) + second(0)) / 2#) <= 0.000001 _
                    And Abs(CDbl(centre(1)) - (first(1) + second(1)) / 2#) <= 0.000001 Then
-3237                     Set PlanDiameter = CloneRecord(record, "drawing-dimension-circle-diameter")
-3238                     Exit Function
+3520                     Set PlanDiameter = CloneRecord(record, "drawing-dimension-circle-diameter")
+3521                     Exit Function
                 End If
             End If
         End If
@@ -3245,20 +3528,20 @@ End Function
 Private Function PlanLine(ByVal records As Collection, ByVal point As Variant, ByVal ux As Double, ByVal uy As Double) As Object
     ' A line through the point that is perpendicular to the measuring direction.
     Dim record As Object, a As Variant, b As Variant, runX As Double, runY As Double, size As Double, along As Double, off As Double
-3248     For Each record In records
-3249         If record("kind") = "line" Then
-3250             a = record("a")
-3251             b = record("b")
-3252             runX = b(0) - a(0)
-3253             runY = b(1) - a(1)
-3254             size = Sqr(runX * runX + runY * runY)
-3255             If size > 0.000000001 Then
-3256                 If Abs(runX * ux + runY * uy) <= 0.000001 * size Then
-3257                     along = ((point(0) - a(0)) * runX + (point(1) - a(1)) * runY) / (size * size)
-3258                     off = Abs((point(0) - a(0)) * runY - (point(1) - a(1)) * runX) / size
-3259                     If along >= -0.000000001 And along <= 1.000000001 And off <= 0.000001 Then
-3260                         Set PlanLine = record
-3261                         Exit Function
+3531     For Each record In records
+3532         If record("kind") = "line" Then
+3533             a = record("a")
+3534             b = record("b")
+3535             runX = b(0) - a(0)
+3536             runY = b(1) - a(1)
+3537             size = Sqr(runX * runX + runY * runY)
+3538             If size > 0.000000001 Then
+3539                 If Abs(runX * ux + runY * uy) <= 0.000001 * size Then
+3540                     along = ((point(0) - a(0)) * runX + (point(1) - a(1)) * runY) / (size * size)
+3541                     off = Abs((point(0) - a(0)) * runY - (point(1) - a(1)) * runX) / size
+3542                     If along >= -0.000000001 And along <= 1.000000001 And off <= 0.000001 Then
+3543                         Set PlanLine = record
+3544                         Exit Function
                     End If
                 End If
             End If
@@ -3269,32 +3552,32 @@ End Function
 Private Function PlanReference(ByVal records As Collection, ByVal point As Variant, ByVal ux As Double, ByVal uy As Double) As Object
     ' A circle centered on the point, else a line through it that is perpendicular to the measuring direction (D05a's own choice, tried first).
     Dim record As Object
-3272     For Each record In records
-3273         If record("kind") = "circle" Then
-3274             If NearFlat(record("a"), point) Then
-3275                 Set PlanReference = record
-3276                 Exit Function
+3555     For Each record In records
+3556         If record("kind") = "circle" Then
+3557             If NearFlat(record("a"), point) Then
+3558                 Set PlanReference = record
+3559                 Exit Function
             End If
         End If
     Next record
-3280     Set PlanReference = PlanLine(records, point, ux, uy)
+3563     Set PlanReference = PlanLine(records, point, ux, uy)
 End Function
 
 Private Function PlanRim(ByVal records As Collection, ByVal point As Variant, ByVal ux As Double, ByVal uy As Double) As Object
     ' A circle seen edge-on (its axis known to lie across the view) is the straight line through its center, 2 x radius long, perpendicular to its axis: it
     ' is a reference when the point is on that line and the measuring direction is the axis's own.
     Dim record As Object, axisFlat As Variant, centre As Variant, runX As Double, runY As Double
-3287     For Each record In records
-3288         If record("kind") = "circle" Then
-3289             If record("faceOn") = 0 Then
-3290                 centre = record("a")
-3291                 axisFlat = record("flatAxis")
-3292                 runX = point(0) - centre(0)
-3293                 runY = point(1) - centre(1)
-3294                 If Abs(-axisFlat(1) * ux + axisFlat(0) * uy) <= 0.000001 And Abs(runX * axisFlat(0) + runY * axisFlat(1)) <= 0.000001 _
+3570     For Each record In records
+3571         If record("kind") = "circle" Then
+3572             If record("faceOn") = 0 Then
+3573                 centre = record("a")
+3574                 axisFlat = record("flatAxis")
+3575                 runX = point(0) - centre(0)
+3576                 runY = point(1) - centre(1)
+3577                 If Abs(-axisFlat(1) * ux + axisFlat(0) * uy) <= 0.000001 And Abs(runX * axisFlat(0) + runY * axisFlat(1)) <= 0.000001 _
                    And Abs(-runX * axisFlat(1) + runY * axisFlat(0)) <= CDbl(record("radius")) + 0.000000001 Then
-3296                     Set PlanRim = CloneRecord(record, "drawing-dimension-edge-on-circles")
-3297                     Exit Function
+3579                     Set PlanRim = CloneRecord(record, "drawing-dimension-edge-on-circles")
+3580                     Exit Function
                 End If
             End If
         End If
@@ -3305,172 +3588,172 @@ Private Function DimensionPlan(ByVal records As Collection, ByVal first As Varia
     ' The one or two edges whose selection makes SolidWorks measure the distance between two flattened points, or Nothing when the view cannot show
     ' it. D05a's own plan (a line, or two references) is tried first; the diameter and edge-on forms only when it finds nothing.
     Dim lineRecord As Object, one As Object, two As Object, dx As Double, dy As Double, length As Double
-3308     dx = second(0) - first(0)
-3309     dy = second(1) - first(1)
-3310     length = Sqr(dx * dx + dy * dy)
-3311     If length < 0.000000001 Then Err.Raise 5, , "The two dimension points coincide in the view"
-3312     Set lineRecord = PlanSingle(records, first, second)
-3313     If Not lineRecord Is Nothing Then
-3314         Set DimensionPlan = New Collection
+3591     dx = second(0) - first(0)
+3592     dy = second(1) - first(1)
+3593     length = Sqr(dx * dx + dy * dy)
+3594     If length < 0.000000001 Then Err.Raise 5, , "The two dimension points coincide in the view"
+3595     Set lineRecord = PlanSingle(records, first, second)
+3596     If Not lineRecord Is Nothing Then
+3597         Set DimensionPlan = New Collection
     stepLabel = currentIdentity & ": DimensionPlan Add"
-3316         DimensionPlan.Add lineRecord
-3317         Exit Function
+3599         DimensionPlan.Add lineRecord
+3600         Exit Function
     End If
-3319     Set one = PlanReference(records, first, dx / length, dy / length)
-3320     Set two = PlanReference(records, second, dx / length, dy / length)
-3321     If Not one Is Nothing And Not two Is Nothing Then
-3322         If Not one Is two Then
-3323             Set DimensionPlan = New Collection
+3602     Set one = PlanReference(records, first, dx / length, dy / length)
+3603     Set two = PlanReference(records, second, dx / length, dy / length)
+3604     If Not one Is Nothing And Not two Is Nothing Then
+3605         If Not one Is two Then
+3606             Set DimensionPlan = New Collection
     stepLabel = currentIdentity & ": DimensionPlan Add"
-3325             DimensionPlan.Add one
+3608             DimensionPlan.Add one
     stepLabel = currentIdentity & ": DimensionPlan Add"
-3327             DimensionPlan.Add two
-3328             Exit Function
+3610             DimensionPlan.Add two
+3611             Exit Function
         End If
     End If
-3331     Set lineRecord = PlanDiameter(records, first, second, length)
-3332     If Not lineRecord Is Nothing Then
-3333         Set DimensionPlan = New Collection
+3614     Set lineRecord = PlanDiameter(records, first, second, length)
+3615     If Not lineRecord Is Nothing Then
+3616         Set DimensionPlan = New Collection
     stepLabel = currentIdentity & ": DimensionPlan Add"
-3335         DimensionPlan.Add lineRecord
-3336         Exit Function
+3618         DimensionPlan.Add lineRecord
+3619         Exit Function
     End If
-3338     Set one = PlanRim(records, first, dx / length, dy / length)
-3339     Set two = PlanRim(records, second, dx / length, dy / length)
-3340     If one Is Nothing And two Is Nothing Then Exit Function
-3341     If one Is Nothing Then Set one = PlanReference(records, first, dx / length, dy / length)
-3342     If two Is Nothing Then Set two = PlanReference(records, second, dx / length, dy / length)
-3343     If one Is Nothing Or two Is Nothing Then Exit Function
-3344     If one("entity") Is two("entity") Then Exit Function
-3345     Set DimensionPlan = New Collection
+3621     Set one = PlanRim(records, first, dx / length, dy / length)
+3622     Set two = PlanRim(records, second, dx / length, dy / length)
+3623     If one Is Nothing And two Is Nothing Then Exit Function
+3624     If one Is Nothing Then Set one = PlanReference(records, first, dx / length, dy / length)
+3625     If two Is Nothing Then Set two = PlanReference(records, second, dx / length, dy / length)
+3626     If one Is Nothing Or two Is Nothing Then Exit Function
+3627     If one("entity") Is two("entity") Then Exit Function
+3628     Set DimensionPlan = New Collection
     stepLabel = currentIdentity & ": DimensionPlan Add"
-3347     DimensionPlan.Add one
+3630     DimensionPlan.Add one
     stepLabel = currentIdentity & ": DimensionPlan Add"
-3349     DimensionPlan.Add two
+3632     DimensionPlan.Add two
 End Function
 
 Private Function TryPick(ByVal entity As Object, ByVal appendSelection As Boolean) As Boolean
-3353     On Error GoTo Failed
-3354     Pick entity, appendSelection, 0
-3355     TryPick = True
-3356     Exit Function
+3636     On Error GoTo Failed
+3637     Pick entity, appendSelection, 0
+3638     TryPick = True
+3639     Exit Function
 Failed:
-3358     TryPick = False
+3641     TryPick = False
 End Function
 
 Private Function AddDrawingDimension(ByVal view As Object, ByVal plan As Collection, ByVal textX As Double, ByVal textY As Double, ByVal expectedMm As Double, ByVal label As String) As Double
     ' Select the planned edges in the view, add the dimension, and read its value back.
     Dim record As Object, i As Long, selected As Long, display As Object, measured As Double, kinds As String
-3364     For Each record In plan
-3365         If Len(kinds) > 0 Then kinds = kinds & "+"
-3366         kinds = kinds & CStr(record("kind"))
+3647     For Each record In plan
+3648         If Len(kinds) > 0 Then kinds = kinds & "+"
+3649         kinds = kinds & CStr(record("kind"))
     Next record
     stepLabel = currentIdentity & ": AddDrawingDimension GetName2"
-3369     callInputs = label & " view=" & view.GetName2() & " edges=" & kinds & " text(m)=" & NumberList(Array(textX, textY)) & " expected(mm)=" & NumberList(Array(expectedMm))
+3652     callInputs = label & " view=" & view.GetName2() & " edges=" & kinds & " text(m)=" & NumberList(Array(textX, textY)) & " expected(mm)=" & NumberList(Array(expectedMm))
     stepLabel = currentIdentity & ": AddDrawingDimension ActivateView"
-3371     If Not drawingInterface.ActivateView(view.GetName2()) Then Err.Raise 5, , "ActivateView failed: " & callInputs
+3654     If Not drawingInterface.ActivateView(view.GetName2()) Then Err.Raise 5, , "ActivateView failed: " & callInputs
     stepLabel = currentIdentity & ": AddDrawingDimension ClearSelection2"
-3373     doc.ClearSelection2 True
-3374     Set pickView = view
-3375     i = 0
-3376     For Each record In plan
-3377         If Not TryPick(record("entity"), i > 0) Then
-3378             RecordMitigation "drawing-select-entity-via-view", True, True
+3656     doc.ClearSelection2 True
+3657     Set pickView = view
+3658     i = 0
+3659     For Each record In plan
+3660         If Not TryPick(record("entity"), i > 0) Then
+3661             RecordMitigation "drawing-select-entity-via-view", True, True
     stepLabel = currentIdentity & ": AddDrawingDimension SelectEntity" & " " & apiInputs & " " & callInputs
-3380             If Not view.SelectEntity(record("entity"), i > 0) Then Err.Raise 5, , "IView.SelectEntity failed after the Select4 selection failed: " & callInputs
-3381             fallbackSuccesses("drawing-select-entity-via-view") = fallbackSuccesses("drawing-select-entity-via-view") + 1
+3663             If Not view.SelectEntity(record("entity"), i > 0) Then Err.Raise 5, , "IView.SelectEntity failed after the Select4 selection failed: " & callInputs
+3664             fallbackSuccesses("drawing-select-entity-via-view") = fallbackSuccesses("drawing-select-entity-via-view") + 1
         End If
-3383         i = i + 1
+3666         i = i + 1
     Next record
-3385     Set pickView = Nothing
+3668     Set pickView = Nothing
     stepLabel = currentIdentity & ": AddDrawingDimension GetSelectedObjectCount2"
-3387     selected = doc.SelectionManager.GetSelectedObjectCount2(-1)
+3670     selected = doc.SelectionManager.GetSelectedObjectCount2(-1)
     stepLabel = currentIdentity & ": AddDrawingDimension Count"
-3389     If selected <> plan.Count Then Err.Raise 5, , CStr(selected) & " edges are selected, not " & CStr(plan.Count) & ": " & callInputs
+3672     If selected <> plan.Count Then Err.Raise 5, , CStr(selected) & " edges are selected, not " & CStr(plan.Count) & ": " & callInputs
     stepLabel = currentIdentity & ": AddDrawingDimension AddDimension2"
-3391     Set display = doc.AddDimension2(textX, textY, 0#)
-3392     Require display, "AddDimension2 returned no dimension: " & callInputs
+3674     Set display = doc.AddDimension2(textX, textY, 0#)
+3675     Require display, "AddDimension2 returned no dimension: " & callInputs
     stepLabel = currentIdentity & ": AddDrawingDimension GetDimension2"
-3394     Set dimensionValue = display.GetDimension2(0)
-3395     Require dimensionValue, "The new dimension has no value object: " & callInputs
+3677     Set dimensionValue = display.GetDimension2(0)
+3678     Require dimensionValue, "The new dimension has no value object: " & callInputs
     stepLabel = currentIdentity & ": AddDrawingDimension SystemValue"
-3397     measured = dimensionValue.SystemValue / 0.001
-3398     If Abs(measured - expectedMm) > 0.000001 Then Err.Raise 5, , "The drawing dimension measured " & NumberList(Array(measured)) & " mm, not " & NumberList(Array(expectedMm)) & " mm: " & callInputs
+3680     measured = dimensionValue.SystemValue / 0.001
+3681     If Abs(measured - expectedMm) > 0.000001 Then Err.Raise 5, , "The drawing dimension measured " & NumberList(Array(measured)) & " mm, not " & NumberList(Array(expectedMm)) & " mm: " & callInputs
     stepLabel = currentIdentity & ": AddDrawingDimension ClearSelection2"
-3400     doc.ClearSelection2 True
-3401     AddDrawingDimension = measured
+3683     doc.ClearSelection2 True
+3684     AddDrawingDimension = measured
 End Function
 
 Private Function DrawingReadBack(ByVal expected As Variant) As String
     ' Every display dimension in the drawing, read from the drawing, must be exactly the recipe's values.
     Dim seen As Object, view As Object, display As Object, key As String, listing As String, i As Long
-3407     Set seen = CreateObject("Scripting.Dictionary")
+3690     Set seen = CreateObject("Scripting.Dictionary")
     stepLabel = currentIdentity & ": DrawingReadBack GetFirstView"
-3409     Set view = drawingInterface.GetFirstView()
-3410     Do While Not view Is Nothing
+3692     Set view = drawingInterface.GetFirstView()
+3693     Do While Not view Is Nothing
     stepLabel = currentIdentity & ": DrawingReadBack GetFirstDisplayDimension5"
-3412         Set display = view.GetFirstDisplayDimension5()
-3413         Do While Not display Is Nothing
+3695         Set display = view.GetFirstDisplayDimension5()
+3696         Do While Not display Is Nothing
     stepLabel = currentIdentity & ": DrawingReadBack GetDimension2"
-3415             key = CStr(Round(display.GetDimension2(0).SystemValue * 1000#, 4))
-3416             If Len(listing) > 0 Then listing = listing & ", "
+3698             key = CStr(Round(display.GetDimension2(0).SystemValue * 1000#, 4))
+3699             If Len(listing) > 0 Then listing = listing & ", "
     stepLabel = currentIdentity & ": DrawingReadBack GetName2"
-3418             listing = listing & view.GetName2() & " " & key & " mm"
+3701             listing = listing & view.GetName2() & " " & key & " mm"
     stepLabel = currentIdentity & ": DrawingReadBack Exists"
-3420             If seen.Exists(key) Then
-3421                 seen(key) = seen(key) + 1
+3703             If seen.Exists(key) Then
+3704                 seen(key) = seen(key) + 1
             Else
     stepLabel = currentIdentity & ": DrawingReadBack Add"
-3424                 seen.Add key, 1
+3707                 seen.Add key, 1
             End If
     stepLabel = currentIdentity & ": DrawingReadBack GetNext3"
-3427             Set display = display.GetNext3()
+3710             Set display = display.GetNext3()
         Loop
     stepLabel = currentIdentity & ": DrawingReadBack GetNextView"
-3430         Set view = view.GetNextView()
+3713         Set view = view.GetNextView()
     Loop
-3432     For i = LBound(expected) To UBound(expected)
-3433         key = CStr(Round(CDbl(expected(i)), 4))
+3715     For i = LBound(expected) To UBound(expected)
+3716         key = CStr(Round(CDbl(expected(i)), 4))
     stepLabel = currentIdentity & ": DrawingReadBack Exists"
-3435         If Not seen.Exists(key) Then Err.Raise 5, , "The drawing is missing the dimension " & key & " mm; it holds: " & listing
-3436         If seen(key) = 1 Then
+3718         If Not seen.Exists(key) Then Err.Raise 5, , "The drawing is missing the dimension " & key & " mm; it holds: " & listing
+3719         If seen(key) = 1 Then
     stepLabel = currentIdentity & ": DrawingReadBack Remove"
-3438             seen.Remove key
+3721             seen.Remove key
         Else
-3440             seen(key) = seen(key) - 1
+3723             seen(key) = seen(key) - 1
         End If
     Next i
     stepLabel = currentIdentity & ": DrawingReadBack Count"
-3444     If seen.Count > 0 Then Err.Raise 5, , "The drawing holds more dimensions than the recipe's: " & listing
-3445     DrawingReadBack = listing
+3727     If seen.Count > 0 Then Err.Raise 5, , "The drawing holds more dimensions than the recipe's: " & listing
+3728     DrawingReadBack = listing
 End Function
 
 Private Sub ExportDrawing(ByVal path As String)
     ' A copy of the sheet as DXF (R2000, which the recipe allows); the file must exist and hold data.
     Dim previous As Long, fs As Object, failureNumber As Long, failure As String, failingStep As String
     stepLabel = currentIdentity & ": ExportDrawing GetUserPreferenceIntegerValue"
-3452     previous = app.GetUserPreferenceIntegerValue(swDxfVersion)
+3735     previous = app.GetUserPreferenceIntegerValue(swDxfVersion)
     stepLabel = currentIdentity & ": ExportDrawing SetUserPreferenceIntegerValue"
-3454     If Not app.SetUserPreferenceIntegerValue(swDxfVersion, swDxfFormat_R2000) Then Err.Raise 5, , "Cannot set the DXF version"
-3455     On Error Resume Next
+3737     If Not app.SetUserPreferenceIntegerValue(swDxfVersion, swDxfFormat_R2000) Then Err.Raise 5, , "Cannot set the DXF version"
+3738     On Error Resume Next
     stepLabel = currentIdentity & ": ExportDrawing GetUserPreferenceIntegerValue"
-3457     If app.GetUserPreferenceIntegerValue(swDxfVersion) <> swDxfFormat_R2000 Then Err.Raise 5, , "The DXF version did not stay at R2000"
-3458     If Err.Number = 0 Then SaveFile path
-3459     failureNumber = Err.Number
-3460     failure = Err.Description
-3461     failingStep = stepLabel
-3462     Err.Clear
+3740     If app.GetUserPreferenceIntegerValue(swDxfVersion) <> swDxfFormat_R2000 Then Err.Raise 5, , "The DXF version did not stay at R2000"
+3741     If Err.Number = 0 Then SaveFile path
+3742     failureNumber = Err.Number
+3743     failure = Err.Description
+3744     failingStep = stepLabel
+3745     Err.Clear
     stepLabel = currentIdentity & ": ExportDrawing SetUserPreferenceIntegerValue"
-3464     app.SetUserPreferenceIntegerValue swDxfVersion, previous
-3465     stepLabel = failingStep
-3466     On Error GoTo 0
-3467     If failureNumber <> 0 Then Err.Raise failureNumber, , failure
-3468     stepLabel = currentIdentity & ": DXF file check"
-3469     Set fs = CreateObject("Scripting.FileSystemObject")
+3747     app.SetUserPreferenceIntegerValue swDxfVersion, previous
+3748     stepLabel = failingStep
+3749     On Error GoTo 0
+3750     If failureNumber <> 0 Then Err.Raise failureNumber, , failure
+3751     stepLabel = currentIdentity & ": DXF file check"
+3752     Set fs = CreateObject("Scripting.FileSystemObject")
     stepLabel = currentIdentity & ": ExportDrawing FileExists"
-3471     If Not fs.FileExists(path) Then Err.Raise 5, , "The DXF export wrote no file"
+3754     If Not fs.FileExists(path) Then Err.Raise 5, , "The DXF export wrote no file"
     stepLabel = currentIdentity & ": ExportDrawing GetFile"
-3473     If fs.GetFile(path).Size = 0 Then Err.Raise 5, , "The DXF export wrote an empty file"
+3756     If fs.GetFile(path).Size = 0 Then Err.Raise 5, , "The DXF export wrote an empty file"
     stepLabel = currentIdentity & ": ExportDrawing GetFileName"
-3475     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing DXF: " & fs.GetFileName(path) & ", " & CStr(fs.GetFile(path).Size) & " bytes, DXF version R2000 (3), previous setting " & CStr(previous) & " restored; scale and text options left at the user defaults (the interop does not say what their values mean)"
+3758     AppendLog currentFolder, currentIdentity, "option", 0, 0, "drawing DXF: " & fs.GetFileName(path) & ", " & CStr(fs.GetFile(path).Size) & " bytes, DXF version R2000 (3), previous setting " & CStr(previous) & " restored; scale and text options left at the user defaults (the interop does not say what their values mean)"
 End Sub
