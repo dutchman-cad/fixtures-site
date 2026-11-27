@@ -1859,9 +1859,9 @@
   },
   "solidedge": {
    "name": "Solid Edge",
-   "cells": 235,
+   "cells": 244,
    "full": 0,
-   "stopped": 235,
+   "stopped": 244,
    "blockers": [
     {
      "rank": 1,
@@ -1974,7 +1974,7 @@
      "owner": "cadmpeg decode",
      "title": "No reader for this file type",
      "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
-     "cells": 18,
+     "cells": 27,
      "examples": [
       {
        "recipe": "D01a",
@@ -2288,7 +2288,7 @@
   {
    "code": "no-reader",
    "owner": "cadmpeg decode",
-   "cells": 65
+   "cells": 74
   },
   {
    "code": "decode-feature-order",

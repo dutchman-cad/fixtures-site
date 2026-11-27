@@ -2110,7 +2110,34 @@
   "/scoreboard/cells/D09b/solidedge.json": {
    "cache-control": "public, max-age=300"
   },
+  "/scoreboard/cells/D10a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
   "/scoreboard/cells/D11a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D12a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D13a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D14a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D15a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D16a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D17a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D18a/solidedge.json": {
+   "cache-control": "public, max-age=300"
+  },
+  "/scoreboard/cells/D19a/solidedge.json": {
    "cache-control": "public, max-age=300"
   },
   "/scoreboard/cells/E01a/freecad.json": {
