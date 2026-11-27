@@ -1,0 +1,43 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "A12b",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2021",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 5,
+  "total": 8
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "native feature",
+  "index": 1
+ },
+ "reason": {
+  "code": "native-not-mapped",
+  "owner": "cadmpeg decode",
+  "title": "Native feature not read",
+  "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 5,
+   "total": 8
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 5,
+   "total": 8
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A12b-solidworks",
+ "downloads": []
+}

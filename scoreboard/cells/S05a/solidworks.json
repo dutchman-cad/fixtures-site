@@ -1,0 +1,43 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "S05a",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2024",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 5,
+  "total": 22
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "native feature",
+  "index": 1
+ },
+ "reason": {
+  "code": "native-not-mapped",
+  "owner": "cadmpeg decode",
+  "title": "Native feature not read",
+  "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 5,
+   "total": 26
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 5,
+   "total": 26
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-S05a-solidworks",
+ "downloads": []
+}

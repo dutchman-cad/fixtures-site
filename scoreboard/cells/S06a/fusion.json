@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "S06a",
+ "program": "fusion",
+ "program_name": "Fusion",
+ "app": "fusion-2706.1.17",
+ "status": "Geometry only",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 0,
+  "total": 0
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "conversion",
+  "index": null
+ },
+ "reason": {
+  "code": "no-history-in-file",
+  "owner": "builder",
+  "title": "File carries no feature history",
+  "explain": "The fixture file holds a shape but no feature history, so there is nothing to rebuild.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-S06a-fusion",
+ "downloads": []
+}

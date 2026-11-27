@@ -1,0 +1,49 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P11a",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2021",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "loft",
+  "index": 1
+ },
+ "reason": {
+  "code": "loft-sections",
+  "owner": "Dutchman mapping",
+  "title": "Loft section count",
+  "explain": "A loft needs between two and fifty sections.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2024",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P11a-solidworks",
+ "downloads": []
+}

@@ -1,0 +1,21 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "F16g",
+ "program": "fusion",
+ "program_name": "Fusion",
+ "app": "fusion",
+ "status": "Full history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 2
+ },
+ "matches": true,
+ "wrong_bodies": 0,
+ "stopped": false,
+ "first_stop": null,
+ "reason": null,
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-F16g-fusion",
+ "downloads": []
+}

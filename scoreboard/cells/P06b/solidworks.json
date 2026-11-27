@@ -1,0 +1,49 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P06b",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2021",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 1,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "shell",
+  "index": 1
+ },
+ "reason": {
+  "code": "face-edge-ref",
+  "owner": "cadmpeg decode",
+  "title": "Face or edge reference not resolved",
+  "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2024",
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P06b-solidworks",
+ "downloads": []
+}

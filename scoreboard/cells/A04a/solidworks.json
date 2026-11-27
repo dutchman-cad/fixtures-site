@@ -1,0 +1,49 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "A04a",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2021",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 3,
+  "total": 6
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "extrude, blind",
+  "index": 2
+ },
+ "reason": {
+  "code": "sc-replay-bodies",
+  "owner": "SolidCraft",
+  "title": "Rebuilt body count differs",
+  "explain": "SolidCraft's replay made a different number of bodies than the original has.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 3,
+   "total": 6
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 3,
+   "total": 6
+  },
+  {
+   "app": "solidworks-2024",
+   "status": "Failing",
+   "rebuilt": 0,
+   "total": 0
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A04a-solidworks",
+ "downloads": []
+}

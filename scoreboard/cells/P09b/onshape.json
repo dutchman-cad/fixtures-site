@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P09b",
+ "program": "onshape",
+ "program_name": "Onshape",
+ "app": "onshape",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 5
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "native feature",
+  "index": 2
+ },
+ "reason": {
+  "code": "native-not-mapped",
+  "owner": "cadmpeg decode",
+  "title": "Native feature not read",
+  "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P09b-onshape",
+ "downloads": []
+}

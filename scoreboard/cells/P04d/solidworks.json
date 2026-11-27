@@ -1,0 +1,49 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P04d",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2021",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "fillet, radius group",
+  "index": 3
+ },
+ "reason": {
+  "code": "fillet-unsupported",
+  "owner": "Dutchman mapping",
+  "title": "Fillet kind not supported",
+  "explain": "Variable-radius fillets and tangency weights are not mapped yet.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2024",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P04d-solidworks",
+ "downloads": []
+}

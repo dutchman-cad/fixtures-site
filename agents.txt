@@ -1,0 +1,196 @@
+The CAD Fixture Recipes portal collects files made from the public recipe booklet.
+Fusion CAM recipes cover designs, setups, tools, toolpaths, and posted programs.
+
+The private link supplied by the contributor is the only credential. Keep its
+/v/<token> URL private. Never share it or post it in a channel, issue, or log.
+Use it only with the portal host that supplied it. Files are private by default.
+
+Send a named User-Agent header with every request (for example
+"my-fixture-client/1.0"). The site's edge refuses some generic library agents,
+such as Python's default "Python-urllib/3.x", with HTTP 403 (error code 1010).
+
+Fixture Builders
+================
+For volunteers who want to run a scripted batch in their own Inventor,
+SolidWorks, or Fusion. Builders create real CAD features, native files and STEP
+copies, plus results.json and one zip named for the app version and build.
+This is a separate route from making the booklet recipes by hand. Identify
+builder-made files accurately; never confirm manual construction for them.
+Please use a licensed copy.
+
+Read the matching one-page run guide before driving the app:
+- Inventor: https://fixtures.dutchmancad.xyz/builders/inventor/README.md
+- SolidWorks: https://fixtures.dutchmancad.xyz/builders/solidworks/README.md
+- Fusion: https://fixtures.dutchmancad.xyz/builders/fusion/README.md
+Download the builder files linked in the matching guide.
+
+Save and close the volunteer's own work first. The builder makes a fresh output
+folder and opens and closes its own documents; it never changes existing files.
+Allow roughly 10–30 minutes, possibly longer; this is an estimate. Do not drive
+the app while the builder is working. Run only the matching app's builder, read
+every results.json row, and report failed and not_scripted recipes with their
+reasons. Never present skipped recipes or a mock run as completed CAD work.
+
+Builders blank author/company and related personal properties before saving,
+and keep personal names, computer names and paths out of results. The portal's
+own privacy scan still runs. Files stay private unless the volunteer chooses
+CC0 when uploading; an agent must not make that choice for them.
+
+Send the generated zip to Dutchy in a Discord DM (or the volunteer's thread). Dutchy
+reads the real app version/build and the builder version from the zip. The portal's
+/bulk address takes CAM design files, not builder zips. Read the receipt; receipt of
+a file is not proof every check passed. If the volunteer cannot send a file on
+Discord, use the alternative: a Google Drive or Dropbox sharing link sent to Dutchy
+in a DM. An agent must not send the DM or the link for the volunteer unless they
+explicitly ask. Keep the contributor's private portal link and receipt private.
+
+The CAM-specific routes, metadata and limits below still apply where relevant;
+this section does not imply that every app's builder zip is accepted by the CAM
+bulk API. Do not invent CAM settings or edit geometry to force a match.
+
+Read GET /cam-recipes.json on that same host. It lists M01 through M11,
+dependencies, geometry, settings, twins, and required and optional files.
+Use millimetres, leave unnamed values at Fusion defaults, generate every operation,
+and make each twin from its a design with only the named change. The booklet is
+available at GET /booklet.pdf on the same host, also linked on the welcome
+and contributor pages. Reference drawing PDF and PNG URLs are in each recipe's
+reference_drawings array (empty where the booklet has no drawing). App and
+priority labels are separate app/priority fields, outside the instructions.
+
+Name designs <ID>.f3d or <ID>.f3z, the library M02a.tools, posted programs <ID>__<post>.<ext> (lower-case a-z, 0-9, and hyphen post slug; nc, tap, or txt extension), and shared post processors posts/<post>.cps, sent once per zip.
+
+For example: M03a.f3d, M02a.tools, M03a__siemens-840d.nc, and
+posts/siemens-840d.cps. NC programs are optional for every M design. Include the
+matching post processor once for every post slug used in the zip. Multiple posts
+per design are welcome. IDs match without case; post slugs must be lower case.
+M11a uses the fanuc post; its M11b twin changes the post to haas. To cover both
+posted outputs, include M11a__fanuc.nc, M11b__haas.nc, posts/fanuc.cps and
+posts/haas.cps. A one-post bundle cannot cover both posted outputs faithfully;
+omit an optional NC output if constrained to one post.
+Keep files at the zip root, except for the posts/ directory. Unknown names are
+reported, never guessed. Include M02a.tools with M02a's design.
+
+Onboarding from the private link alone (no pre-existing account or cookie):
+1. GET "$PORTAL_LINK". It sets a session cookie, including for curl's default
+   Accept header. Browsers opening the link redirect to /me; keep that behaviour
+   by using a cookie jar with curl. The welcome card posts to /me/card.
+2. POST "$PORTAL_LINK/card": credit is optional text; cc0=yes is optional public
+   dedication. Omit cc0 to keep files private. Submitting the card confirms the
+   statement about making the parts yourself. Read it first; answer accurately.
+3. GET "$PORTAL_LINK/apps", then POST there with fusion=yes,
+   fusion_detail=<actual build from Help -> About>, and fusion_tpl=<template>.
+   Templates: "default metric", "another template", or "not sure".
+4. POST "$PORTAL_LINK/flow/fusion/check" with version=<actual Fusion build>.
+   This confirms the build for six hours; repeat when prompted or after an update.
+   An optional back field is a step key such as fusion:M01a.
+GET "$PORTAL_LINK/about" edits the card. Token routes work directly; their
+redirects go to /me and therefore need the cookie jar. GET /me/apps and
+POST /me/flow/fusion/check are the equivalent cookie-authenticated routes.
+Do not invent a build or confirm manual construction for synthetic files.
+There is no synthetic/test bypass; stop and ask the contributor for real metadata
+and files if those confirmations cannot truthfully be made.
+
+Example, with the supplied private URL in PORTAL_LINK and the real build in
+FUSION_BUILD (do not enable shell tracing; protect the cookie jar like the link):
+
+umask 077
+COOKIE_JAR=$(mktemp)
+curl --fail-with-body -c "$COOKIE_JAR" -b "$COOKIE_JAR" -L "$PORTAL_LINK" -o welcome.html
+# Read welcome.html and the booklet before submitting the card. This example
+# leaves credit blank and files private; only proceed if its statements are true.
+curl --fail-with-body -c "$COOKIE_JAR" -b "$COOKIE_JAR" -L \
+  --data-urlencode 'credit=' "$PORTAL_LINK/card" -o card.html
+curl --fail-with-body -c "$COOKIE_JAR" -b "$COOKIE_JAR" -L \
+  --data-urlencode 'fusion=yes' --data-urlencode "fusion_detail=$FUSION_BUILD" \
+  --data-urlencode 'fusion_tpl=default metric' "$PORTAL_LINK/apps" -o apps.html
+curl --fail-with-body -c "$COOKIE_JAR" -b "$COOKIE_JAR" -L \
+  --data-urlencode "version=$FUSION_BUILD" "$PORTAL_LINK/flow/fusion/check" -o ready.html
+# Remove COOKIE_JAR and the private HTML files when finished.
+The bulk route uses the same dependency, build, redo, quota, and checking rules
+as individual uploads. Put prerequisites and twins together; zip order is ignored.
+
+With the contributor's private URL in PORTAL_LINK, send one zip in the bundle field:
+
+curl --fail-with-body -H 'Accept: application/json' \
+  -F 'bundle=@cam-files.zip;type=application/zip' "$PORTAL_LINK/bulk"
+
+Do not paste the expanded command or the private link into shared output.
+The response has batch, summary, and files. Every file row has name, step (or
+null), stored, verdict, and summary; a rejected file also has reason. A stored
+file was received; unchecked means its CAM settings need a person to review
+them. A match concerns the measurements the reader can check, not every CAM
+setting. Read every reason, fix rejected files, and submit another zip as needed.
+Programs link to their shared post processor in post_processor. Download it from
+"$PORTAL_LINK/bundles/<batch>/<file>" using those two numbers. Posts have no step.
+One summary notice is sent per zip.
+
+Read the receipt again at "$PORTAL_LINK/bulk/<batch>" with the same Accept
+header. Without it, the response is an HTML table. Another private link cannot
+read this receipt. Keep the receipt private too.
+
+Limits: one zip up to 1.5 GiB (1536 MiB), 5000 entries, 4 GiB unpacked, 50 MiB
+per recipe or post file, and 5 GiB total stored per contributor, including zips
+and repeated files. Zip reception and extraction stream to disk. Recipe
+files are read within the 50 MiB per-file limit. Unsafe paths, symlinks,
+executable programs, and scripts are refused. The documented NC programs
+(.nc/.tap/.txt) and Fusion post processors (.cps) are accepted data, not the
+"programs and scripts" refused here. The portal does not run them. Renaming an
+executable payload to an accepted extension does not make it acceptable.
+Damaged archives and size-limit failures may reject the whole archive before any files are stored.
+
+Bulk request errors (POST /v/<token>/bulk and GET /v/<token>/bulk/<batch>):
+Always send Accept: application/json. Every request-level error is JSON with
+status (the HTTP status number), error (stable machine-readable code), message
+(human explanation), and fix_url (same-host path for recovery). For example:
+{"status":400,"error":"fusion_required","message":"Choose Fusion on your card first.","fix_url":"/v/<token>/apps"}
+Keep fix_url private: it may contain the credential. No HTML error is returned
+with this Accept header, including malformed multipart or receipt IDs.
+
+Codes and recovery:
+- fusion_required (400): no Fusion CAM steps selected. Complete the card, select
+  Fusion at fix_url (/apps), and confirm the build before retrying.
+- not_found (404): invalid/expired private link, missing/incomplete receipt, or a
+  receipt belonging to someone else. fix_url is /agents.txt; check the link and
+  batch number privately with the contributor. Other contributors' IDs do not work.
+- payload_too_large (413): request/body or ZIP reception limit exceeded. Reduce
+  the bundle and retry from the private page at fix_url.
+- storage_limit (400): ZIP plus stored data would exceed 5 GiB. Manage stored
+  files from the private page at fix_url or ask a person before retrying.
+- request_rejected (400, or the multipart extractor's client-error status):
+  malformed/missing multipart boundary or body; missing, repeated, misnamed,
+  non-ZIP or blocked bundle; missing PK ZIP signature; unexpected/repeated text
+  fields; invalid UTF-8; text fields over 2048 bytes; note over 200 characters;
+  consent other than private or cc0; malformed receipt ID. Read message, repair
+  the request, and retry from the private page at fix_url.
+- archive_rejected (normally 400; 500 for archive I/O failure): damaged,
+  encrypted or unsupported-compression ZIP,
+  invalid ZIP64/directory metadata, more than 5000 entries, directory metadata
+  over 32 MiB, unreadable headers/entries, declared size mismatch, or expansion
+  beyond 4 GiB or remaining storage. Repair/reduce the ZIP; fix_url is the private
+  page. The response also has batch, summary and files (empty). The received ZIP
+  is retained and counts towards quota; extracted members are removed. The same
+  error record can be fetched with GET /bulk/<batch> (HTTP 200, original status
+  retained in the JSON). No member was stored.
+- method_not_allowed (405): use POST for upload, GET for receipt; fix_url points
+  back to the private page.
+- internal_error (500): database, filesystem, task, or receipt decoding failure.
+  Retry later or ask a person using the private page at fix_url. A batch may
+  already exist; check any known receipt before uploading again.
+Errors before archive reception completes have no batch/receipt. Do not infer
+per-file acceptance from a request error. During a partial internal failure,
+already stored files may remain.
+
+A processed batch returns HTTP 200 even if some/all file rows were rejected;
+these are per-file errors, expressed by stored=false and a human reason:
+unsafe path/symlink; blocked executable/script; duplicate name (case-insensitive);
+unknown name/ID or non-Fusion step; empty file; over 50 MiB; storage exhausted;
+missing safe matching post; missing companion tool library; stale/unconfirmed
+build; unmet prerequisite; redo/build rule; or ordinary upload/content-check
+failure. Follow the reason, use the private page's step screen to fix metadata,
+confirm the build at /flow/fusion/check if needed, and resubmit corrected files.
+A stored row with a checking verdict is distinct from a request/file rejection:
+read its summary and do not assume it passed every CAM check.
+
+For help, use the questions box on the private page and choose Ask a person,
+or contact the fixtures team privately. Never include the private link in the
+question or a screenshot.

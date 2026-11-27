@@ -1,0 +1,21 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "N09a",
+ "program": "freecad",
+ "program_name": "FreeCAD",
+ "app": "freecad-1.1.4",
+ "status": "Full history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 2
+ },
+ "matches": true,
+ "wrong_bodies": null,
+ "stopped": false,
+ "first_stop": null,
+ "reason": null,
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-N09a-freecad",
+ "downloads": []
+}

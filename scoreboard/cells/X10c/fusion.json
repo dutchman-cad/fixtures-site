@@ -1,0 +1,37 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "X10c",
+ "program": "fusion",
+ "program_name": "Fusion",
+ "app": "fusion",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 1,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "base feature",
+  "index": 2
+ },
+ "reason": {
+  "code": "base-feature-empty",
+  "owner": "Dutchman mapping",
+  "title": "Base feature gives no solid",
+  "explain": "The first feature produced no solid body that SolidCraft can import.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "fusion-2706.1.17",
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-X10c-fusion",
+ "downloads": []
+}

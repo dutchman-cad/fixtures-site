@@ -1,0 +1,2193 @@
+{
+ "schema": "dutchman-scoreboard-blockers/1",
+ "note": "Why cells of the Dutchman fixture scoreboard stop, per program: reason codes ranked by how many cells each blocks. Each cell counts once, under its first stop. Static, read-only, public.",
+ "solidcraft": "0.46.2",
+ "programs_order": [
+  "inventor",
+  "fusion",
+  "solidworks",
+  "creo",
+  "catia",
+  "freecad",
+  "solidedge",
+  "alibre",
+  "onshape",
+  "nx"
+ ],
+ "owners": [
+  {
+   "owner": "cadmpeg decode",
+   "explain": "cadmpeg (the file reader) does not read this part of the file yet."
+  },
+  {
+   "owner": "Dutchman mapping",
+   "explain": "Dutchman reads it but has no rule to turn it into a SolidCraft feature yet."
+  },
+  {
+   "owner": "SolidCraft",
+   "explain": "SolidCraft refused the feature, or rebuilt a different shape than the original."
+  },
+  {
+   "owner": "builder",
+   "explain": "The fixture file or the way it was built is the problem, not the converter."
+  },
+  {
+   "owner": "unclassified",
+   "explain": "Nobody has traced this reason to an owner yet."
+  }
+ ],
+ "reasons": {
+  "assembly-no-parts": {
+   "code": "assembly-no-parts",
+   "owner": "Dutchman mapping",
+   "title": "Assembly places no parts",
+   "explain": "The assembly has no placed parts, so there is nothing to rebuild."
+  },
+  "base-feature-empty": {
+   "code": "base-feature-empty",
+   "owner": "Dutchman mapping",
+   "title": "Base feature gives no solid",
+   "explain": "The first feature produced no solid body that SolidCraft can import."
+  },
+  "body-reference-missing": {
+   "code": "body-reference-missing",
+   "owner": "Dutchman mapping",
+   "title": "Body or topology reference missing",
+   "explain": "The feature depends on an earlier body, edge or face that Dutchman cannot name yet."
+  },
+  "chamfer-unresolved": {
+   "code": "chamfer-unresolved",
+   "owner": "Dutchman mapping",
+   "title": "Chamfer not resolved",
+   "explain": "The chamfer's dimensions cannot be resolved against the model yet."
+  },
+  "edge-identity": {
+   "code": "edge-identity",
+   "owner": "Dutchman mapping",
+   "title": "Edge identity not resolved",
+   "explain": "A fillet or chamfer edge cannot be tied back to geometry in the source file."
+  },
+  "extrude-unsupported": {
+   "code": "extrude-unsupported",
+   "owner": "Dutchman mapping",
+   "title": "Extrude kind not supported",
+   "explain": "This extrude end, face or profile region is not mapped or could not be confirmed yet."
+  },
+  "face-edge-ref": {
+   "code": "face-edge-ref",
+   "owner": "cadmpeg decode",
+   "title": "Face or edge reference not resolved",
+   "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet."
+  },
+  "face-unresolved": {
+   "code": "face-unresolved",
+   "owner": "Dutchman mapping",
+   "title": "Face not resolved",
+   "explain": "The feature's face cannot be resolved against the rebuilt model."
+  },
+  "feature-not-mapped": {
+   "code": "feature-not-mapped",
+   "owner": "Dutchman mapping",
+   "title": "Feature not mapped yet",
+   "explain": "Dutchman has no rule for this feature type yet."
+  },
+  "fillet-unsupported": {
+   "code": "fillet-unsupported",
+   "owner": "Dutchman mapping",
+   "title": "Fillet kind not supported",
+   "explain": "Variable-radius fillets and tangency weights are not mapped yet."
+  },
+  "hole-unresolved": {
+   "code": "hole-unresolved",
+   "owner": "Dutchman mapping",
+   "title": "Hole placement not resolved",
+   "explain": "The hole's face, end or placement cannot be resolved against the model."
+  },
+  "loft-sections": {
+   "code": "loft-sections",
+   "owner": "Dutchman mapping",
+   "title": "Loft section count",
+   "explain": "A loft needs between two and fifty sections."
+  },
+  "model-check-fails": {
+   "code": "model-check-fails",
+   "owner": "cadmpeg decode",
+   "title": "Read model fails its checks",
+   "explain": "cadmpeg read the file, but its model of it fails internal consistency checks."
+  },
+  "native-not-mapped": {
+   "code": "native-not-mapped",
+   "owner": "cadmpeg decode",
+   "title": "Native feature not read",
+   "explain": "This program's own feature type has no neutral form in cadmpeg yet."
+  },
+  "no-geometry-yet": {
+   "code": "no-geometry-yet",
+   "owner": "cadmpeg decode",
+   "title": "Opens, but no geometry read",
+   "explain": "The file opens, but cadmpeg cannot read its geometry yet."
+  },
+  "no-history-in-file": {
+   "code": "no-history-in-file",
+   "owner": "builder",
+   "title": "File carries no feature history",
+   "explain": "The fixture file holds a shape but no feature history, so there is nothing to rebuild."
+  },
+  "no-reader": {
+   "code": "no-reader",
+   "owner": "cadmpeg decode",
+   "title": "No reader for this file type",
+   "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried."
+  },
+  "no-reference-shape": {
+   "code": "no-reference-shape",
+   "owner": "Dutchman mapping",
+   "title": "Original shape cannot be compared",
+   "explain": "The original geometry opens as empty shells, so the rebuilt shape cannot be checked against it."
+  },
+  "no-solids": {
+   "code": "no-solids",
+   "owner": "cadmpeg decode",
+   "title": "No solids or surfaces read",
+   "explain": "cadmpeg found no solid bodies or surfaces in this file that SolidCraft can import."
+  },
+  "parts-missing": {
+   "code": "parts-missing",
+   "owner": "builder",
+   "title": "Assembly parts not found",
+   "explain": "The assembly was saved without its part files next to it, so none could be loaded."
+  },
+  "parts-placed-only": {
+   "code": "parts-placed-only",
+   "owner": "Dutchman mapping",
+   "title": "Parts placed as shapes only",
+   "explain": "No part's history was written; the parts were placed as geometry without an editable timeline."
+  },
+  "pattern-unsupported": {
+   "code": "pattern-unsupported",
+   "owner": "Dutchman mapping",
+   "title": "Pattern not supported",
+   "explain": "The pattern repeats nothing, has no resolved direction, or repeats a body Dutchman cannot name."
+  },
+  "primitive-unplaced": {
+   "code": "primitive-unplaced",
+   "owner": "Dutchman mapping",
+   "title": "Primitive without a placement",
+   "explain": "A primitive solid has no placement to build it at."
+  },
+  "revolve-unresolved": {
+   "code": "revolve-unresolved",
+   "owner": "Dutchman mapping",
+   "title": "Revolve not resolved",
+   "explain": "The revolve's profile, axis or two-sided turn directions cannot be resolved."
+  },
+  "sc-refused-fillet": {
+   "code": "sc-refused-fillet",
+   "owner": "SolidCraft",
+   "title": "SolidCraft: fillet does not fit",
+   "explain": "SolidCraft refused a fillet that is larger than the faces beside its edges allow."
+  },
+  "sc-refused-profile": {
+   "code": "sc-refused-profile",
+   "owner": "SolidCraft",
+   "title": "SolidCraft: no closed profile",
+   "explain": "SolidCraft refused the feature because its sketch has no closed profile."
+  },
+  "sc-refused-thread": {
+   "code": "sc-refused-thread",
+   "owner": "SolidCraft",
+   "title": "SolidCraft: thread start unclear",
+   "explain": "SolidCraft refused a thread because it cannot tell which end the thread starts from."
+  },
+  "sc-replay-bodies": {
+   "code": "sc-replay-bodies",
+   "owner": "SolidCraft",
+   "title": "Rebuilt body count differs",
+   "explain": "SolidCraft's replay made a different number of bodies than the original has."
+  },
+  "sc-replay-position": {
+   "code": "sc-replay-position",
+   "owner": "SolidCraft",
+   "title": "Rebuilt body sits elsewhere",
+   "explain": "SolidCraft's replay put a body in a different place than the original."
+  },
+  "sc-replay-shape": {
+   "code": "sc-replay-shape",
+   "owner": "SolidCraft",
+   "title": "Rebuilt body shape differs",
+   "explain": "SolidCraft's replay made a body whose size, volume or area differs from the original."
+  },
+  "sc-revolve-to-shape": {
+   "code": "sc-revolve-to-shape",
+   "owner": "SolidCraft",
+   "title": "SolidCraft: revolve to a shape",
+   "explain": "SolidCraft cannot end a revolve at the first face of another body yet."
+  },
+  "sc-step-import-empty": {
+   "code": "sc-step-import-empty",
+   "owner": "SolidCraft",
+   "title": "SolidCraft imported no body",
+   "explain": "SolidCraft could not rebuild a feature because its STEP import produced no bodies."
+  },
+  "shape-differs": {
+   "code": "shape-differs",
+   "owner": "unclassified",
+   "title": "Every feature rebuilt, shape differs",
+   "explain": "All features rebuilt, yet the written shape differs from the original; the cause is not traced yet."
+  },
+  "sheet-metal-unsupported": {
+   "code": "sheet-metal-unsupported",
+   "owner": "Dutchman mapping",
+   "title": "Sheet-metal profile not supported",
+   "explain": "A sheet-metal flange whose profile is native, not sketch lines and arcs, is not mapped yet."
+  },
+  "sketch-text": {
+   "code": "sketch-text",
+   "owner": "Dutchman mapping",
+   "title": "Sketch text not supported",
+   "explain": "Sketch text cannot be kept as solved outlines yet."
+  },
+  "sweep-path": {
+   "code": "sweep-path",
+   "owner": "Dutchman mapping",
+   "title": "Sweep path not resolved",
+   "explain": "The sweep has no path, or its path or swept shape cannot be resolved."
+  },
+  "thread-unsupported": {
+   "code": "thread-unsupported",
+   "owner": "Dutchman mapping",
+   "title": "Modeled thread not supported",
+   "explain": "Modeled (not cosmetic) threads are not mapped yet."
+  },
+  "unclassified": {
+   "code": "unclassified",
+   "owner": "unclassified",
+   "title": "Not classified yet",
+   "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one."
+  },
+  "undecoded-pattern": {
+   "code": "undecoded-pattern",
+   "owner": "cadmpeg decode",
+   "title": "Repeat not decoded",
+   "explain": "cadmpeg does not decode what a repeated feature repeats, or how, yet."
+  }
+ },
+ "programs": {
+  "inventor": {
+   "name": "Inventor",
+   "cells": 208,
+   "full": 128,
+   "stopped": 80,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "native-not-mapped",
+     "owner": "cadmpeg decode",
+     "title": "Native feature not read",
+     "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+     "cells": 57,
+     "examples": [
+      {
+       "recipe": "P04d",
+       "cell": "cells/P04d/inventor.json",
+       "page": "#c-P04d-inventor"
+      },
+      {
+       "recipe": "P04e",
+       "cell": "cells/P04e/inventor.json",
+       "page": "#c-P04e-inventor"
+      },
+      {
+       "recipe": "P14a",
+       "cell": "cells/P14a/inventor.json",
+       "page": "#c-P14a-inventor"
+      },
+      {
+       "recipe": "P14b",
+       "cell": "cells/P14b/inventor.json",
+       "page": "#c-P14b-inventor"
+      },
+      {
+       "recipe": "X10e",
+       "cell": "cells/X10e/inventor.json",
+       "page": "#c-X10e-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 2,
+     "code": "assembly-no-parts",
+     "owner": "Dutchman mapping",
+     "title": "Assembly places no parts",
+     "explain": "The assembly has no placed parts, so there is nothing to rebuild.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "A08a",
+       "cell": "cells/A08a/inventor.json",
+       "page": "#c-A08a-inventor"
+      },
+      {
+       "recipe": "A08b",
+       "cell": "cells/A08b/inventor.json",
+       "page": "#c-A08b-inventor"
+      },
+      {
+       "recipe": "A26a",
+       "cell": "cells/A26a/inventor.json",
+       "page": "#c-A26a-inventor"
+      },
+      {
+       "recipe": "A26b",
+       "cell": "cells/A26b/inventor.json",
+       "page": "#c-A26b-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 3,
+     "code": "parts-missing",
+     "owner": "builder",
+     "title": "Assembly parts not found",
+     "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "A21b",
+       "cell": "cells/A21b/inventor.json",
+       "page": "#c-A21b-inventor"
+      },
+      {
+       "recipe": "A21c",
+       "cell": "cells/A21c/inventor.json",
+       "page": "#c-A21c-inventor"
+      },
+      {
+       "recipe": "A22a",
+       "cell": "cells/A22a/inventor.json",
+       "page": "#c-A22a-inventor"
+      },
+      {
+       "recipe": "A22b",
+       "cell": "cells/A22b/inventor.json",
+       "page": "#c-A22b-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 4,
+     "code": "sc-step-import-empty",
+     "owner": "SolidCraft",
+     "title": "SolidCraft imported no body",
+     "explain": "SolidCraft could not rebuild a feature because its STEP import produced no bodies.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "X10a",
+       "cell": "cells/X10a/inventor.json",
+       "page": "#c-X10a-inventor"
+      },
+      {
+       "recipe": "X10b",
+       "cell": "cells/X10b/inventor.json",
+       "page": "#c-X10b-inventor"
+      },
+      {
+       "recipe": "X10c",
+       "cell": "cells/X10c/inventor.json",
+       "page": "#c-X10c-inventor"
+      },
+      {
+       "recipe": "X10d",
+       "cell": "cells/X10d/inventor.json",
+       "page": "#c-X10d-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 5,
+     "code": "body-reference-missing",
+     "owner": "Dutchman mapping",
+     "title": "Body or topology reference missing",
+     "explain": "The feature depends on an earlier body, edge or face that Dutchman cannot name yet.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "P06a",
+       "cell": "cells/P06a/inventor.json",
+       "page": "#c-P06a-inventor"
+      },
+      {
+       "recipe": "P06b",
+       "cell": "cells/P06b/inventor.json",
+       "page": "#c-P06b-inventor"
+      },
+      {
+       "recipe": "E03a",
+       "cell": "cells/E03a/inventor.json",
+       "page": "#c-E03a-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 6,
+     "code": "sc-replay-shape",
+     "owner": "SolidCraft",
+     "title": "Rebuilt body shape differs",
+     "explain": "SolidCraft's replay made a body whose size, volume or area differs from the original.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "P08a",
+       "cell": "cells/P08a/inventor.json",
+       "page": "#c-P08a-inventor"
+      },
+      {
+       "recipe": "P08b",
+       "cell": "cells/P08b/inventor.json",
+       "page": "#c-P08b-inventor"
+      },
+      {
+       "recipe": "X02c",
+       "cell": "cells/X02c/inventor.json",
+       "page": "#c-X02c-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 7,
+     "code": "chamfer-unresolved",
+     "owner": "Dutchman mapping",
+     "title": "Chamfer not resolved",
+     "explain": "The chamfer's dimensions cannot be resolved against the model yet.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P05e",
+       "cell": "cells/P05e/inventor.json",
+       "page": "#c-P05e-inventor"
+      },
+      {
+       "recipe": "P05f",
+       "cell": "cells/P05f/inventor.json",
+       "page": "#c-P05f-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 8,
+     "code": "shape-differs",
+     "owner": "unclassified",
+     "title": "Every feature rebuilt, shape differs",
+     "explain": "All features rebuilt, yet the written shape differs from the original; the cause is not traced yet.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P11a",
+       "cell": "cells/P11a/inventor.json",
+       "page": "#c-P11a-inventor"
+      },
+      {
+       "recipe": "P11b",
+       "cell": "cells/P11b/inventor.json",
+       "page": "#c-P11b-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 9,
+     "code": "face-edge-ref",
+     "owner": "cadmpeg decode",
+     "title": "Face or edge reference not resolved",
+     "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "S07c",
+       "cell": "cells/S07c/inventor.json",
+       "page": "#c-S07c-inventor"
+      }
+     ]
+    }
+   ]
+  },
+  "fusion": {
+   "name": "Fusion",
+   "cells": 308,
+   "full": 199,
+   "stopped": 109,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "native-not-mapped",
+     "owner": "cadmpeg decode",
+     "title": "Native feature not read",
+     "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+     "cells": 42,
+     "examples": [
+      {
+       "recipe": "S01a",
+       "cell": "cells/S01a/fusion.json",
+       "page": "#c-S01a-fusion"
+      },
+      {
+       "recipe": "S01b",
+       "cell": "cells/S01b/fusion.json",
+       "page": "#c-S01b-fusion"
+      },
+      {
+       "recipe": "S02a",
+       "cell": "cells/S02a/fusion.json",
+       "page": "#c-S02a-fusion"
+      },
+      {
+       "recipe": "S02b",
+       "cell": "cells/S02b/fusion.json",
+       "page": "#c-S02b-fusion"
+      },
+      {
+       "recipe": "S02c",
+       "cell": "cells/S02c/fusion.json",
+       "page": "#c-S02c-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 2,
+     "code": "no-history-in-file",
+     "owner": "builder",
+     "title": "File carries no feature history",
+     "explain": "The fixture file holds a shape but no feature history, so there is nothing to rebuild.",
+     "cells": 11,
+     "examples": [
+      {
+       "recipe": "S02h",
+       "cell": "cells/S02h/fusion.json",
+       "page": "#c-S02h-fusion"
+      },
+      {
+       "recipe": "S03a",
+       "cell": "cells/S03a/fusion.json",
+       "page": "#c-S03a-fusion"
+      },
+      {
+       "recipe": "S03b",
+       "cell": "cells/S03b/fusion.json",
+       "page": "#c-S03b-fusion"
+      },
+      {
+       "recipe": "S03c",
+       "cell": "cells/S03c/fusion.json",
+       "page": "#c-S03c-fusion"
+      },
+      {
+       "recipe": "S03d",
+       "cell": "cells/S03d/fusion.json",
+       "page": "#c-S03d-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 3,
+     "code": "base-feature-empty",
+     "owner": "Dutchman mapping",
+     "title": "Base feature gives no solid",
+     "explain": "The first feature produced no solid body that SolidCraft can import.",
+     "cells": 6,
+     "examples": [
+      {
+       "recipe": "X10a",
+       "cell": "cells/X10a/fusion.json",
+       "page": "#c-X10a-fusion"
+      },
+      {
+       "recipe": "X10b",
+       "cell": "cells/X10b/fusion.json",
+       "page": "#c-X10b-fusion"
+      },
+      {
+       "recipe": "X10c",
+       "cell": "cells/X10c/fusion.json",
+       "page": "#c-X10c-fusion"
+      },
+      {
+       "recipe": "X10d",
+       "cell": "cells/X10d/fusion.json",
+       "page": "#c-X10d-fusion"
+      },
+      {
+       "recipe": "X10e",
+       "cell": "cells/X10e/fusion.json",
+       "page": "#c-X10e-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 4,
+     "code": "extrude-unsupported",
+     "owner": "Dutchman mapping",
+     "title": "Extrude kind not supported",
+     "explain": "This extrude end, face or profile region is not mapped or could not be confirmed yet.",
+     "cells": 6,
+     "examples": [
+      {
+       "recipe": "X11a",
+       "cell": "cells/X11a/fusion.json",
+       "page": "#c-X11a-fusion"
+      },
+      {
+       "recipe": "X11b",
+       "cell": "cells/X11b/fusion.json",
+       "page": "#c-X11b-fusion"
+      },
+      {
+       "recipe": "E02e",
+       "cell": "cells/E02e/fusion.json",
+       "page": "#c-E02e-fusion"
+      },
+      {
+       "recipe": "E03e",
+       "cell": "cells/E03e/fusion.json",
+       "page": "#c-E03e-fusion"
+      },
+      {
+       "recipe": "F20d",
+       "cell": "cells/F20d/fusion.json",
+       "page": "#c-F20d-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 5,
+     "code": "face-edge-ref",
+     "owner": "cadmpeg decode",
+     "title": "Face or edge reference not resolved",
+     "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
+     "cells": 6,
+     "examples": [
+      {
+       "recipe": "F37a",
+       "cell": "cells/F37a/fusion.json",
+       "page": "#c-F37a-fusion"
+      },
+      {
+       "recipe": "F37b",
+       "cell": "cells/F37b/fusion.json",
+       "page": "#c-F37b-fusion"
+      },
+      {
+       "recipe": "F37d",
+       "cell": "cells/F37d/fusion.json",
+       "page": "#c-F37d-fusion"
+      },
+      {
+       "recipe": "F37e",
+       "cell": "cells/F37e/fusion.json",
+       "page": "#c-F37e-fusion"
+      },
+      {
+       "recipe": "F37f",
+       "cell": "cells/F37f/fusion.json",
+       "page": "#c-F37f-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 6,
+     "code": "fillet-unsupported",
+     "owner": "Dutchman mapping",
+     "title": "Fillet kind not supported",
+     "explain": "Variable-radius fillets and tangency weights are not mapped yet.",
+     "cells": 6,
+     "examples": [
+      {
+       "recipe": "P04d",
+       "cell": "cells/P04d/fusion.json",
+       "page": "#c-P04d-fusion"
+      },
+      {
+       "recipe": "P04e",
+       "cell": "cells/P04e/fusion.json",
+       "page": "#c-P04e-fusion"
+      },
+      {
+       "recipe": "F03c",
+       "cell": "cells/F03c/fusion.json",
+       "page": "#c-F03c-fusion"
+      },
+      {
+       "recipe": "F03d",
+       "cell": "cells/F03d/fusion.json",
+       "page": "#c-F03d-fusion"
+      },
+      {
+       "recipe": "F27a",
+       "cell": "cells/F27a/fusion.json",
+       "page": "#c-F27a-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 7,
+     "code": "feature-not-mapped",
+     "owner": "Dutchman mapping",
+     "title": "Feature not mapped yet",
+     "explain": "Dutchman has no rule for this feature type yet.",
+     "cells": 5,
+     "examples": [
+      {
+       "recipe": "E03d",
+       "cell": "cells/E03d/fusion.json",
+       "page": "#c-E03d-fusion"
+      },
+      {
+       "recipe": "F14b",
+       "cell": "cells/F14b/fusion.json",
+       "page": "#c-F14b-fusion"
+      },
+      {
+       "recipe": "F21a",
+       "cell": "cells/F21a/fusion.json",
+       "page": "#c-F21a-fusion"
+      },
+      {
+       "recipe": "F21b",
+       "cell": "cells/F21b/fusion.json",
+       "page": "#c-F21b-fusion"
+      },
+      {
+       "recipe": "F22c",
+       "cell": "cells/F22c/fusion.json",
+       "page": "#c-F22c-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 8,
+     "code": "sc-replay-shape",
+     "owner": "SolidCraft",
+     "title": "Rebuilt body shape differs",
+     "explain": "SolidCraft's replay made a body whose size, volume or area differs from the original.",
+     "cells": 5,
+     "examples": [
+      {
+       "recipe": "F08c",
+       "cell": "cells/F08c/fusion.json",
+       "page": "#c-F08c-fusion"
+      },
+      {
+       "recipe": "F09a",
+       "cell": "cells/F09a/fusion.json",
+       "page": "#c-F09a-fusion"
+      },
+      {
+       "recipe": "F17a",
+       "cell": "cells/F17a/fusion.json",
+       "page": "#c-F17a-fusion"
+      },
+      {
+       "recipe": "F17d",
+       "cell": "cells/F17d/fusion.json",
+       "page": "#c-F17d-fusion"
+      },
+      {
+       "recipe": "F17g",
+       "cell": "cells/F17g/fusion.json",
+       "page": "#c-F17g-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 9,
+     "code": "no-solids",
+     "owner": "cadmpeg decode",
+     "title": "No solids or surfaces read",
+     "explain": "cadmpeg found no solid bodies or surfaces in this file that SolidCraft can import.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "E03b",
+       "cell": "cells/E03b/fusion.json",
+       "page": "#c-E03b-fusion"
+      },
+      {
+       "recipe": "E03c",
+       "cell": "cells/E03c/fusion.json",
+       "page": "#c-E03c-fusion"
+      },
+      {
+       "recipe": "F19b",
+       "cell": "cells/F19b/fusion.json",
+       "page": "#c-F19b-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 10,
+     "code": "hole-unresolved",
+     "owner": "Dutchman mapping",
+     "title": "Hole placement not resolved",
+     "explain": "The hole's face, end or placement cannot be resolved against the model.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "F17e",
+       "cell": "cells/F17e/fusion.json",
+       "page": "#c-F17e-fusion"
+      },
+      {
+       "recipe": "D04a",
+       "cell": "cells/D04a/fusion.json",
+       "page": "#c-D04a-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 11,
+     "code": "no-reference-shape",
+     "owner": "Dutchman mapping",
+     "title": "Original shape cannot be compared",
+     "explain": "The original geometry opens as empty shells, so the rebuilt shape cannot be checked against it.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "F13a",
+       "cell": "cells/F13a/fusion.json",
+       "page": "#c-F13a-fusion"
+      },
+      {
+       "recipe": "F13b",
+       "cell": "cells/F13b/fusion.json",
+       "page": "#c-F13b-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 12,
+     "code": "pattern-unsupported",
+     "owner": "Dutchman mapping",
+     "title": "Pattern not supported",
+     "explain": "The pattern repeats nothing, has no resolved direction, or repeats a body Dutchman cannot name.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "A07a",
+       "cell": "cells/A07a/fusion.json",
+       "page": "#c-A07a-fusion"
+      },
+      {
+       "recipe": "A07b",
+       "cell": "cells/A07b/fusion.json",
+       "page": "#c-A07b-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 13,
+     "code": "sc-refused-fillet",
+     "owner": "SolidCraft",
+     "title": "SolidCraft: fillet does not fit",
+     "explain": "SolidCraft refused a fillet that is larger than the faces beside its edges allow.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "F36a",
+       "cell": "cells/F36a/fusion.json",
+       "page": "#c-F36a-fusion"
+      },
+      {
+       "recipe": "F36b",
+       "cell": "cells/F36b/fusion.json",
+       "page": "#c-F36b-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 14,
+     "code": "sc-refused-thread",
+     "owner": "SolidCraft",
+     "title": "SolidCraft: thread start unclear",
+     "explain": "SolidCraft refused a thread because it cannot tell which end the thread starts from.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "F17c",
+       "cell": "cells/F17c/fusion.json",
+       "page": "#c-F17c-fusion"
+      },
+      {
+       "recipe": "F17f",
+       "cell": "cells/F17f/fusion.json",
+       "page": "#c-F17f-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 15,
+     "code": "sheet-metal-unsupported",
+     "owner": "Dutchman mapping",
+     "title": "Sheet-metal profile not supported",
+     "explain": "A sheet-metal flange whose profile is native, not sketch lines and arcs, is not mapped yet.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "F39a",
+       "cell": "cells/F39a/fusion.json",
+       "page": "#c-F39a-fusion"
+      },
+      {
+       "recipe": "F39b",
+       "cell": "cells/F39b/fusion.json",
+       "page": "#c-F39b-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 16,
+     "code": "body-reference-missing",
+     "owner": "Dutchman mapping",
+     "title": "Body or topology reference missing",
+     "explain": "The feature depends on an earlier body, edge or face that Dutchman cannot name yet.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "F24a",
+       "cell": "cells/F24a/fusion.json",
+       "page": "#c-F24a-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 17,
+     "code": "primitive-unplaced",
+     "owner": "Dutchman mapping",
+     "title": "Primitive without a placement",
+     "explain": "A primitive solid has no placement to build it at.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "F14d",
+       "cell": "cells/F14d/fusion.json",
+       "page": "#c-F14d-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 18,
+     "code": "revolve-unresolved",
+     "owner": "Dutchman mapping",
+     "title": "Revolve not resolved",
+     "explain": "The revolve's profile, axis or two-sided turn directions cannot be resolved.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "F15b",
+       "cell": "cells/F15b/fusion.json",
+       "page": "#c-F15b-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 19,
+     "code": "sc-revolve-to-shape",
+     "owner": "SolidCraft",
+     "title": "SolidCraft: revolve to a shape",
+     "explain": "SolidCraft cannot end a revolve at the first face of another body yet.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "F15f",
+       "cell": "cells/F15f/fusion.json",
+       "page": "#c-F15f-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 20,
+     "code": "sketch-text",
+     "owner": "Dutchman mapping",
+     "title": "Sketch text not supported",
+     "explain": "Sketch text cannot be kept as solved outlines yet.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "F21c",
+       "cell": "cells/F21c/fusion.json",
+       "page": "#c-F21c-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 21,
+     "code": "thread-unsupported",
+     "owner": "Dutchman mapping",
+     "title": "Modeled thread not supported",
+     "explain": "Modeled (not cosmetic) threads are not mapped yet.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "F17b",
+       "cell": "cells/F17b/fusion.json",
+       "page": "#c-F17b-fusion"
+      }
+     ]
+    },
+    {
+     "rank": 22,
+     "code": "undecoded-pattern",
+     "owner": "cadmpeg decode",
+     "title": "Repeat not decoded",
+     "explain": "cadmpeg does not decode what a repeated feature repeats, or how, yet.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "F23a",
+       "cell": "cells/F23a/fusion.json",
+       "page": "#c-F23a-fusion"
+      }
+     ]
+    }
+   ]
+  },
+  "solidworks": {
+   "name": "SolidWorks",
+   "cells": 149,
+   "full": 10,
+   "stopped": 139,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "native-not-mapped",
+     "owner": "cadmpeg decode",
+     "title": "Native feature not read",
+     "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+     "cells": 53,
+     "examples": [
+      {
+       "recipe": "P02a",
+       "cell": "cells/P02a/solidworks.json",
+       "page": "#c-P02a-solidworks"
+      },
+      {
+       "recipe": "P02b",
+       "cell": "cells/P02b/solidworks.json",
+       "page": "#c-P02b-solidworks"
+      },
+      {
+       "recipe": "P07a",
+       "cell": "cells/P07a/solidworks.json",
+       "page": "#c-P07a-solidworks"
+      },
+      {
+       "recipe": "P07b",
+       "cell": "cells/P07b/solidworks.json",
+       "page": "#c-P07b-solidworks"
+      },
+      {
+       "recipe": "P08a",
+       "cell": "cells/P08a/solidworks.json",
+       "page": "#c-P08a-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 2,
+     "code": "sc-replay-bodies",
+     "owner": "SolidCraft",
+     "title": "Rebuilt body count differs",
+     "explain": "SolidCraft's replay made a different number of bodies than the original has.",
+     "cells": 46,
+     "examples": [
+      {
+       "recipe": "A01a",
+       "cell": "cells/A01a/solidworks.json",
+       "page": "#c-A01a-solidworks"
+      },
+      {
+       "recipe": "A01b",
+       "cell": "cells/A01b/solidworks.json",
+       "page": "#c-A01b-solidworks"
+      },
+      {
+       "recipe": "A01c",
+       "cell": "cells/A01c/solidworks.json",
+       "page": "#c-A01c-solidworks"
+      },
+      {
+       "recipe": "A01d",
+       "cell": "cells/A01d/solidworks.json",
+       "page": "#c-A01d-solidworks"
+      },
+      {
+       "recipe": "A01e",
+       "cell": "cells/A01e/solidworks.json",
+       "page": "#c-A01e-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 3,
+     "code": "edge-identity",
+     "owner": "Dutchman mapping",
+     "title": "Edge identity not resolved",
+     "explain": "A fillet or chamfer edge cannot be tied back to geometry in the source file.",
+     "cells": 11,
+     "examples": [
+      {
+       "recipe": "P04a",
+       "cell": "cells/P04a/solidworks.json",
+       "page": "#c-P04a-solidworks"
+      },
+      {
+       "recipe": "P04b",
+       "cell": "cells/P04b/solidworks.json",
+       "page": "#c-P04b-solidworks"
+      },
+      {
+       "recipe": "P04c",
+       "cell": "cells/P04c/solidworks.json",
+       "page": "#c-P04c-solidworks"
+      },
+      {
+       "recipe": "P05a",
+       "cell": "cells/P05a/solidworks.json",
+       "page": "#c-P05a-solidworks"
+      },
+      {
+       "recipe": "P05b",
+       "cell": "cells/P05b/solidworks.json",
+       "page": "#c-P05b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 4,
+     "code": "feature-not-mapped",
+     "owner": "Dutchman mapping",
+     "title": "Feature not mapped yet",
+     "explain": "Dutchman has no rule for this feature type yet.",
+     "cells": 6,
+     "examples": [
+      {
+       "recipe": "W01a",
+       "cell": "cells/W01a/solidworks.json",
+       "page": "#c-W01a-solidworks"
+      },
+      {
+       "recipe": "W01b",
+       "cell": "cells/W01b/solidworks.json",
+       "page": "#c-W01b-solidworks"
+      },
+      {
+       "recipe": "W01c",
+       "cell": "cells/W01c/solidworks.json",
+       "page": "#c-W01c-solidworks"
+      },
+      {
+       "recipe": "W01d",
+       "cell": "cells/W01d/solidworks.json",
+       "page": "#c-W01d-solidworks"
+      },
+      {
+       "recipe": "W01e",
+       "cell": "cells/W01e/solidworks.json",
+       "page": "#c-W01e-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 5,
+     "code": "face-unresolved",
+     "owner": "Dutchman mapping",
+     "title": "Face not resolved",
+     "explain": "The feature's face cannot be resolved against the rebuilt model.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "P03a",
+       "cell": "cells/P03a/solidworks.json",
+       "page": "#c-P03a-solidworks"
+      },
+      {
+       "recipe": "P03b",
+       "cell": "cells/P03b/solidworks.json",
+       "page": "#c-P03b-solidworks"
+      },
+      {
+       "recipe": "A05a",
+       "cell": "cells/A05a/solidworks.json",
+       "page": "#c-A05a-solidworks"
+      },
+      {
+       "recipe": "A05b",
+       "cell": "cells/A05b/solidworks.json",
+       "page": "#c-A05b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 6,
+     "code": "sweep-path",
+     "owner": "Dutchman mapping",
+     "title": "Sweep path not resolved",
+     "explain": "The sweep has no path, or its path or swept shape cannot be resolved.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "P10a",
+       "cell": "cells/P10a/solidworks.json",
+       "page": "#c-P10a-solidworks"
+      },
+      {
+       "recipe": "P10b",
+       "cell": "cells/P10b/solidworks.json",
+       "page": "#c-P10b-solidworks"
+      },
+      {
+       "recipe": "P14a",
+       "cell": "cells/P14a/solidworks.json",
+       "page": "#c-P14a-solidworks"
+      },
+      {
+       "recipe": "P14b",
+       "cell": "cells/P14b/solidworks.json",
+       "page": "#c-P14b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 7,
+     "code": "revolve-unresolved",
+     "owner": "Dutchman mapping",
+     "title": "Revolve not resolved",
+     "explain": "The revolve's profile, axis or two-sided turn directions cannot be resolved.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "A09b",
+       "cell": "cells/A09b/solidworks.json",
+       "page": "#c-A09b-solidworks"
+      },
+      {
+       "recipe": "A10a",
+       "cell": "cells/A10a/solidworks.json",
+       "page": "#c-A10a-solidworks"
+      },
+      {
+       "recipe": "A10b",
+       "cell": "cells/A10b/solidworks.json",
+       "page": "#c-A10b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 8,
+     "code": "face-edge-ref",
+     "owner": "cadmpeg decode",
+     "title": "Face or edge reference not resolved",
+     "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P06a",
+       "cell": "cells/P06a/solidworks.json",
+       "page": "#c-P06a-solidworks"
+      },
+      {
+       "recipe": "P06b",
+       "cell": "cells/P06b/solidworks.json",
+       "page": "#c-P06b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 9,
+     "code": "fillet-unsupported",
+     "owner": "Dutchman mapping",
+     "title": "Fillet kind not supported",
+     "explain": "Variable-radius fillets and tangency weights are not mapped yet.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P04d",
+       "cell": "cells/P04d/solidworks.json",
+       "page": "#c-P04d-solidworks"
+      },
+      {
+       "recipe": "P04e",
+       "cell": "cells/P04e/solidworks.json",
+       "page": "#c-P04e-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 10,
+     "code": "loft-sections",
+     "owner": "Dutchman mapping",
+     "title": "Loft section count",
+     "explain": "A loft needs between two and fifty sections.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P11a",
+       "cell": "cells/P11a/solidworks.json",
+       "page": "#c-P11a-solidworks"
+      },
+      {
+       "recipe": "P11b",
+       "cell": "cells/P11b/solidworks.json",
+       "page": "#c-P11b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 11,
+     "code": "pattern-unsupported",
+     "owner": "Dutchman mapping",
+     "title": "Pattern not supported",
+     "explain": "The pattern repeats nothing, has no resolved direction, or repeats a body Dutchman cannot name.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P09a",
+       "cell": "cells/P09a/solidworks.json",
+       "page": "#c-P09a-solidworks"
+      },
+      {
+       "recipe": "P09b",
+       "cell": "cells/P09b/solidworks.json",
+       "page": "#c-P09b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 12,
+     "code": "sc-replay-position",
+     "owner": "SolidCraft",
+     "title": "Rebuilt body sits elsewhere",
+     "explain": "SolidCraft's replay put a body in a different place than the original.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P13a",
+       "cell": "cells/P13a/solidworks.json",
+       "page": "#c-P13a-solidworks"
+      },
+      {
+       "recipe": "P13b",
+       "cell": "cells/P13b/solidworks.json",
+       "page": "#c-P13b-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 13,
+     "code": "no-reader",
+     "owner": "cadmpeg decode",
+     "title": "No reader for this file type",
+     "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "D05a",
+       "cell": "cells/D05a/solidworks.json",
+       "page": "#c-D05a-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 14,
+     "code": "sc-refused-profile",
+     "owner": "SolidCraft",
+     "title": "SolidCraft: no closed profile",
+     "explain": "SolidCraft refused the feature because its sketch has no closed profile.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "D04a",
+       "cell": "cells/D04a/solidworks.json",
+       "page": "#c-D04a-solidworks"
+      }
+     ]
+    }
+   ]
+  },
+  "creo": {
+   "name": "Creo",
+   "cells": 46,
+   "full": 0,
+   "stopped": 46,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "no-geometry-yet",
+     "owner": "cadmpeg decode",
+     "title": "Opens, but no geometry read",
+     "explain": "The file opens, but cadmpeg cannot read its geometry yet.",
+     "cells": 46,
+     "examples": [
+      {
+       "recipe": "P01a",
+       "cell": "cells/P01a/creo.json",
+       "page": "#c-P01a-creo"
+      },
+      {
+       "recipe": "P01b",
+       "cell": "cells/P01b/creo.json",
+       "page": "#c-P01b-creo"
+      },
+      {
+       "recipe": "P02a",
+       "cell": "cells/P02a/creo.json",
+       "page": "#c-P02a-creo"
+      },
+      {
+       "recipe": "P02b",
+       "cell": "cells/P02b/creo.json",
+       "page": "#c-P02b-creo"
+      },
+      {
+       "recipe": "P03a",
+       "cell": "cells/P03a/creo.json",
+       "page": "#c-P03a-creo"
+      }
+     ]
+    }
+   ]
+  },
+  "catia": {
+   "name": "CATIA",
+   "cells": 7,
+   "full": 0,
+   "stopped": 7,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "no-solids",
+     "owner": "cadmpeg decode",
+     "title": "No solids or surfaces read",
+     "explain": "cadmpeg found no solid bodies or surfaces in this file that SolidCraft can import.",
+     "cells": 7,
+     "examples": [
+      {
+       "recipe": "P01a",
+       "cell": "cells/P01a/catia.json",
+       "page": "#c-P01a-catia"
+      },
+      {
+       "recipe": "P01b",
+       "cell": "cells/P01b/catia.json",
+       "page": "#c-P01b-catia"
+      },
+      {
+       "recipe": "P02a",
+       "cell": "cells/P02a/catia.json",
+       "page": "#c-P02a-catia"
+      },
+      {
+       "recipe": "P02b",
+       "cell": "cells/P02b/catia.json",
+       "page": "#c-P02b-catia"
+      },
+      {
+       "recipe": "P03a",
+       "cell": "cells/P03a/catia.json",
+       "page": "#c-P03a-catia"
+      }
+     ]
+    }
+   ]
+  },
+  "freecad": {
+   "name": "FreeCAD",
+   "cells": 238,
+   "full": 132,
+   "stopped": 106,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "native-not-mapped",
+     "owner": "cadmpeg decode",
+     "title": "Native feature not read",
+     "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+     "cells": 36,
+     "examples": [
+      {
+       "recipe": "S02a",
+       "cell": "cells/S02a/freecad.json",
+       "page": "#c-S02a-freecad"
+      },
+      {
+       "recipe": "S02b",
+       "cell": "cells/S02b/freecad.json",
+       "page": "#c-S02b-freecad"
+      },
+      {
+       "recipe": "S02c",
+       "cell": "cells/S02c/freecad.json",
+       "page": "#c-S02c-freecad"
+      },
+      {
+       "recipe": "S02d",
+       "cell": "cells/S02d/freecad.json",
+       "page": "#c-S02d-freecad"
+      },
+      {
+       "recipe": "S02e",
+       "cell": "cells/S02e/freecad.json",
+       "page": "#c-S02e-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 2,
+     "code": "parts-placed-only",
+     "owner": "Dutchman mapping",
+     "title": "Parts placed as shapes only",
+     "explain": "No part's history was written; the parts were placed as geometry without an editable timeline.",
+     "cells": 29,
+     "examples": [
+      {
+       "recipe": "A01a",
+       "cell": "cells/A01a/freecad.json",
+       "page": "#c-A01a-freecad"
+      },
+      {
+       "recipe": "A01b",
+       "cell": "cells/A01b/freecad.json",
+       "page": "#c-A01b-freecad"
+      },
+      {
+       "recipe": "A01c",
+       "cell": "cells/A01c/freecad.json",
+       "page": "#c-A01c-freecad"
+      },
+      {
+       "recipe": "A01d",
+       "cell": "cells/A01d/freecad.json",
+       "page": "#c-A01d-freecad"
+      },
+      {
+       "recipe": "A01e",
+       "cell": "cells/A01e/freecad.json",
+       "page": "#c-A01e-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 3,
+     "code": "sc-replay-shape",
+     "owner": "SolidCraft",
+     "title": "Rebuilt body shape differs",
+     "explain": "SolidCraft's replay made a body whose size, volume or area differs from the original.",
+     "cells": 15,
+     "examples": [
+      {
+       "recipe": "P07a",
+       "cell": "cells/P07a/freecad.json",
+       "page": "#c-P07a-freecad"
+      },
+      {
+       "recipe": "P07b",
+       "cell": "cells/P07b/freecad.json",
+       "page": "#c-P07b-freecad"
+      },
+      {
+       "recipe": "P08a",
+       "cell": "cells/P08a/freecad.json",
+       "page": "#c-P08a-freecad"
+      },
+      {
+       "recipe": "X02a",
+       "cell": "cells/X02a/freecad.json",
+       "page": "#c-X02a-freecad"
+      },
+      {
+       "recipe": "X04b",
+       "cell": "cells/X04b/freecad.json",
+       "page": "#c-X04b-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 4,
+     "code": "sc-replay-position",
+     "owner": "SolidCraft",
+     "title": "Rebuilt body sits elsewhere",
+     "explain": "SolidCraft's replay put a body in a different place than the original.",
+     "cells": 5,
+     "examples": [
+      {
+       "recipe": "P08b",
+       "cell": "cells/P08b/freecad.json",
+       "page": "#c-P08b-freecad"
+      },
+      {
+       "recipe": "N17b",
+       "cell": "cells/N17b/freecad.json",
+       "page": "#c-N17b-freecad"
+      },
+      {
+       "recipe": "N32a",
+       "cell": "cells/N32a/freecad.json",
+       "page": "#c-N32a-freecad"
+      },
+      {
+       "recipe": "N32b",
+       "cell": "cells/N32b/freecad.json",
+       "page": "#c-N32b-freecad"
+      },
+      {
+       "recipe": "N32c",
+       "cell": "cells/N32c/freecad.json",
+       "page": "#c-N32c-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 5,
+     "code": "body-reference-missing",
+     "owner": "Dutchman mapping",
+     "title": "Body or topology reference missing",
+     "explain": "The feature depends on an earlier body, edge or face that Dutchman cannot name yet.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "P06a",
+       "cell": "cells/P06a/freecad.json",
+       "page": "#c-P06a-freecad"
+      },
+      {
+       "recipe": "P06b",
+       "cell": "cells/P06b/freecad.json",
+       "page": "#c-P06b-freecad"
+      },
+      {
+       "recipe": "E02e",
+       "cell": "cells/E02e/freecad.json",
+       "page": "#c-E02e-freecad"
+      },
+      {
+       "recipe": "S15b",
+       "cell": "cells/S15b/freecad.json",
+       "page": "#c-S15b-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 6,
+     "code": "feature-not-mapped",
+     "owner": "Dutchman mapping",
+     "title": "Feature not mapped yet",
+     "explain": "Dutchman has no rule for this feature type yet.",
+     "cells": 4,
+     "examples": [
+      {
+       "recipe": "X10f",
+       "cell": "cells/X10f/freecad.json",
+       "page": "#c-X10f-freecad"
+      },
+      {
+       "recipe": "E03b",
+       "cell": "cells/E03b/freecad.json",
+       "page": "#c-E03b-freecad"
+      },
+      {
+       "recipe": "E03c",
+       "cell": "cells/E03c/freecad.json",
+       "page": "#c-E03c-freecad"
+      },
+      {
+       "recipe": "E03d",
+       "cell": "cells/E03d/freecad.json",
+       "page": "#c-E03d-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 7,
+     "code": "face-edge-ref",
+     "owner": "cadmpeg decode",
+     "title": "Face or edge reference not resolved",
+     "explain": "The feature points at a face or edge that cadmpeg does not resolve to the model yet.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "X11a",
+       "cell": "cells/X11a/freecad.json",
+       "page": "#c-X11a-freecad"
+      },
+      {
+       "recipe": "X11b",
+       "cell": "cells/X11b/freecad.json",
+       "page": "#c-X11b-freecad"
+      },
+      {
+       "recipe": "E02d",
+       "cell": "cells/E02d/freecad.json",
+       "page": "#c-E02d-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 8,
+     "code": "no-reference-shape",
+     "owner": "Dutchman mapping",
+     "title": "Original shape cannot be compared",
+     "explain": "The original geometry opens as empty shells, so the rebuilt shape cannot be checked against it.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "N04c",
+       "cell": "cells/N04c/freecad.json",
+       "page": "#c-N04c-freecad"
+      },
+      {
+       "recipe": "N06a",
+       "cell": "cells/N06a/freecad.json",
+       "page": "#c-N06a-freecad"
+      },
+      {
+       "recipe": "N06b",
+       "cell": "cells/N06b/freecad.json",
+       "page": "#c-N06b-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 9,
+     "code": "sc-replay-bodies",
+     "owner": "SolidCraft",
+     "title": "Rebuilt body count differs",
+     "explain": "SolidCraft's replay made a different number of bodies than the original has.",
+     "cells": 3,
+     "examples": [
+      {
+       "recipe": "X05a",
+       "cell": "cells/X05a/freecad.json",
+       "page": "#c-X05a-freecad"
+      },
+      {
+       "recipe": "X05b",
+       "cell": "cells/X05b/freecad.json",
+       "page": "#c-X05b-freecad"
+      },
+      {
+       "recipe": "E02a",
+       "cell": "cells/E02a/freecad.json",
+       "page": "#c-E02a-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 10,
+     "code": "base-feature-empty",
+     "owner": "Dutchman mapping",
+     "title": "Base feature gives no solid",
+     "explain": "The first feature produced no solid body that SolidCraft can import.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "P14a",
+       "cell": "cells/P14a/freecad.json",
+       "page": "#c-P14a-freecad"
+      },
+      {
+       "recipe": "P14b",
+       "cell": "cells/P14b/freecad.json",
+       "page": "#c-P14b-freecad"
+      }
+     ]
+    },
+    {
+     "rank": 11,
+     "code": "model-check-fails",
+     "owner": "cadmpeg decode",
+     "title": "Read model fails its checks",
+     "explain": "cadmpeg read the file, but its model of it fails internal consistency checks.",
+     "cells": 2,
+     "examples": [
+      {
+       "recipe": "E03a",
+       "cell": "cells/E03a/freecad.json",
+       "page": "#c-E03a-freecad"
+      },
+      {
+       "recipe": "E03e",
+       "cell": "cells/E03e/freecad.json",
+       "page": "#c-E03e-freecad"
+      }
+     ]
+    }
+   ]
+  },
+  "solidedge": {
+   "name": "Solid Edge",
+   "cells": 235,
+   "full": 0,
+   "stopped": 235,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "unclassified",
+     "owner": "unclassified",
+     "title": "Not classified yet",
+     "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
+     "cells": 217,
+     "examples": [
+      {
+       "recipe": "P01a",
+       "cell": "cells/P01a/solidedge.json",
+       "page": "#c-P01a-solidedge"
+      },
+      {
+       "recipe": "P01b",
+       "cell": "cells/P01b/solidedge.json",
+       "page": "#c-P01b-solidedge"
+      },
+      {
+       "recipe": "P02a",
+       "cell": "cells/P02a/solidedge.json",
+       "page": "#c-P02a-solidedge"
+      },
+      {
+       "recipe": "P02b",
+       "cell": "cells/P02b/solidedge.json",
+       "page": "#c-P02b-solidedge"
+      },
+      {
+       "recipe": "P03a",
+       "cell": "cells/P03a/solidedge.json",
+       "page": "#c-P03a-solidedge"
+      }
+     ]
+    },
+    {
+     "rank": 2,
+     "code": "no-reader",
+     "owner": "cadmpeg decode",
+     "title": "No reader for this file type",
+     "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
+     "cells": 18,
+     "examples": [
+      {
+       "recipe": "D01a",
+       "cell": "cells/D01a/solidedge.json",
+       "page": "#c-D01a-solidedge"
+      },
+      {
+       "recipe": "D01b",
+       "cell": "cells/D01b/solidedge.json",
+       "page": "#c-D01b-solidedge"
+      },
+      {
+       "recipe": "D01c",
+       "cell": "cells/D01c/solidedge.json",
+       "page": "#c-D01c-solidedge"
+      },
+      {
+       "recipe": "D01d",
+       "cell": "cells/D01d/solidedge.json",
+       "page": "#c-D01d-solidedge"
+      },
+      {
+       "recipe": "D01e",
+       "cell": "cells/D01e/solidedge.json",
+       "page": "#c-D01e-solidedge"
+      }
+     ]
+    }
+   ]
+  },
+  "alibre": {
+   "name": "Alibre Design",
+   "cells": 46,
+   "full": 0,
+   "stopped": 46,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "no-reader",
+     "owner": "cadmpeg decode",
+     "title": "No reader for this file type",
+     "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
+     "cells": 46,
+     "examples": [
+      {
+       "recipe": "P01a",
+       "cell": "cells/P01a/alibre.json",
+       "page": "#c-P01a-alibre"
+      },
+      {
+       "recipe": "P01b",
+       "cell": "cells/P01b/alibre.json",
+       "page": "#c-P01b-alibre"
+      },
+      {
+       "recipe": "P02a",
+       "cell": "cells/P02a/alibre.json",
+       "page": "#c-P02a-alibre"
+      },
+      {
+       "recipe": "P02b",
+       "cell": "cells/P02b/alibre.json",
+       "page": "#c-P02b-alibre"
+      },
+      {
+       "recipe": "P03a",
+       "cell": "cells/P03a/alibre.json",
+       "page": "#c-P03a-alibre"
+      }
+     ]
+    }
+   ]
+  },
+  "onshape": {
+   "name": "Onshape",
+   "cells": 50,
+   "full": 4,
+   "stopped": 46,
+   "blockers": [
+    {
+     "rank": 1,
+     "code": "native-not-mapped",
+     "owner": "cadmpeg decode",
+     "title": "Native feature not read",
+     "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+     "cells": 46,
+     "examples": [
+      {
+       "recipe": "P01a",
+       "cell": "cells/P01a/onshape.json",
+       "page": "#c-P01a-onshape"
+      },
+      {
+       "recipe": "P01b",
+       "cell": "cells/P01b/onshape.json",
+       "page": "#c-P01b-onshape"
+      },
+      {
+       "recipe": "P02a",
+       "cell": "cells/P02a/onshape.json",
+       "page": "#c-P02a-onshape"
+      },
+      {
+       "recipe": "P02b",
+       "cell": "cells/P02b/onshape.json",
+       "page": "#c-P02b-onshape"
+      },
+      {
+       "recipe": "P03a",
+       "cell": "cells/P03a/onshape.json",
+       "page": "#c-P03a-onshape"
+      }
+     ]
+    }
+   ]
+  },
+  "nx": {
+   "name": "NX",
+   "cells": 0,
+   "full": 0,
+   "stopped": 0,
+   "blockers": []
+  }
+ },
+ "overall": [
+  {
+   "code": "native-not-mapped",
+   "owner": "cadmpeg decode",
+   "cells": 234
+  },
+  {
+   "code": "unclassified",
+   "owner": "unclassified",
+   "cells": 217
+  },
+  {
+   "code": "no-reader",
+   "owner": "cadmpeg decode",
+   "cells": 65
+  },
+  {
+   "code": "sc-replay-bodies",
+   "owner": "SolidCraft",
+   "cells": 49
+  },
+  {
+   "code": "no-geometry-yet",
+   "owner": "cadmpeg decode",
+   "cells": 46
+  },
+  {
+   "code": "parts-placed-only",
+   "owner": "Dutchman mapping",
+   "cells": 29
+  },
+  {
+   "code": "sc-replay-shape",
+   "owner": "SolidCraft",
+   "cells": 23
+  },
+  {
+   "code": "feature-not-mapped",
+   "owner": "Dutchman mapping",
+   "cells": 15
+  },
+  {
+   "code": "face-edge-ref",
+   "owner": "cadmpeg decode",
+   "cells": 12
+  },
+  {
+   "code": "edge-identity",
+   "owner": "Dutchman mapping",
+   "cells": 11
+  },
+  {
+   "code": "no-history-in-file",
+   "owner": "builder",
+   "cells": 11
+  },
+  {
+   "code": "no-solids",
+   "owner": "cadmpeg decode",
+   "cells": 10
+  },
+  {
+   "code": "base-feature-empty",
+   "owner": "Dutchman mapping",
+   "cells": 8
+  },
+  {
+   "code": "body-reference-missing",
+   "owner": "Dutchman mapping",
+   "cells": 8
+  },
+  {
+   "code": "fillet-unsupported",
+   "owner": "Dutchman mapping",
+   "cells": 8
+  },
+  {
+   "code": "sc-replay-position",
+   "owner": "SolidCraft",
+   "cells": 7
+  },
+  {
+   "code": "extrude-unsupported",
+   "owner": "Dutchman mapping",
+   "cells": 6
+  },
+  {
+   "code": "no-reference-shape",
+   "owner": "Dutchman mapping",
+   "cells": 5
+  },
+  {
+   "code": "assembly-no-parts",
+   "owner": "Dutchman mapping",
+   "cells": 4
+  },
+  {
+   "code": "face-unresolved",
+   "owner": "Dutchman mapping",
+   "cells": 4
+  },
+  {
+   "code": "parts-missing",
+   "owner": "builder",
+   "cells": 4
+  },
+  {
+   "code": "pattern-unsupported",
+   "owner": "Dutchman mapping",
+   "cells": 4
+  },
+  {
+   "code": "revolve-unresolved",
+   "owner": "Dutchman mapping",
+   "cells": 4
+  },
+  {
+   "code": "sc-step-import-empty",
+   "owner": "SolidCraft",
+   "cells": 4
+  },
+  {
+   "code": "sweep-path",
+   "owner": "Dutchman mapping",
+   "cells": 4
+  },
+  {
+   "code": "chamfer-unresolved",
+   "owner": "Dutchman mapping",
+   "cells": 2
+  },
+  {
+   "code": "hole-unresolved",
+   "owner": "Dutchman mapping",
+   "cells": 2
+  },
+  {
+   "code": "loft-sections",
+   "owner": "Dutchman mapping",
+   "cells": 2
+  },
+  {
+   "code": "model-check-fails",
+   "owner": "cadmpeg decode",
+   "cells": 2
+  },
+  {
+   "code": "sc-refused-fillet",
+   "owner": "SolidCraft",
+   "cells": 2
+  },
+  {
+   "code": "sc-refused-thread",
+   "owner": "SolidCraft",
+   "cells": 2
+  },
+  {
+   "code": "shape-differs",
+   "owner": "unclassified",
+   "cells": 2
+  },
+  {
+   "code": "sheet-metal-unsupported",
+   "owner": "Dutchman mapping",
+   "cells": 2
+  },
+  {
+   "code": "primitive-unplaced",
+   "owner": "Dutchman mapping",
+   "cells": 1
+  },
+  {
+   "code": "sc-refused-profile",
+   "owner": "SolidCraft",
+   "cells": 1
+  },
+  {
+   "code": "sc-revolve-to-shape",
+   "owner": "SolidCraft",
+   "cells": 1
+  },
+  {
+   "code": "sketch-text",
+   "owner": "Dutchman mapping",
+   "cells": 1
+  },
+  {
+   "code": "thread-unsupported",
+   "owner": "Dutchman mapping",
+   "cells": 1
+  },
+  {
+   "code": "undecoded-pattern",
+   "owner": "cadmpeg decode",
+   "cells": 1
+  }
+ ]
+}

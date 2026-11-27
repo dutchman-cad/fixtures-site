@@ -1,0 +1,43 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P06a",
+ "program": "inventor",
+ "program_name": "Inventor",
+ "app": "inventor-2016",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "shell",
+  "index": 3
+ },
+ "reason": {
+  "code": "body-reference-missing",
+  "owner": "Dutchman mapping",
+  "title": "Body or topology reference missing",
+  "explain": "The feature depends on an earlier body, edge or face that Dutchman cannot name yet.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "inventor-2025",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "inventor-2027",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P06a-inventor",
+ "downloads": []
+}

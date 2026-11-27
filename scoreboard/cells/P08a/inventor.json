@@ -1,0 +1,43 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P08a",
+ "program": "inventor",
+ "program_name": "Inventor",
+ "app": "inventor-2016",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 4
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "extrude, blind",
+  "index": 2
+ },
+ "reason": {
+  "code": "sc-replay-shape",
+  "owner": "SolidCraft",
+  "title": "Rebuilt body shape differs",
+  "explain": "SolidCraft's replay made a body whose size, volume or area differs from the original.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "inventor-2025",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 4
+  },
+  {
+   "app": "inventor-2027",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 4
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P08a-inventor",
+ "downloads": []
+}

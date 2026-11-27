@@ -1,0 +1,34 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P04c",
+ "program": "inventor",
+ "program_name": "Inventor",
+ "app": "inventor-2016",
+ "status": "Full history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 3,
+  "total": 3
+ },
+ "matches": true,
+ "wrong_bodies": null,
+ "stopped": false,
+ "first_stop": null,
+ "reason": null,
+ "others": [
+  {
+   "app": "inventor-2025",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "inventor-2027",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P04c-inventor",
+ "downloads": []
+}

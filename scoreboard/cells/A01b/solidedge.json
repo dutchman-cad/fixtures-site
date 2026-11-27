@@ -1,0 +1,43 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "A01b",
+ "program": "solidedge",
+ "program_name": "Solid Edge",
+ "app": "solidedge-dev-2f8263ad",
+ "status": "Geometry only",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 0,
+  "total": 0
+ },
+ "matches": true,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "conversion",
+  "index": null
+ },
+ "reason": {
+  "code": "unclassified",
+  "owner": "unclassified",
+  "title": "Not classified yet",
+  "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solid-edge-2026",
+   "status": "Awaiting reader",
+   "rebuilt": 0,
+   "total": 0
+  },
+  {
+   "app": "solidedge-2026",
+   "status": "Awaiting reader",
+   "rebuilt": 0,
+   "total": 0
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A01b-solidedge",
+ "downloads": []
+}

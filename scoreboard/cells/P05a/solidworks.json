@@ -1,0 +1,55 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P05a",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2021",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "chamfer, distance group",
+  "index": 3
+ },
+ "reason": {
+  "code": "edge-identity",
+  "owner": "Dutchman mapping",
+  "title": "Edge identity not resolved",
+  "explain": "A fillet or chamfer edge cannot be tied back to geometry in the source file.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2024",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2025",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P05a-solidworks",
+ "downloads": []
+}

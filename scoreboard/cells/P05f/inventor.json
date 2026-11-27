@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P05f",
+ "program": "inventor",
+ "program_name": "Inventor",
+ "app": "inventor-2016",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "chamfer, distance group",
+  "index": 3
+ },
+ "reason": {
+  "code": "chamfer-unresolved",
+  "owner": "Dutchman mapping",
+  "title": "Chamfer not resolved",
+  "explain": "The chamfer's dimensions cannot be resolved against the model yet.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P05f-inventor",
+ "downloads": []
+}

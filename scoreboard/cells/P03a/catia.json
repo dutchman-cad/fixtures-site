@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P03a",
+ "program": "catia",
+ "program_name": "CATIA",
+ "app": "catia-r2026",
+ "status": "Failing",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 0,
+  "total": 0
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "conversion",
+  "index": null
+ },
+ "reason": {
+  "code": "no-solids",
+  "owner": "cadmpeg decode",
+  "title": "No solids or surfaces read",
+  "explain": "cadmpeg found no solid bodies or surfaces in this file that SolidCraft can import.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P03a-catia",
+ "downloads": []
+}

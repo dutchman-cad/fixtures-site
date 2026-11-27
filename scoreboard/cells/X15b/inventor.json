@@ -1,0 +1,21 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "X15b",
+ "program": "inventor",
+ "program_name": "Inventor",
+ "app": "inventor-2016",
+ "status": "Full history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 3,
+  "total": 3
+ },
+ "matches": true,
+ "wrong_bodies": null,
+ "stopped": false,
+ "first_stop": null,
+ "reason": null,
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-X15b-inventor",
+ "downloads": []
+}

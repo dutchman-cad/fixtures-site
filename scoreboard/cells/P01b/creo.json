@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "P01b",
+ "program": "creo",
+ "program_name": "Creo",
+ "app": "creo-7",
+ "status": "Failing",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 0,
+  "total": 0
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "conversion",
+  "index": null
+ },
+ "reason": {
+  "code": "no-geometry-yet",
+  "owner": "cadmpeg decode",
+  "title": "Opens, but no geometry read",
+  "explain": "The file opens, but cadmpeg cannot read its geometry yet.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P01b-creo",
+ "downloads": []
+}

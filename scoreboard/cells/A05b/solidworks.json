@@ -1,0 +1,49 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "A05b",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2021",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 6,
+  "total": 7
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "hole, simple, blind",
+  "index": 5
+ },
+ "reason": {
+  "code": "face-unresolved",
+  "owner": "Dutchman mapping",
+  "title": "Face not resolved",
+  "explain": "The feature's face cannot be resolved against the rebuilt model.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "solidworks-2023",
+   "status": "Partial history",
+   "rebuilt": 6,
+   "total": 7
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 6,
+   "total": 7
+  },
+  {
+   "app": "solidworks-2024",
+   "status": "Failing",
+   "rebuilt": 0,
+   "total": 0
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A05b-solidworks",
+ "downloads": []
+}

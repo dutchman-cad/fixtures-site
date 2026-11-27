@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "X10d",
+ "program": "inventor",
+ "program_name": "Inventor",
+ "app": "inventor-2016",
+ "status": "Failing",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 0,
+  "total": 2
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "sketch",
+  "index": 1
+ },
+ "reason": {
+  "code": "sc-step-import-empty",
+  "owner": "SolidCraft",
+  "title": "SolidCraft imported no body",
+  "explain": "SolidCraft could not rebuild a feature because its STEP import produced no bodies.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-X10d-inventor",
+ "downloads": []
+}

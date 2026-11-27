@@ -1,0 +1,798 @@
+{
+ "headers": {
+  "/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/agents.txt": {
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/apple-touch-icon.png": {
+   "content-type": "image/png"
+  },
+  "/booklet.pdf": {
+   "content-disposition": "attachment; filename=\"cad-fixture-recipes-v1.83.pdf\"",
+   "content-type": "application/pdf"
+  },
+  "/builders/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/alibre/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/alibre/build_alibre.ps1": {
+   "content-disposition": "attachment; filename=\"build_alibre.ps1\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/coverage.json": {
+   "content-type": "application/json"
+  },
+  "/builders/creo/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/creo/KIT.md": {
+   "content-disposition": "attachment; filename=\"KIT.md\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/creo/build_creo.html": {
+   "content-disposition": "attachment; filename=\"build_creo.html\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/creo/creo_fixtures.json": {
+   "content-disposition": "attachment; filename=\"creo_fixtures.json\"",
+   "content-type": "application/json"
+  },
+  "/builders/creo/creo_recipes.creojs": {
+   "content-disposition": "attachment; filename=\"creo_recipes.creojs\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/creo/pack_creo.ps1": {
+   "content-disposition": "attachment; filename=\"pack_creo.ps1\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/creo/probe_creo.html": {
+   "content-disposition": "attachment; filename=\"probe_creo.html\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/creo/probe_creo.ps1": {
+   "content-disposition": "attachment; filename=\"probe_creo.ps1\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/freecad/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/freecad/build_freecad.py": {
+   "content-disposition": "attachment; filename=\"build_freecad.py\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/fusion/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/fusion/FixtureBuilder.zip": {
+   "content-disposition": "attachment; filename=\"FixtureBuilder.zip\"",
+   "content-type": "application/zip"
+  },
+  "/builders/fusion/fixture_job.py": {
+   "content-disposition": "attachment; filename=\"fixture_job.py\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/inventor/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/inventor/Inventor-builder-latest.zip": {
+   "content-disposition": "attachment; filename=\"Inventor-builder-latest.zip\"",
+   "content-type": "application/zip"
+  },
+  "/builders/inventor/build_inventor.py": {
+   "content-disposition": "attachment; filename=\"build_inventor.py\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/inventor/build_inventor.vb": {
+   "content-disposition": "attachment; filename=\"build_inventor.vb\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/onshape/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/onshape/build_onshape.py": {
+   "content-disposition": "attachment; filename=\"build_onshape.py\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/solidedge/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/solidedge/build_solidedge.ps1": {
+   "content-disposition": "attachment; filename=\"build_solidedge.ps1\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/solidedge/repro/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/solidedge/repro/build_repro.ps1": {
+   "content-disposition": "attachment; filename=\"build_repro.ps1\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/solidworks/": {
+   "content-type": "text/html; charset=utf-8"
+  },
+  "/builders/solidworks/FixtureBuilder.bas": {
+   "content-disposition": "attachment; filename=\"FixtureBuilder.bas\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/solidworks/FixtureDrawings.bas": {
+   "content-disposition": "attachment; filename=\"FixtureDrawings.bas\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/solidworks/FixtureLauncher.bas": {
+   "content-disposition": "attachment; filename=\"FixtureLauncher.bas\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/builders/solidworks/build_solidworks.py": {
+   "content-disposition": "attachment; filename=\"build_solidworks.py\"",
+   "content-type": "text/plain; charset=utf-8"
+  },
+  "/cam-recipes.json": {
+   "content-type": "application/json"
+  },
+  "/drawings/A01a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/A01a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/A02a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/A02a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/A03a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/A03a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/A04a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/A04a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/A05a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/A05a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/A06a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/A06a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/A10a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/A10a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F01a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F01a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F02a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F02a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F03a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F03a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F04a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F04a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F05a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F05a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F06a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F06a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F11a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F11a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F13a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F13a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F14a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F14a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F15a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F15a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F16a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F16a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F18a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F18a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F20a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F20a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F21a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F21a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/F24a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/F24a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/M01a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/M01a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/M07a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/M07a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N01a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N01a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N02a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N02a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N03a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N03a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N04a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N04a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N05a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N05a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N06a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N06a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N07a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N07a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N08a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N08a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N09a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N09a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N10a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N10a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N11a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N11a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N12a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N12a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N13a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N13a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N14a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N14a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N15a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N15a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N16a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N16a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N17a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N17a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N18a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N18a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N30a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N30a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N31a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N31a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N32a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N32a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N33a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N33a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N34a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N34a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N35a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N35a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N36a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N36a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N37a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N37a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N38a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N38a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N39a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N39a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/N40a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/N40a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P01a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P01a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P02a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P02a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P03a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P03a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P04a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P04a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P05a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P05a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P06a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P06a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P07a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P07a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P08a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P08a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P09a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P09a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P10a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P10a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P11a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P11a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P12a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P12a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P13a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P13a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P15a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P15a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/P16a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/P16a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S01a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S01a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S01b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S01b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S02a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S02a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S02b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S02b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S02c.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S02c.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S02d.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S02d.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S02e.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S02e.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S02f.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S02f.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S02g.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S02g.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S03a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S03a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S03b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S03b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S03d.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S03d.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S03e.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S03e.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S05a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S05a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S06a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S06a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S06b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S06b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S07a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S07a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S07b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S07b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S07c.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S07c.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S08a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S08a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S08b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S08b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S09a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S09a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S09b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S09b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S11a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S11a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S11b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S11b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S12a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S12a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S13a.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S13a.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S13b.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S13b.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S13c.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S13c.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/S13d.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/S13d.png": {
+   "content-type": "image/png"
+  },
+  "/drawings/volunteer/P01a-cvl.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/volunteer/P01b-cvl.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/volunteer/P02a-cvl.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/volunteer/P02b-cvl.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/volunteer/P03a-cvl.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/drawings/volunteer/P03b-cvl.pdf": {
+   "content-type": "application/pdf"
+  },
+  "/favicon-32.png": {
+   "content-type": "image/png"
+  },
+  "/favicon.ico": {
+   "content-type": "image/x-icon"
+  },
+  "/favicon.svg": {
+   "content-type": "image/svg+xml"
+  },
+  "/og.png": {
+   "content-type": "image/png"
+  },
+  "/scoreboard/files/solidworks-2026_P01a.step": {
+   "content-disposition": "attachment; filename=\"solidworks-2026_P01a.step\"",
+   "content-type": "application/octet-stream"
+  }
+ },
+ "note": "Response headers and redirects of the home origin, for the Worker in front of this mirror.",
+ "redirects": {
+  "/builders/alibre/README.md": {
+   "location": "/builders/alibre/",
+   "status": 301
+  },
+  "/builders/creo/README.md": {
+   "location": "/builders/creo/",
+   "status": 301
+  },
+  "/builders/freecad/README.md": {
+   "location": "/builders/freecad/",
+   "status": 301
+  },
+  "/builders/fusion/README.md": {
+   "location": "/builders/fusion/",
+   "status": 301
+  },
+  "/builders/inventor/README.md": {
+   "location": "/builders/inventor/",
+   "status": 301
+  },
+  "/builders/onshape/README.md": {
+   "location": "/builders/onshape/",
+   "status": 301
+  },
+  "/builders/solidedge/README.md": {
+   "location": "/builders/solidedge/",
+   "status": 301
+  },
+  "/builders/solidedge/repro/README.md": {
+   "location": "/builders/solidedge/repro/",
+   "status": 301
+  },
+  "/builders/solidworks/README.md": {
+   "location": "/builders/solidworks/",
+   "status": 301
+  }
+ }
+}

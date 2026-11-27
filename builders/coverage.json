@@ -1,0 +1,32 @@
+{
+  "inventor": {
+    "designs": 219,
+    "scripted": 211,
+    "not_yet": 8
+  },
+  "solidworks": {
+    "designs": 166,
+    "scripted": 146,
+    "not_yet": 20
+  },
+  "fusion": {
+    "designs": 401,
+    "scripted": 318,
+    "not_yet": 83
+  },
+  "solidedge": {
+    "designs": 252,
+    "scripted": 235,
+    "not_yet": 17
+  },
+  "onshape": {
+    "designs": 211,
+    "scripted": 154,
+    "not_yet": 57
+  },
+  "alibre": {
+    "designs": 141,
+    "scripted": 82,
+    "not_yet": 59
+  }
+}

@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "F14d",
+ "program": "fusion",
+ "program_name": "Fusion",
+ "app": "fusion",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 1,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "primitive",
+  "index": 2
+ },
+ "reason": {
+  "code": "primitive-unplaced",
+  "owner": "Dutchman mapping",
+  "title": "Primitive without a placement",
+  "explain": "A primitive solid has no placement to build it at.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-F14d-fusion",
+ "downloads": []
+}

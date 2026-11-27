@@ -1,0 +1,37 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "F36a",
+ "program": "fusion",
+ "program_name": "Fusion",
+ "app": "fusion",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "fillet, radius groups",
+  "index": 3
+ },
+ "reason": {
+  "code": "sc-refused-fillet",
+  "owner": "SolidCraft",
+  "title": "SolidCraft: fillet does not fit",
+  "explain": "SolidCraft refused a fillet that is larger than the faces beside its edges allow.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "fusion-2706.1.17",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-F36a-fusion",
+ "downloads": []
+}

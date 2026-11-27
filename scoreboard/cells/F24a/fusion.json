@@ -1,0 +1,37 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "F24a",
+ "program": "fusion",
+ "program_name": "Fusion",
+ "app": "fusion",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 2,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": 0,
+ "stopped": true,
+ "first_stop": {
+  "kind": "pattern",
+  "index": 3
+ },
+ "reason": {
+  "code": "body-reference-missing",
+  "owner": "Dutchman mapping",
+  "title": "Body or topology reference missing",
+  "explain": "The feature depends on an earlier body, edge or face that Dutchman cannot name yet.",
+  "text": null
+ },
+ "others": [
+  {
+   "app": "fusion-2706.1.17",
+   "status": "Partial history",
+   "rebuilt": 2,
+   "total": 3
+  }
+ ],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-F24a-fusion",
+ "downloads": []
+}

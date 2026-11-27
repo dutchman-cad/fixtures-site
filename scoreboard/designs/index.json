@@ -1,0 +1,1207 @@
+{
+ "projects": {
+  "railcore": {
+   "models": {
+    "300ZL": {
+     "sc": "railcore/300ZL.png",
+     "original": "railcore/300ZL.original.png",
+     "known_differences": [
+      {
+       "title": "dutchman#924: some rebuilt parts land 8-30 mm away from the stored geometry",
+       "url": "https://github.com/dutchman-cad/dutchman/issues/924"
+      },
+      {
+       "title": "dutchman#923: every rebuilt part is written twice",
+       "url": "https://github.com/dutchman-cad/dutchman/issues/923"
+      }
+     ]
+    },
+    "300ZLT": {
+     "sc": "railcore/300ZLT.png",
+     "original": "railcore/300ZLT.original.png",
+     "known_differences": [
+      {
+       "title": "dutchman#924: some rebuilt parts land 8-30 mm away from the stored geometry",
+       "url": "https://github.com/dutchman-cad/dutchman/issues/924"
+      },
+      {
+       "title": "dutchman#923: every rebuilt part is written twice",
+       "url": "https://github.com/dutchman-cad/dutchman/issues/923"
+      }
+     ]
+    },
+    "ZL v1": {
+     "sc": "railcore/ZLv1.png",
+     "original": "railcore/ZLv1.original.png",
+     "known_differences": [
+      {
+       "title": "dutchman#924: some rebuilt parts land 8-30 mm away from the stored geometry",
+       "url": "https://github.com/dutchman-cad/dutchman/issues/924"
+      },
+      {
+       "title": "dutchman#923: every rebuilt part is written twice",
+       "url": "https://github.com/dutchman-cad/dutchman/issues/923"
+      }
+     ]
+    },
+    "300ZL FSK v55 (2023)": {
+     "sc": "railcore/300ZL-FSK-v55.png",
+     "original": "railcore/300ZL-FSK-v55.original.png"
+    },
+    "300ZLT FSK v3 (2023)": {
+     "sc": "railcore/300ZLT-FSK-v3.png",
+     "original": "railcore/300ZLT-FSK-v3.original.png"
+    }
+   },
+   "credit": "RailCore® II 300ZL by J. Steve White and Tony Akens (RailCore Labs), CC BY-SA 4.0, github.com/railcore/parts",
+   "credit_url": "https://github.com/railcore/parts"
+  },
+  "recipes": {
+   "models": {
+    "A01a": {
+     "sc": "recipes/A01a.png"
+    },
+    "A01b": {
+     "sc": "recipes/A01b.png"
+    },
+    "A01c": {
+     "sc": "recipes/A01c.png"
+    },
+    "A01d": {
+     "sc": "recipes/A01d.png"
+    },
+    "A01e": {
+     "sc": "recipes/A01e.png"
+    },
+    "A02a": {
+     "sc": "recipes/A02a.png"
+    },
+    "A02b": {
+     "sc": "recipes/A02b.png"
+    },
+    "A03a": {
+     "sc": "recipes/A03a.png"
+    },
+    "A03b": {
+     "sc": "recipes/A03b.png"
+    },
+    "A04a": {
+     "sc": "recipes/A04a.png"
+    },
+    "A04b": {
+     "sc": "recipes/A04b.png"
+    },
+    "A07a": {
+     "sc": "recipes/A07a.png"
+    },
+    "A07b": {
+     "sc": "recipes/A07b.png"
+    },
+    "A09a": {
+     "sc": "recipes/A09a.png"
+    },
+    "A09b": {
+     "sc": "recipes/A09b.png"
+    },
+    "E01a": {
+     "sc": "recipes/E01a.png"
+    },
+    "E01b": {
+     "sc": "recipes/E01b.png"
+    },
+    "E01c": {
+     "sc": "recipes/E01c.png"
+    },
+    "E01d": {
+     "sc": "recipes/E01d.png"
+    },
+    "E01e": {
+     "sc": "recipes/E01e.png"
+    },
+    "E02a": {
+     "sc": "recipes/E02a.png"
+    },
+    "E02b": {
+     "sc": "recipes/E02b.png"
+    },
+    "E02c": {
+     "sc": "recipes/E02c.png"
+    },
+    "E02d": {
+     "sc": "recipes/E02d.png"
+    },
+    "E02e": {
+     "sc": "recipes/E02e.png"
+    },
+    "E03a": {
+     "sc": "recipes/E03a.png"
+    },
+    "E03b": {
+     "sc": "recipes/E03b.png"
+    },
+    "E03c": {
+     "sc": "recipes/E03c.png"
+    },
+    "E03d": {
+     "sc": "recipes/E03d.png"
+    },
+    "F01a": {
+     "sc": "recipes/F01a.png"
+    },
+    "F01b": {
+     "sc": "recipes/F01b.png"
+    },
+    "F02a": {
+     "sc": "recipes/F02a.png"
+    },
+    "F02b": {
+     "sc": "recipes/F02b.png"
+    },
+    "F03a": {
+     "sc": "recipes/F03a.png"
+    },
+    "F03b": {
+     "sc": "recipes/F03b.png"
+    },
+    "F03c": {
+     "sc": "recipes/F03c.png"
+    },
+    "F03d": {
+     "sc": "recipes/F03d.png"
+    },
+    "F04a": {
+     "sc": "recipes/F04a.png"
+    },
+    "F04b": {
+     "sc": "recipes/F04b.png"
+    },
+    "F04c": {
+     "sc": "recipes/F04c.png"
+    },
+    "F04d": {
+     "sc": "recipes/F04d.png"
+    },
+    "F04e": {
+     "sc": "recipes/F04e.png"
+    },
+    "F05a": {
+     "sc": "recipes/F05a.png"
+    },
+    "F05b": {
+     "sc": "recipes/F05b.png"
+    },
+    "F06a": {
+     "sc": "recipes/F06a.png"
+    },
+    "F06b": {
+     "sc": "recipes/F06b.png"
+    },
+    "F10a": {
+     "sc": "recipes/F10a.png"
+    },
+    "F10b": {
+     "sc": "recipes/F10b.png"
+    },
+    "F10c": {
+     "sc": "recipes/F10c.png"
+    },
+    "F10d": {
+     "sc": "recipes/F10d.png"
+    },
+    "F10e": {
+     "sc": "recipes/F10e.png"
+    },
+    "F10f": {
+     "sc": "recipes/F10f.png"
+    },
+    "F10g": {
+     "sc": "recipes/F10g.png"
+    },
+    "F10h": {
+     "sc": "recipes/F10h.png"
+    },
+    "F12a": {
+     "sc": "recipes/F12a.png"
+    },
+    "F12b": {
+     "sc": "recipes/F12b.png"
+    },
+    "F12c": {
+     "sc": "recipes/F12c.png"
+    },
+    "F12d": {
+     "sc": "recipes/F12d.png"
+    },
+    "F12e": {
+     "sc": "recipes/F12e.png"
+    },
+    "F12f": {
+     "sc": "recipes/F12f.png"
+    },
+    "F12g": {
+     "sc": "recipes/F12g.png"
+    },
+    "F12h": {
+     "sc": "recipes/F12h.png"
+    },
+    "F12i": {
+     "sc": "recipes/F12i.png"
+    },
+    "F12j": {
+     "sc": "recipes/F12j.png"
+    },
+    "F12k": {
+     "sc": "recipes/F12k.png"
+    },
+    "F12l": {
+     "sc": "recipes/F12l.png"
+    },
+    "F15a": {
+     "sc": "recipes/F15a.png"
+    },
+    "F15b": {
+     "sc": "recipes/F15b.png"
+    },
+    "F15c": {
+     "sc": "recipes/F15c.png"
+    },
+    "F15d": {
+     "sc": "recipes/F15d.png"
+    },
+    "F15e": {
+     "sc": "recipes/F15e.png"
+    },
+    "F15f": {
+     "sc": "recipes/F15f.png"
+    },
+    "F16a": {
+     "sc": "recipes/F16a.png"
+    },
+    "F16b": {
+     "sc": "recipes/F16b.png"
+    },
+    "F16c": {
+     "sc": "recipes/F16c.png"
+    },
+    "F16d": {
+     "sc": "recipes/F16d.png"
+    },
+    "F16e": {
+     "sc": "recipes/F16e.png"
+    },
+    "F16f": {
+     "sc": "recipes/F16f.png"
+    },
+    "F16h": {
+     "sc": "recipes/F16h.png"
+    },
+    "F17a": {
+     "sc": "recipes/F17a.png"
+    },
+    "F17b": {
+     "sc": "recipes/F17b.png"
+    },
+    "F17c": {
+     "sc": "recipes/F17c.png"
+    },
+    "F17d": {
+     "sc": "recipes/F17d.png"
+    },
+    "F17e": {
+     "sc": "recipes/F17e.png"
+    },
+    "F17f": {
+     "sc": "recipes/F17f.png"
+    },
+    "F17g": {
+     "sc": "recipes/F17g.png"
+    },
+    "F18a": {
+     "sc": "recipes/F18a.png"
+    },
+    "F20a": {
+     "sc": "recipes/F20a.png"
+    },
+    "F20b": {
+     "sc": "recipes/F20b.png"
+    },
+    "F20c": {
+     "sc": "recipes/F20c.png"
+    },
+    "F22a": {
+     "sc": "recipes/F22a.png"
+    },
+    "F24a": {
+     "sc": "recipes/F24a.png"
+    },
+    "F25a": {
+     "sc": "recipes/F25a.png"
+    },
+    "F25b": {
+     "sc": "recipes/F25b.png"
+    },
+    "F25c": {
+     "sc": "recipes/F25c.png"
+    },
+    "F25d": {
+     "sc": "recipes/F25d.png"
+    },
+    "F26a": {
+     "sc": "recipes/F26a.png"
+    },
+    "F27a": {
+     "sc": "recipes/F27a.png"
+    },
+    "F27b": {
+     "sc": "recipes/F27b.png"
+    },
+    "F27c": {
+     "sc": "recipes/F27c.png"
+    },
+    "F28a": {
+     "sc": "recipes/F28a.png"
+    },
+    "F28b": {
+     "sc": "recipes/F28b.png"
+    },
+    "F35c": {
+     "sc": "recipes/F35c.png"
+    },
+    "F36a": {
+     "sc": "recipes/F36a.png"
+    },
+    "F36b": {
+     "sc": "recipes/F36b.png"
+    },
+    "P01a": {
+     "sc": "recipes/P01a.png"
+    },
+    "P01b": {
+     "sc": "recipes/P01b.png"
+    },
+    "P02a": {
+     "sc": "recipes/P02a.png"
+    },
+    "P02b": {
+     "sc": "recipes/P02b.png"
+    },
+    "P03a": {
+     "sc": "recipes/P03a.png"
+    },
+    "P03b": {
+     "sc": "recipes/P03b.png"
+    },
+    "P04a": {
+     "sc": "recipes/P04a.png"
+    },
+    "P04b": {
+     "sc": "recipes/P04b.png"
+    },
+    "P04c": {
+     "sc": "recipes/P04c.png"
+    },
+    "P04d": {
+     "sc": "recipes/P04d.png"
+    },
+    "P04e": {
+     "sc": "recipes/P04e.png"
+    },
+    "P05a": {
+     "sc": "recipes/P05a.png"
+    },
+    "P05b": {
+     "sc": "recipes/P05b.png"
+    },
+    "P05c": {
+     "sc": "recipes/P05c.png"
+    },
+    "P05d": {
+     "sc": "recipes/P05d.png"
+    },
+    "P05e": {
+     "sc": "recipes/P05e.png"
+    },
+    "P05f": {
+     "sc": "recipes/P05f.png"
+    },
+    "P06a": {
+     "sc": "recipes/P06a.png"
+    },
+    "P06b": {
+     "sc": "recipes/P06b.png"
+    },
+    "P07a": {
+     "sc": "recipes/P07a.png"
+    },
+    "P07b": {
+     "sc": "recipes/P07b.png"
+    },
+    "P08a": {
+     "sc": "recipes/P08a.png"
+    },
+    "P08b": {
+     "sc": "recipes/P08b.png"
+    },
+    "P09a": {
+     "sc": "recipes/P09a.png"
+    },
+    "P09b": {
+     "sc": "recipes/P09b.png"
+    },
+    "P10a": {
+     "sc": "recipes/P10a.png"
+    },
+    "P10b": {
+     "sc": "recipes/P10b.png"
+    },
+    "P11a": {
+     "sc": "recipes/P11a.png"
+    },
+    "P11b": {
+     "sc": "recipes/P11b.png"
+    },
+    "P12a": {
+     "sc": "recipes/P12a.png"
+    },
+    "P12b": {
+     "sc": "recipes/P12b.png"
+    },
+    "P13a": {
+     "sc": "recipes/P13a.png"
+    },
+    "P13b": {
+     "sc": "recipes/P13b.png"
+    },
+    "P14a": {
+     "sc": "recipes/P14a.png"
+    },
+    "P14b": {
+     "sc": "recipes/P14b.png"
+    },
+    "P15a": {
+     "sc": "recipes/P15a.png"
+    },
+    "P15b": {
+     "sc": "recipes/P15b.png"
+    },
+    "P16a": {
+     "sc": "recipes/P16a.png"
+    },
+    "S01a": {
+     "sc": "recipes/S01a.png"
+    },
+    "S01b": {
+     "sc": "recipes/S01b.png"
+    },
+    "S02a": {
+     "sc": "recipes/S02a.png"
+    },
+    "S02b": {
+     "sc": "recipes/S02b.png"
+    },
+    "S02c": {
+     "sc": "recipes/S02c.png"
+    },
+    "S03a": {
+     "sc": "recipes/S03a.png"
+    },
+    "S03b": {
+     "sc": "recipes/S03b.png"
+    },
+    "S03c": {
+     "sc": "recipes/S03c.png"
+    },
+    "S03d": {
+     "sc": "recipes/S03d.png"
+    },
+    "S03e": {
+     "sc": "recipes/S03e.png"
+    },
+    "S05a": {
+     "sc": "recipes/S05a.png"
+    },
+    "S07a": {
+     "sc": "recipes/S07a.png"
+    },
+    "S07b": {
+     "sc": "recipes/S07b.png"
+    },
+    "S07c": {
+     "sc": "recipes/S07c.png"
+    },
+    "S11a": {
+     "sc": "recipes/S11a.png"
+    },
+    "S13a": {
+     "sc": "recipes/S13a.png"
+    },
+    "S13b": {
+     "sc": "recipes/S13b.png"
+    },
+    "S15a": {
+     "sc": "recipes/S15a.png"
+    },
+    "S15b": {
+     "sc": "recipes/S15b.png"
+    },
+    "X01a": {
+     "sc": "recipes/X01a.png"
+    },
+    "X01b": {
+     "sc": "recipes/X01b.png"
+    },
+    "X01c": {
+     "sc": "recipes/X01c.png"
+    },
+    "X03a": {
+     "sc": "recipes/X03a.png"
+    },
+    "X03b": {
+     "sc": "recipes/X03b.png"
+    },
+    "X03c": {
+     "sc": "recipes/X03c.png"
+    },
+    "X05a": {
+     "sc": "recipes/X05a.png"
+    },
+    "X05b": {
+     "sc": "recipes/X05b.png"
+    },
+    "X07a": {
+     "sc": "recipes/X07a.png"
+    },
+    "X07b": {
+     "sc": "recipes/X07b.png"
+    },
+    "X08a": {
+     "sc": "recipes/X08a.png"
+    },
+    "X08b": {
+     "sc": "recipes/X08b.png"
+    },
+    "X10a": {
+     "sc": "recipes/X10a.png"
+    },
+    "X10b": {
+     "sc": "recipes/X10b.png"
+    },
+    "X10c": {
+     "sc": "recipes/X10c.png"
+    },
+    "X10d": {
+     "sc": "recipes/X10d.png"
+    },
+    "X10e": {
+     "sc": "recipes/X10e.png"
+    },
+    "X10f": {
+     "sc": "recipes/X10f.png"
+    },
+    "X10g": {
+     "sc": "recipes/X10g.png"
+    },
+    "X13a": {
+     "sc": "recipes/X13a.png"
+    },
+    "X13b": {
+     "sc": "recipes/X13b.png"
+    },
+    "X15a": {
+     "sc": "recipes/X15a.png"
+    },
+    "X15b": {
+     "sc": "recipes/X15b.png"
+    },
+    "A05a": {
+     "sc": "recipes/A05a.png"
+    },
+    "A05b": {
+     "sc": "recipes/A05b.png"
+    },
+    "A06a": {
+     "sc": "recipes/A06a.png"
+    },
+    "A06b": {
+     "sc": "recipes/A06b.png"
+    },
+    "A08a": {
+     "sc": "recipes/A08a.png"
+    },
+    "A08b": {
+     "sc": "recipes/A08b.png"
+    },
+    "A10a": {
+     "sc": "recipes/A10a.png"
+    },
+    "A10b": {
+     "sc": "recipes/A10b.png"
+    },
+    "A11a": {
+     "sc": "recipes/A11a.png"
+    },
+    "A11b": {
+     "sc": "recipes/A11b.png"
+    },
+    "A11c": {
+     "sc": "recipes/A11c.png"
+    },
+    "A12a": {
+     "sc": "recipes/A12a.png"
+    },
+    "A12b": {
+     "sc": "recipes/A12b.png"
+    },
+    "A12c": {
+     "sc": "recipes/A12c.png"
+    },
+    "A13a": {
+     "sc": "recipes/A13a.png"
+    },
+    "A13b": {
+     "sc": "recipes/A13b.png"
+    },
+    "A14a": {
+     "sc": "recipes/A14a.png"
+    },
+    "A14b": {
+     "sc": "recipes/A14b.png"
+    },
+    "A14c": {
+     "sc": "recipes/A14c.png"
+    },
+    "A15a": {
+     "sc": "recipes/A15a.png"
+    },
+    "A15b": {
+     "sc": "recipes/A15b.png"
+    },
+    "A15c": {
+     "sc": "recipes/A15c.png"
+    },
+    "A16a": {
+     "sc": "recipes/A16a.png"
+    },
+    "A16b": {
+     "sc": "recipes/A16b.png"
+    },
+    "A16c": {
+     "sc": "recipes/A16c.png"
+    },
+    "A17a": {
+     "sc": "recipes/A17a.png"
+    },
+    "A17b": {
+     "sc": "recipes/A17b.png"
+    },
+    "A18a": {
+     "sc": "recipes/A18a.png"
+    },
+    "A18b": {
+     "sc": "recipes/A18b.png"
+    },
+    "A18c": {
+     "sc": "recipes/A18c.png"
+    },
+    "A19a": {
+     "sc": "recipes/A19a.png"
+    },
+    "A19b": {
+     "sc": "recipes/A19b.png"
+    },
+    "A19c": {
+     "sc": "recipes/A19c.png"
+    },
+    "A20a": {
+     "sc": "recipes/A20a.png"
+    },
+    "A20b": {
+     "sc": "recipes/A20b.png"
+    },
+    "A20c": {
+     "sc": "recipes/A20c.png"
+    },
+    "A21a": {
+     "sc": "recipes/A21a.png"
+    },
+    "A21b": {
+     "sc": "recipes/A21b.png"
+    },
+    "A21c": {
+     "sc": "recipes/A21c.png"
+    },
+    "A22a": {
+     "sc": "recipes/A22a.png"
+    },
+    "A22b": {
+     "sc": "recipes/A22b.png"
+    },
+    "A23a": {
+     "sc": "recipes/A23a.png"
+    },
+    "A23b": {
+     "sc": "recipes/A23b.png"
+    },
+    "A23c": {
+     "sc": "recipes/A23c.png"
+    },
+    "A24a": {
+     "sc": "recipes/A24a.png"
+    },
+    "A24b": {
+     "sc": "recipes/A24b.png"
+    },
+    "A25a": {
+     "sc": "recipes/A25a.png"
+    },
+    "A25b": {
+     "sc": "recipes/A25b.png"
+    },
+    "A25c": {
+     "sc": "recipes/A25c.png"
+    },
+    "A25d": {
+     "sc": "recipes/A25d.png"
+    },
+    "A26a": {
+     "sc": "recipes/A26a.png"
+    },
+    "A26b": {
+     "sc": "recipes/A26b.png"
+    },
+    "D01a": {
+     "sc": "recipes/D01a.png"
+    },
+    "D01b": {
+     "sc": "recipes/D01b.png"
+    },
+    "D01c": {
+     "sc": "recipes/D01c.png"
+    },
+    "D01d": {
+     "sc": "recipes/D01d.png"
+    },
+    "D01e": {
+     "sc": "recipes/D01e.png"
+    },
+    "D01f": {
+     "sc": "recipes/D01f.png"
+    },
+    "D01g": {
+     "sc": "recipes/D01g.png"
+    },
+    "D01h": {
+     "sc": "recipes/D01h.png"
+    },
+    "D02a": {
+     "sc": "recipes/D02a.png"
+    },
+    "D03a": {
+     "sc": "recipes/D03a.png"
+    },
+    "D03b": {
+     "sc": "recipes/D03b.png"
+    },
+    "D03c": {
+     "sc": "recipes/D03c.png"
+    },
+    "D04a": {
+     "sc": "recipes/D04a.png"
+    },
+    "D05a": {
+     "sc": "recipes/D05a.png"
+    },
+    "D06a": {
+     "sc": "recipes/D06a.png"
+    },
+    "D07a": {
+     "sc": "recipes/D07a.png"
+    },
+    "D08a": {
+     "sc": "recipes/D08a.png"
+    },
+    "D08b": {
+     "sc": "recipes/D08b.png"
+    },
+    "D10a": {
+     "sc": "recipes/D10a.png"
+    },
+    "D11a": {
+     "sc": "recipes/D11a.png"
+    },
+    "D12a": {
+     "sc": "recipes/D12a.png"
+    },
+    "D13a": {
+     "sc": "recipes/D13a.png"
+    },
+    "D14a": {
+     "sc": "recipes/D14a.png"
+    },
+    "D15a": {
+     "sc": "recipes/D15a.png"
+    },
+    "D16a": {
+     "sc": "recipes/D16a.png"
+    },
+    "D17a": {
+     "sc": "recipes/D17a.png"
+    },
+    "D18a": {
+     "sc": "recipes/D18a.png"
+    },
+    "D19a": {
+     "sc": "recipes/D19a.png"
+    },
+    "F11a": {
+     "sc": "recipes/F11a.png"
+    },
+    "F11b": {
+     "sc": "recipes/F11b.png"
+    },
+    "F13a": {
+     "sc": "recipes/F13a.png"
+    },
+    "F13b": {
+     "sc": "recipes/F13b.png"
+    },
+    "F14a": {
+     "sc": "recipes/F14a.png"
+    },
+    "F14b": {
+     "sc": "recipes/F14b.png"
+    },
+    "F14c": {
+     "sc": "recipes/F14c.png"
+    },
+    "F14d": {
+     "sc": "recipes/F14d.png"
+    },
+    "F16g": {
+     "sc": "recipes/F16g.png"
+    },
+    "F18b": {
+     "sc": "recipes/F18b.png"
+    },
+    "F18c": {
+     "sc": "recipes/F18c.png"
+    },
+    "F18d": {
+     "sc": "recipes/F18d.png"
+    },
+    "F18e": {
+     "sc": "recipes/F18e.png"
+    },
+    "F18f": {
+     "sc": "recipes/F18f.png"
+    },
+    "F21a": {
+     "sc": "recipes/F21a.png"
+    },
+    "F21b": {
+     "sc": "recipes/F21b.png"
+    },
+    "M01a": {
+     "sc": "recipes/M01a.png"
+    },
+    "M01b": {
+     "sc": "recipes/M01b.png"
+    },
+    "M01c": {
+     "sc": "recipes/M01c.png"
+    },
+    "M01d": {
+     "sc": "recipes/M01d.png"
+    },
+    "M01e": {
+     "sc": "recipes/M01e.png"
+    },
+    "M01f": {
+     "sc": "recipes/M01f.png"
+    },
+    "M02a": {
+     "sc": "recipes/M02a.png"
+    },
+    "M02b": {
+     "sc": "recipes/M02b.png"
+    },
+    "M03a": {
+     "sc": "recipes/M03a.png"
+    },
+    "M03b": {
+     "sc": "recipes/M03b.png"
+    },
+    "M04a": {
+     "sc": "recipes/M04a.png"
+    },
+    "M04b": {
+     "sc": "recipes/M04b.png"
+    },
+    "M05a": {
+     "sc": "recipes/M05a.png"
+    },
+    "M05b": {
+     "sc": "recipes/M05b.png"
+    },
+    "M06a": {
+     "sc": "recipes/M06a.png"
+    },
+    "M06b": {
+     "sc": "recipes/M06b.png"
+    },
+    "M07a": {
+     "sc": "recipes/M07a.png"
+    },
+    "M07b": {
+     "sc": "recipes/M07b.png"
+    },
+    "M08a": {
+     "sc": "recipes/M08a.png"
+    },
+    "M08b": {
+     "sc": "recipes/M08b.png"
+    },
+    "M09a": {
+     "sc": "recipes/M09a.png"
+    },
+    "M09b": {
+     "sc": "recipes/M09b.png"
+    },
+    "M10a": {
+     "sc": "recipes/M10a.png"
+    },
+    "M11a": {
+     "sc": "recipes/M11a.png"
+    },
+    "M11b": {
+     "sc": "recipes/M11b.png"
+    },
+    "N01a": {
+     "sc": "recipes/N01a.png"
+    },
+    "N01b": {
+     "sc": "recipes/N01b.png"
+    },
+    "N02a": {
+     "sc": "recipes/N02a.png"
+    },
+    "N02b": {
+     "sc": "recipes/N02b.png"
+    },
+    "N03a": {
+     "sc": "recipes/N03a.png"
+    },
+    "N03b": {
+     "sc": "recipes/N03b.png"
+    },
+    "N04a": {
+     "sc": "recipes/N04a.png"
+    },
+    "N04b": {
+     "sc": "recipes/N04b.png"
+    },
+    "N04c": {
+     "sc": "recipes/N04c.png"
+    },
+    "N05a": {
+     "sc": "recipes/N05a.png"
+    },
+    "N05b": {
+     "sc": "recipes/N05b.png"
+    },
+    "N06a": {
+     "sc": "recipes/N06a.png"
+    },
+    "N06b": {
+     "sc": "recipes/N06b.png"
+    },
+    "N07a": {
+     "sc": "recipes/N07a.png"
+    },
+    "N07b": {
+     "sc": "recipes/N07b.png"
+    },
+    "N08a": {
+     "sc": "recipes/N08a.png"
+    },
+    "N08b": {
+     "sc": "recipes/N08b.png"
+    },
+    "N09a": {
+     "sc": "recipes/N09a.png"
+    },
+    "N09b": {
+     "sc": "recipes/N09b.png"
+    },
+    "N10a": {
+     "sc": "recipes/N10a.png"
+    },
+    "N10b": {
+     "sc": "recipes/N10b.png"
+    },
+    "N11a": {
+     "sc": "recipes/N11a.png"
+    },
+    "N11b": {
+     "sc": "recipes/N11b.png"
+    },
+    "N12a": {
+     "sc": "recipes/N12a.png"
+    },
+    "N12b": {
+     "sc": "recipes/N12b.png"
+    },
+    "N13a": {
+     "sc": "recipes/N13a.png"
+    },
+    "N13b": {
+     "sc": "recipes/N13b.png"
+    },
+    "N14a": {
+     "sc": "recipes/N14a.png"
+    },
+    "N14b": {
+     "sc": "recipes/N14b.png"
+    },
+    "N15a": {
+     "sc": "recipes/N15a.png"
+    },
+    "N15b": {
+     "sc": "recipes/N15b.png"
+    },
+    "N16a": {
+     "sc": "recipes/N16a.png"
+    },
+    "N16b": {
+     "sc": "recipes/N16b.png"
+    },
+    "N17a": {
+     "sc": "recipes/N17a.png"
+    },
+    "N17b": {
+     "sc": "recipes/N17b.png"
+    },
+    "N18a": {
+     "sc": "recipes/N18a.png"
+    },
+    "N18b": {
+     "sc": "recipes/N18b.png"
+    },
+    "N30a": {
+     "sc": "recipes/N30a.png"
+    },
+    "N30b": {
+     "sc": "recipes/N30b.png"
+    },
+    "N31a": {
+     "sc": "recipes/N31a.png"
+    },
+    "N31b": {
+     "sc": "recipes/N31b.png"
+    },
+    "N31c": {
+     "sc": "recipes/N31c.png"
+    },
+    "N32a": {
+     "sc": "recipes/N32a.png"
+    },
+    "N32b": {
+     "sc": "recipes/N32b.png"
+    },
+    "N32c": {
+     "sc": "recipes/N32c.png"
+    },
+    "N33a": {
+     "sc": "recipes/N33a.png"
+    },
+    "N33b": {
+     "sc": "recipes/N33b.png"
+    },
+    "N34a": {
+     "sc": "recipes/N34a.png"
+    },
+    "N34b": {
+     "sc": "recipes/N34b.png"
+    },
+    "N35a": {
+     "sc": "recipes/N35a.png"
+    },
+    "N35b": {
+     "sc": "recipes/N35b.png"
+    },
+    "N36a": {
+     "sc": "recipes/N36a.png"
+    },
+    "N36b": {
+     "sc": "recipes/N36b.png"
+    },
+    "N37a": {
+     "sc": "recipes/N37a.png"
+    },
+    "N37b": {
+     "sc": "recipes/N37b.png"
+    },
+    "N38a": {
+     "sc": "recipes/N38a.png"
+    },
+    "N38b": {
+     "sc": "recipes/N38b.png"
+    },
+    "N39a": {
+     "sc": "recipes/N39a.png"
+    },
+    "N39b": {
+     "sc": "recipes/N39b.png"
+    },
+    "N40a": {
+     "sc": "recipes/N40a.png"
+    },
+    "N40b": {
+     "sc": "recipes/N40b.png"
+    },
+    "S02d": {
+     "sc": "recipes/S02d.png"
+    },
+    "S02e": {
+     "sc": "recipes/S02e.png"
+    },
+    "S02f": {
+     "sc": "recipes/S02f.png"
+    },
+    "S02g": {
+     "sc": "recipes/S02g.png"
+    },
+    "S06a": {
+     "sc": "recipes/S06a.png"
+    },
+    "S06b": {
+     "sc": "recipes/S06b.png"
+    },
+    "S08a": {
+     "sc": "recipes/S08a.png"
+    },
+    "S08b": {
+     "sc": "recipes/S08b.png"
+    },
+    "S09a": {
+     "sc": "recipes/S09a.png"
+    },
+    "S09b": {
+     "sc": "recipes/S09b.png"
+    },
+    "S11b": {
+     "sc": "recipes/S11b.png"
+    },
+    "S12a": {
+     "sc": "recipes/S12a.png"
+    },
+    "S13c": {
+     "sc": "recipes/S13c.png"
+    },
+    "S13d": {
+     "sc": "recipes/S13d.png"
+    }
+   }
+  }
+ }
+}

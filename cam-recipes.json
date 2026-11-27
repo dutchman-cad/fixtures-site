@@ -1,0 +1,2007 @@
+{
+  "naming": "Name designs <ID>.f3d or <ID>.f3z, the library M02a.tools, posted programs <ID>__<post>.<ext> (lower-case a-z, 0-9, and hyphen post slug; nc, tap, or txt extension), and shared post processors posts/<post>.cps, sent once per zip.",
+  "units": "mm unless stated",
+  "defaults": "Leave unnamed values at Fusion defaults. Generate every operation before saving. Each twin starts from its a file and changes only the named setting.",
+  "recipes": [
+    {
+      "id": "M01",
+      "title": "CAM plate and setup",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [],
+      "depends_on": [],
+      "inherits_operations_from": [],
+      "twins": [
+        {
+          "id": "M01b",
+          "from": "M01a",
+          "changes": {
+            "stock.top_offset": 2
+          }
+        },
+        {
+          "id": "M01c",
+          "from": "M01a",
+          "changes": {
+            "wcs.origin": {
+              "point": "stock box top face front-left corner",
+              "x": -32,
+              "y": -22,
+              "z": 16
+            }
+          }
+        },
+        {
+          "id": "M01d",
+          "from": "M01a",
+          "changes": {
+            "wcs.origin": {
+              "point": "stock box top face back-right corner",
+              "x": 32,
+              "y": 22,
+              "z": 16
+            }
+          }
+        },
+        {
+          "id": "M01e",
+          "from": "M01a",
+          "changes": {
+            "wcs.origin": {
+              "point": "stock box bottom face front-left corner",
+              "x": -32,
+              "y": -22,
+              "z": 0
+            }
+          }
+        },
+        {
+          "id": "M01f",
+          "from": "M01a",
+          "changes": {
+            "wcs.origin": {
+              "point": "stock box top face front-right corner",
+              "x": 32,
+              "y": -22,
+              "z": 16
+            }
+          }
+        }
+      ],
+      "files": {
+        "M01a": {
+          "required": [
+            {
+              "one_of": [
+                "M01a.f3d",
+                "M01a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M01a__<post>.nc",
+            "M01a__<post>.tap",
+            "M01a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M01b": {
+          "required": [
+            {
+              "one_of": [
+                "M01b.f3d",
+                "M01b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M01b__<post>.nc",
+            "M01b__<post>.tap",
+            "M01b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M01c": {
+          "required": [
+            {
+              "one_of": [
+                "M01c.f3d",
+                "M01c.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M01c__<post>.nc",
+            "M01c__<post>.tap",
+            "M01c__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M01d": {
+          "required": [
+            {
+              "one_of": [
+                "M01d.f3d",
+                "M01d.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M01d__<post>.nc",
+            "M01d__<post>.tap",
+            "M01d__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M01e": {
+          "required": [
+            {
+              "one_of": [
+                "M01e.f3d",
+                "M01e.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M01e__<post>.nc",
+            "M01e__<post>.tap",
+            "M01e__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M01f": {
+          "required": [
+            {
+              "one_of": [
+                "M01f.f3d",
+                "M01f.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M01f__<post>.nc",
+            "M01f__<post>.tap",
+            "M01f__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "The CAM plate and one setup. The plate: a 60 (X) × 40 (Y) rectangle centred on the origin on XY, extruded 15 up; a 30 × 20 pocket centred on the top face, corners R5, 5 deep; and four Ø6 holes through at (±22, ±14). It spans x −30…30, y −20…20, z 0…15. The setup: Milling, the WCS in model orientation with its origin at the top centre of the stock, and a stock box 2 larger on each side and 1 above the part. Reference drawing (PNG) How: Design: Sketch on XY, Center Rectangle from the origin, 60 along X and 40 along Y. Extrude 15 up, New Body. Sketch on the top face: Center Rectangle 30 × 20 from the origin, Sketch Fillet R5 on its four corners; Extrude −5, Cut. Hole tool on the top face, four points at (22, 14), (−22, 14), (−22, −14), and (22, −14), Simple, Ø6, Through All. Manufacture: Setup → New Setup. Setup tab: Operation Type Milling; Work Coordinate System: Orientation Model orientation, Origin Stock box point, and click the point at the top centre of the stock box. Stock tab: Mode Relative size box, Stock Offset Mode Add stock to sides and top-bottom, Stock Side Offset 2, Stock Top Offset 1, Stock Bottom Offset 0. OK, and leave the setup named Setup1.",
+      "twin_instructions": "b: from a: Stock Top Offset 2 · c: from a: WCS Origin at the stock box point on the top face's front-left corner (x −32, y −22, z 16) · d: from a: WCS Origin at the top face's back-right corner (x 32, y 22, z 16) · e: from a: WCS Origin at the bottom face's front-left corner (x −32, y −22, z 0) · f: from a: WCS Origin at the top face's front-right corner (x 32, y −22, z 16)",
+      "reference_drawings": [
+        "https://fixtures.dutchmancad.xyz/drawings/M01a.pdf",
+        "https://fixtures.dutchmancad.xyz/drawings/M01a.png"
+      ],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M02",
+      "title": "Tool library and Face",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "2D Face",
+          "tool_number": 1,
+          "spindle_speed_rpm": 10000,
+          "cutting_feedrate_mm_min": 1000,
+          "stepover": 4.5
+        }
+      ],
+      "depends_on": [
+        "M01a"
+      ],
+      "inherits_operations_from": [],
+      "twins": [
+        {
+          "id": "M02b",
+          "from": "M02a",
+          "changes": {
+            "Face.stepover": 3
+          }
+        }
+      ],
+      "files": {
+        "M02a": {
+          "required": [
+            {
+              "one_of": [
+                "M02a.f3d",
+                "M02a.f3z"
+              ]
+            },
+            "M02a.tools"
+          ],
+          "optional": [
+            "M02a__<post>.nc",
+            "M02a__<post>.tap",
+            "M02a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M02b": {
+          "required": [
+            {
+              "one_of": [
+                "M02b.f3d",
+                "M02b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M02b__<post>.nc",
+            "M02b__<post>.tap",
+            "M02b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "A tool library of three tools, and M01a with one Face operation that uses tool 1. Send the library too, exported as M02a.tools. Tool 1: flat end mill Ø6, 3 flutes. Tool 2: ball end mill Ø6, 2 flutes. Tool 3: drill Ø6, tip angle 118°. How: Manufacture → Manage → Tool Library. Under Local, right-click Library → New library, and name it CAM fixtures. In it, add three tools, units mm, with these Cutter values and the Post Processor Number shown. Tool 1, Flat end mill: Diameter 6, Number of flutes 3, Flute length 15, Shoulder length 20, Overall length 50, Shaft diameter 6, Length below holder 25; Number 1. Tool 2, Ball end mill: Diameter 6, Number of flutes 2, the same lengths; Number 2. Tool 3, Drill: Diameter 6, Tip angle 118°, Flute length 30, Overall length 60, Shaft diameter 6, Length below holder 40; Number 3. Right-click the library, Export, and save it as M02a.tools. Then open M01a, save it as M02a, and add 2D → Face: Tool 1, Spindle Speed 10000 rpm, Cutting Feedrate 1000 mm/min; Passes: Stepover 4.5; everything else as it comes.",
+      "twin_instructions": "b: from a: Face Stepover 3",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M03",
+      "title": "2D Adaptive",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "2D Adaptive Clearing",
+          "tool_number": 1,
+          "cutting_feedrate_mm_min": 1000,
+          "geometry": "pocket's bottom edge loop",
+          "optimal_load": 1,
+          "stock_to_leave": true,
+          "radial_stock_to_leave": 0.3,
+          "axial_stock_to_leave": 0.2,
+          "multiple_depths": true,
+          "maximum_roughing_stepdown": 2,
+          "spindle_speed_rpm": 10000
+        }
+      ],
+      "depends_on": [
+        "M02a"
+      ],
+      "inherits_operations_from": [
+        "M02a"
+      ],
+      "twins": [
+        {
+          "id": "M03b",
+          "from": "M03a",
+          "changes": {
+            "optimal_load": 1.5
+          }
+        }
+      ],
+      "files": {
+        "M03a": {
+          "required": [
+            {
+              "one_of": [
+                "M03a.f3d",
+                "M03a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M03a__<post>.nc",
+            "M03a__<post>.tap",
+            "M03a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M03b": {
+          "required": [
+            {
+              "one_of": [
+                "M03b.f3d",
+                "M03b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M03b__<post>.nc",
+            "M03b__<post>.tap",
+            "M03b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "M02a + a 2D Adaptive Clearing of the pocket with tool 1. How: Open M02a, save it as M03a. 2D → 2D Adaptive Clearing. Tool: tool 1, Spindle Speed 10000 rpm, Cutting Feedrate 1000 mm/min. Geometry: Pocket Selections, the pocket's bottom edge loop. Passes: Optimal Load 1; Stock to Leave ticked, Radial Stock to Leave 0.3, Axial Stock to Leave 0.2; Multiple Depths ticked, Maximum Roughing Stepdown 2. OK, and let it generate.",
+      "twin_instructions": "b: from a: Optimal Load 1.5",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M04",
+      "title": "2D Pocket",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "2D Pocket",
+          "tool_number": 1,
+          "cutting_feedrate_mm_min": 800,
+          "geometry": "pocket's bottom edge loop",
+          "maximum_stepover": 2.4,
+          "multiple_depths": true,
+          "maximum_roughing_stepdown": 2,
+          "stock_to_leave": false,
+          "spindle_speed_rpm": 10000
+        }
+      ],
+      "depends_on": [
+        "M02a"
+      ],
+      "inherits_operations_from": [
+        "M02a"
+      ],
+      "twins": [
+        {
+          "id": "M04b",
+          "from": "M04a",
+          "changes": {
+            "maximum_stepover": 3
+          }
+        }
+      ],
+      "files": {
+        "M04a": {
+          "required": [
+            {
+              "one_of": [
+                "M04a.f3d",
+                "M04a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M04a__<post>.nc",
+            "M04a__<post>.tap",
+            "M04a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M04b": {
+          "required": [
+            {
+              "one_of": [
+                "M04b.f3d",
+                "M04b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M04b__<post>.nc",
+            "M04b__<post>.tap",
+            "M04b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "M02a + a 2D Pocket of the pocket with tool 1. How: Open M02a, save it as M04a. 2D → 2D Pocket. Tool: tool 1, Spindle Speed 10000 rpm, Cutting Feedrate 800 mm/min. Geometry: Pocket Selections, the pocket's bottom edge loop. Passes: Maximum Stepover 2.4; Multiple Depths ticked, Maximum Roughing Stepdown 2; Stock to Leave unticked.",
+      "twin_instructions": "b: from a: Maximum Stepover 3",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M05",
+      "title": "2D Contour",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "2D Contour",
+          "tool_number": 1,
+          "cutting_feedrate_mm_min": 1000,
+          "geometry": "plate's bottom outer edge loop",
+          "tabs": false,
+          "bottom_height": {
+            "reference": "Selected contour(s)",
+            "offset": -1
+          },
+          "multiple_depths": true,
+          "maximum_roughing_stepdown": 3,
+          "stock_to_leave": false,
+          "spindle_speed_rpm": 10000
+        }
+      ],
+      "depends_on": [
+        "M02a"
+      ],
+      "inherits_operations_from": [
+        "M02a"
+      ],
+      "twins": [
+        {
+          "id": "M05b",
+          "from": "M05a",
+          "changes": {
+            "tabs": {
+              "enabled": true,
+              "shape": "Rectangular",
+              "width": 5,
+              "height": 2,
+              "positioning": "By distance",
+              "distance": 50
+            }
+          }
+        }
+      ],
+      "files": {
+        "M05a": {
+          "required": [
+            {
+              "one_of": [
+                "M05a.f3d",
+                "M05a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M05a__<post>.nc",
+            "M05a__<post>.tap",
+            "M05a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M05b": {
+          "required": [
+            {
+              "one_of": [
+                "M05b.f3d",
+                "M05b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M05b__<post>.nc",
+            "M05b__<post>.tap",
+            "M05b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "M02a + a 2D Contour round the outside of the plate with tool 1, cutting 1 below its bottom. How: Open M02a, save it as M05a. 2D → 2D Contour. Tool: tool 1, Spindle Speed 10000 rpm, Cutting Feedrate 1000 mm/min. Geometry: Contour Selections, the plate's bottom outer edge loop; Tabs unticked. Heights: Bottom Height Selected contour(s), Offset −1. Passes: Multiple Depths ticked, Maximum Roughing Stepdown 3; Stock to Leave unticked.",
+      "twin_instructions": "b: from a: Tabs ticked, Tab Shape Rectangular, Tab Width 5, Tab Height 2, Tab Positioning By distance, Tab Distance 50",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M06",
+      "title": "Drilling",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "Drilling",
+          "tool_number": 3,
+          "plunge_feedrate_mm_min": 200,
+          "hole_mode": "Selected faces",
+          "geometry": "four holes' walls",
+          "bottom_height": "Hole bottom",
+          "drill_tip_through_bottom": true,
+          "break_through_depth": 1,
+          "cycle_type": "Drilling - rapid out",
+          "spindle_speed_rpm": 10000
+        }
+      ],
+      "depends_on": [
+        "M02a"
+      ],
+      "inherits_operations_from": [
+        "M02a"
+      ],
+      "twins": [
+        {
+          "id": "M06b",
+          "from": "M06a",
+          "changes": {
+            "cycle": {
+              "type": "Deep drilling - full retract",
+              "pecking_depth": 3
+            }
+          }
+        }
+      ],
+      "files": {
+        "M06a": {
+          "required": [
+            {
+              "one_of": [
+                "M06a.f3d",
+                "M06a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M06a__<post>.nc",
+            "M06a__<post>.tap",
+            "M06a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M06b": {
+          "required": [
+            {
+              "one_of": [
+                "M06b.f3d",
+                "M06b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M06b__<post>.nc",
+            "M06b__<post>.tap",
+            "M06b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "M02a + Drilling of the four Ø6 holes with tool 3. How: Open M02a, save it as M06a. Drilling → Drilling. Tool: tool 3, Spindle Speed 10000 rpm, Plunge Feedrate 200 mm/min. Geometry: Hole Mode Selected faces, and pick the four holes' walls. Heights: Bottom Height Hole bottom; Drill Tip Through Bottom ticked, Break-Through Depth 1. Cycle: Cycle Type Drilling - rapid out.",
+      "twin_instructions": "b: from a: Cycle Type Deep drilling - full retract, Pecking Depth 3",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M07",
+      "title": "CAM dome and 3D Adaptive",
+      "part": {
+        "name": "CAM dome",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 20,
+        "fillet": {
+          "edges": "four top edges in one Fillet",
+          "radius": 10
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            20
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "3D Adaptive Clearing",
+          "tool_number": 1,
+          "cutting_feedrate_mm_min": 1000,
+          "optimal_load": 1,
+          "maximum_stepdown": 2,
+          "stock_to_leave": true,
+          "radial_stock_to_leave": 0.5,
+          "axial_stock_to_leave": 0.5,
+          "spindle_speed_rpm": 10000
+        }
+      ],
+      "depends_on": [
+        "M02a"
+      ],
+      "inherits_operations_from": [],
+      "twins": [
+        {
+          "id": "M07b",
+          "from": "M07a",
+          "changes": {
+            "maximum_stepdown": 3
+          }
+        }
+      ],
+      "files": {
+        "M07a": {
+          "required": [
+            {
+              "one_of": [
+                "M07a.f3d",
+                "M07a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M07a__<post>.nc",
+            "M07a__<post>.tap",
+            "M07a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M07b": {
+          "required": [
+            {
+              "one_of": [
+                "M07b.f3d",
+                "M07b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M07b__<post>.nc",
+            "M07b__<post>.tap",
+            "M07b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "The CAM dome, a setup like M01's, and a 3D Adaptive Clearing with tool 1. The dome: a 60 (X) × 40 (Y) rectangle centred on the origin on XY, extruded 20 up, with R10 fillets on its four top edges. It spans x −30…30, y −20…20, z 0…20. Reference drawing (PNG) How: New design. Sketch on XY, Center Rectangle from the origin, 60 along X and 40 along Y. Extrude 20 up, New Body. Fillet the four top edges in one Fillet, R10. Manufacture: a setup exactly as in M01 (Milling; Model orientation; origin at the stock box's top centre; Relative size box, side offset 2, top offset 1, bottom offset 0). Then 3D → Adaptive Clearing. Tool: tool 1 from CAM fixtures, Spindle Speed 10000 rpm, Cutting Feedrate 1000 mm/min. Passes: Optimal Load 1, Maximum Stepdown 2; Stock to Leave ticked, Radial Stock to Leave 0.5, Axial Stock to Leave 0.5.",
+      "twin_instructions": "b: from a: Maximum Stepdown 3",
+      "reference_drawings": [
+        "https://fixtures.dutchmancad.xyz/drawings/M07a.pdf",
+        "https://fixtures.dutchmancad.xyz/drawings/M07a.png"
+      ],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M08",
+      "title": "Parallel",
+      "part": {
+        "name": "CAM dome",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 20,
+        "fillet": {
+          "edges": "four top edges in one Fillet",
+          "radius": 10
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            20
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "3D Parallel",
+          "tool_number": 2,
+          "cutting_feedrate_mm_min": 1200,
+          "stepover": 0.5,
+          "pass_direction_degrees": 0,
+          "stock_to_leave": false,
+          "spindle_speed_rpm": 10000
+        }
+      ],
+      "depends_on": [
+        "M07a"
+      ],
+      "inherits_operations_from": [
+        "M07a"
+      ],
+      "twins": [
+        {
+          "id": "M08b",
+          "from": "M08a",
+          "changes": {
+            "pass_direction_degrees": 90
+          }
+        }
+      ],
+      "files": {
+        "M08a": {
+          "required": [
+            {
+              "one_of": [
+                "M08a.f3d",
+                "M08a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M08a__<post>.nc",
+            "M08a__<post>.tap",
+            "M08a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M08b": {
+          "required": [
+            {
+              "one_of": [
+                "M08b.f3d",
+                "M08b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M08b__<post>.nc",
+            "M08b__<post>.tap",
+            "M08b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "M07a + a Parallel finish with tool 2. How: Open M07a, save it as M08a. 3D → Parallel. Tool: tool 2, Spindle Speed 10000 rpm, Cutting Feedrate 1200 mm/min. Passes: Stepover 0.5, Pass Direction 0°; Stock to Leave unticked.",
+      "twin_instructions": "b: from a: Pass Direction 90°",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M09",
+      "title": "Scallop",
+      "part": {
+        "name": "CAM dome",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 20,
+        "fillet": {
+          "edges": "four top edges in one Fillet",
+          "radius": 10
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            20
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "3D Scallop",
+          "tool_number": 2,
+          "cutting_feedrate_mm_min": 1200,
+          "stepover": 0.3,
+          "stock_to_leave": false,
+          "spindle_speed_rpm": 10000
+        }
+      ],
+      "depends_on": [
+        "M07a"
+      ],
+      "inherits_operations_from": [
+        "M07a"
+      ],
+      "twins": [
+        {
+          "id": "M09b",
+          "from": "M09a",
+          "changes": {
+            "stepover": 0.5
+          }
+        }
+      ],
+      "files": {
+        "M09a": {
+          "required": [
+            {
+              "one_of": [
+                "M09a.f3d",
+                "M09a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M09a__<post>.nc",
+            "M09a__<post>.tap",
+            "M09a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M09b": {
+          "required": [
+            {
+              "one_of": [
+                "M09b.f3d",
+                "M09b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M09b__<post>.nc",
+            "M09b__<post>.tap",
+            "M09b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "M07a + a Scallop finish with tool 2. How: Open M07a, save it as M09a. 3D → Scallop. Tool: tool 2, Spindle Speed 10000 rpm, Cutting Feedrate 1200 mm/min. Passes: Stepover 0.3; Stock to Leave unticked.",
+      "twin_instructions": "b: from a: Stepover 0.5",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M10",
+      "title": "Two setups",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        },
+        {
+          "name": "Setup2",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Select Z axis/plane & X axis",
+            "z_plane": "plate's bottom face",
+            "flip_z_axis": true,
+            "z_direction": "down, out of the bottom",
+            "origin": "Stock box point: centre of stock bottom face"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "2D Face",
+          "tool_number": 1,
+          "spindle_speed_rpm": 10000,
+          "cutting_feedrate_mm_min": 1000,
+          "stepover": 4.5,
+          "setup": "Setup2"
+        }
+      ],
+      "depends_on": [
+        "M04a"
+      ],
+      "inherits_operations_from": [
+        "M04a"
+      ],
+      "twins": [],
+      "files": {
+        "M10a": {
+          "required": [
+            {
+              "one_of": [
+                "M10a.f3d",
+                "M10a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M10a__<post>.nc",
+            "M10a__<post>.tap",
+            "M10a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "Two setups: M04a, plus a second setup for the flipped part with a Face of the underside. How: Open M04a, save it as M10a. Setup → New Setup. Setup tab: Operation Type Milling; Work Coordinate System: Orientation Select Z axis/plane & X axis, pick the plate's bottom face for Z and tick Flip Z Axis so Z points down, out of the bottom; Origin Stock box point, the point at the centre of the stock's bottom face. Stock tab: as in M01. OK, so it is named Setup2. Then, with Setup2 selected, 2D → Face: tool 1, Spindle Speed 10000 rpm, Cutting Feedrate 1000 mm/min, Stepover 4.5.",
+      "twin_instructions": "none",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    },
+    {
+      "id": "M11",
+      "title": "Post processor",
+      "part": {
+        "name": "CAM plate",
+        "rectangle": {
+          "plane": "XY",
+          "center": [
+            0,
+            0
+          ],
+          "x": 60,
+          "y": 40
+        },
+        "extrude": 15,
+        "pocket": {
+          "center": "top face centre",
+          "x": 30,
+          "y": 20,
+          "corner_radius": 5,
+          "depth": 5
+        },
+        "holes": {
+          "type": "Simple",
+          "diameter": 6,
+          "extent": "Through All",
+          "points": [
+            [
+              22,
+              14
+            ],
+            [
+              -22,
+              14
+            ],
+            [
+              -22,
+              -14
+            ],
+            [
+              22,
+              -14
+            ]
+          ]
+        },
+        "bounds": {
+          "x": [
+            -30,
+            30
+          ],
+          "y": [
+            -20,
+            20
+          ],
+          "z": [
+            0,
+            15
+          ]
+        }
+      },
+      "setup": [
+        {
+          "name": "Setup1",
+          "operation_type": "Milling",
+          "wcs": {
+            "orientation": "Model orientation",
+            "origin": "Stock box point: top centre"
+          },
+          "stock": {
+            "mode": "Relative size box",
+            "offset_mode": "Add stock to sides and top-bottom",
+            "side_offset": 2,
+            "top_offset": 1,
+            "bottom_offset": 0
+          }
+        }
+      ],
+      "tools": [
+        {
+          "number": 1,
+          "type": "Flat end mill",
+          "diameter": 6,
+          "flutes": 3,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 2,
+          "type": "Ball end mill",
+          "diameter": 6,
+          "flutes": 2,
+          "flute_length": 15,
+          "shoulder_length": 20,
+          "overall_length": 50,
+          "shaft_diameter": 6,
+          "length_below_holder": 25
+        },
+        {
+          "number": 3,
+          "type": "Drill",
+          "diameter": 6,
+          "tip_angle": 118,
+          "flute_length": 30,
+          "overall_length": 60,
+          "shaft_diameter": 6,
+          "length_below_holder": 40
+        }
+      ],
+      "library": "CAM fixtures",
+      "operations": [
+        {
+          "type": "NC Program",
+          "setup": "Setup1",
+          "setup_program_name_number": 1001,
+          "setup_program_comment": "M11",
+          "post": "Fanuc / fanuc",
+          "program_name": 1001,
+          "program_comment": "M11",
+          "units": "Millimeters",
+          "output_folder": "anywhere"
+        }
+      ],
+      "depends_on": [
+        "M05a"
+      ],
+      "inherits_operations_from": [
+        "M05a"
+      ],
+      "twins": [
+        {
+          "id": "M11b",
+          "from": "M11a",
+          "changes": {
+            "post": "Haas / haas"
+          }
+        }
+      ],
+      "files": {
+        "M11a": {
+          "required": [
+            {
+              "one_of": [
+                "M11a.f3d",
+                "M11a.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M11a__<post>.nc",
+            "M11a__<post>.tap",
+            "M11a__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        },
+        "M11b": {
+          "required": [
+            {
+              "one_of": [
+                "M11b.f3d",
+                "M11b.f3z"
+              ]
+            }
+          ],
+          "optional": [
+            "M11b__<post>.nc",
+            "M11b__<post>.tap",
+            "M11b__<post>.txt"
+          ],
+          "post_processor": "posts/<post>.cps; once per zip, linked by post slug"
+        }
+      },
+      "instructions": "M05a with a post processor chosen in the setup, and its NC program. Send the NC file too if Fusion lets you post (M11a__fanuc.nc); it's welcome but optional. How: Open M05a, save it as M11a. Edit Setup1, Post Process tab: Program Name/Number 1001, Program Comment M11. Then right-click Setup1 → Create NC Program: Post Fanuc / fanuc from the Fusion library, Program name 1001, Program comment M11, Units Millimeters, Output folder anywhere. OK, so an NC Program appears in the browser and is saved with the design. Right-click it → Post Process to write M11a__fanuc.nc (some free plans can't post; then send just the design).",
+      "twin_instructions": "b: from a: Post Haas / haas instead",
+      "reference_drawings": [],
+      "app": "Fusion",
+      "priority": "high"
+    }
+  ]
+}

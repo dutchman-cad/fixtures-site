@@ -1,0 +1,27 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "F13a",
+ "program": "fusion",
+ "program_name": "Fusion",
+ "app": "fusion",
+ "status": "Partial history",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 1,
+  "total": 1
+ },
+ "matches": false,
+ "wrong_bodies": 1,
+ "stopped": true,
+ "first_stop": null,
+ "reason": {
+  "code": "no-reference-shape",
+  "owner": "Dutchman mapping",
+  "title": "Original shape cannot be compared",
+  "explain": "The original geometry opens as empty shells, so the rebuilt shape cannot be checked against it.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-F13a-fusion",
+ "downloads": []
+}

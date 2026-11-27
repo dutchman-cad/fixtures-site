@@ -1,0 +1,16 @@
+{
+ "note": "CC0 recipe files released by their authors, author names removed and verified. Private uploads are never listed.",
+ "count": 1,
+ "files": [
+  {
+   "file": "solidworks-2026_P01a.step",
+   "recipe": "P01a",
+   "app": "solidworks-2026",
+   "consent": "cc0",
+   "sha256": "7f84472e53c874fab89d6fb625d0c430799ee67e6fb739d9be7b9253c69d4f83",
+   "bytes": 16277,
+   "verdict": "built",
+   "url": "https://progress.dutchmancad.xyz/scoreboard/files/solidworks-2026_P01a.step"
+  }
+ ]
+}
