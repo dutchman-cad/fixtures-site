@@ -30,8 +30,8 @@
   },
   {
    "app": "solidworks-2026",
-   "status": "Partial history",
-   "rebuilt": 1,
+   "status": "Geometry only",
+   "rebuilt": 0,
    "total": 2
   }
  ],

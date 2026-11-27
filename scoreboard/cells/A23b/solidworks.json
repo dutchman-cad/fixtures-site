@@ -33,9 +33,9 @@
   },
   {
    "app": "solidworks-2026",
-   "status": "Partial history",
-   "rebuilt": 1,
-   "total": 8
+   "status": "Geometry only",
+   "rebuilt": 0,
+   "total": 2
   }
  ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A23b-solidworks",

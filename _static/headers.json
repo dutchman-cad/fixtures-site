@@ -1812,6 +1812,9 @@
   "/scoreboard/cells/A20b/solidedge.json": {
    "cache-control": "public, max-age=300"
   },
+  "/scoreboard/cells/A20b/solidworks.json": {
+   "cache-control": "public, max-age=300"
+  },
   "/scoreboard/cells/A20c/inventor.json": {
    "cache-control": "public, max-age=300"
   },

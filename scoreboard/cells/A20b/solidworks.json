@@ -1,0 +1,30 @@
+{
+ "schema": "dutchman-scoreboard-cell/1",
+ "recipe": "A20b",
+ "program": "solidworks",
+ "program_name": "SolidWorks",
+ "app": "solidworks-2026",
+ "status": "Geometry only",
+ "numbers_only": true,
+ "features": {
+  "rebuilt": 0,
+  "total": 3
+ },
+ "matches": null,
+ "wrong_bodies": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "sketch",
+  "index": 1
+ },
+ "reason": {
+  "code": "sketch-no-curve",
+  "owner": "Dutchman mapping",
+  "title": "Sketch curve not resolved",
+  "explain": "A sketch curve has no neutral form that Dutchman can hand to SolidCraft.",
+  "text": null
+ },
+ "others": [],
+ "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A20b-solidworks",
+ "downloads": []
+}

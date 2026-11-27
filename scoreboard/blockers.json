@@ -283,6 +283,12 @@
    "title": "Sheet-metal profile not supported",
    "explain": "A sheet-metal flange whose profile is native, not sketch lines and arcs, is not mapped yet."
   },
+  "sketch-no-curve": {
+   "code": "sketch-no-curve",
+   "owner": "Dutchman mapping",
+   "title": "Sketch curve not resolved",
+   "explain": "A sketch curve has no neutral form that Dutchman can hand to SolidCraft."
+  },
   "sketch-text": {
    "code": "sketch-text",
    "owner": "Dutchman mapping",
@@ -1087,9 +1093,9 @@
   },
   "solidworks": {
    "name": "SolidWorks",
-   "cells": 149,
+   "cells": 150,
    "full": 10,
-   "stopped": 139,
+   "stopped": 140,
    "blockers": [
     {
      "rank": 1,
@@ -1443,6 +1449,21 @@
        "recipe": "D04a",
        "cell": "cells/D04a/solidworks.json",
        "page": "#c-D04a-solidworks"
+      }
+     ]
+    },
+    {
+     "rank": 15,
+     "code": "sketch-no-curve",
+     "owner": "Dutchman mapping",
+     "title": "Sketch curve not resolved",
+     "explain": "A sketch curve has no neutral form that Dutchman can hand to SolidCraft.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "A20b",
+       "cell": "cells/A20b/solidworks.json",
+       "page": "#c-A20b-solidworks"
       }
      ]
     }
@@ -2483,6 +2504,11 @@
   {
    "code": "sc-revolve-to-shape",
    "owner": "SolidCraft",
+   "cells": 1
+  },
+  {
+   "code": "sketch-no-curve",
+   "owner": "Dutchman mapping",
    "cells": 1
   },
   {

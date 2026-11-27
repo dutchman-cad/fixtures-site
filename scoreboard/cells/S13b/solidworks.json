@@ -26,16 +26,16 @@
  },
  "others": [
   {
-   "app": "solidworks-2026",
-   "status": "Partial history",
-   "rebuilt": 7,
-   "total": 26
-  },
-  {
    "app": "solidworks-2024",
    "status": "Partial history",
    "rebuilt": 5,
    "total": 19
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 6,
+   "total": 26
   }
  ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-S13b-solidworks",

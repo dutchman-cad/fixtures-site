@@ -27,8 +27,8 @@
  "others": [
   {
    "app": "solidworks-2026",
-   "status": "Partial history",
-   "rebuilt": 2,
+   "status": "Geometry only",
+   "rebuilt": 0,
    "total": 10
   }
  ],

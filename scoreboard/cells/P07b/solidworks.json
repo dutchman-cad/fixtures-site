@@ -32,16 +32,16 @@
    "total": 9
   },
   {
-   "app": "solidworks-2026",
-   "status": "Partial history",
-   "rebuilt": 5,
-   "total": 9
-  },
-  {
    "app": "solidworks-2024",
    "status": "Partial history",
    "rebuilt": 3,
    "total": 6
+  },
+  {
+   "app": "solidworks-2026",
+   "status": "Partial history",
+   "rebuilt": 4,
+   "total": 9
   }
  ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P07b-solidworks",
