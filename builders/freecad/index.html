@@ -1,0 +1,404 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>FreeCAD Fixture Builder</title><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><style>.builders{min-width:0;overflow-wrap:anywhere}.builders p>a:only-child,.builders li>a:only-child{display:inline-flex;align-items:center;min-height:44px}.builders .downloads{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.builders .btn{box-sizing:border-box;max-width:100%;white-space:normal;font-size:1.1rem;padding:14px 20px}.builders li{margin:10px 0}.builders code{white-space:normal;overflow-wrap:anywhere}.builders ol,.builders ul{padding-left:24px}</style><style>
+.wrap:has(.builder-home){max-width:1120px}
+.builder-home{overflow-wrap:anywhere}
+.builder-home section{scroll-margin-top:24px;margin-bottom:56px}
+.builder-home h1{font-size:clamp(2.6rem,6vw,4.5rem);letter-spacing:-.045em;line-height:1.04;max-width:18ch}
+.builder-home h2{font-size:1.8rem;letter-spacing:-.025em;margin:0 0 14px}
+.builder-home h3{font-size:1.3rem;margin:0}
+.builder-home p{max-width:72ch}
+.builder-home .lede{font-size:1.3rem;line-height:1.5;max-width:48ch}
+.builder-home .eyebrow{color:var(--accent);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin:0 0 16px}
+.builder-hero{padding:36px 0 40px;border-bottom:1px solid var(--line)}
+.builder-home .btn{font-size:1rem;max-width:100%;box-sizing:border-box;white-space:normal;padding:12px 16px}
+.builder-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:24px}
+.builder-grid .builder-card{display:flex;flex-direction:column;margin:0;padding:26px;min-width:0;border-top:3px solid var(--accent)}
+.builder-card .builder-version{color:var(--accent);font-size:.95rem;margin:6px 0 0}
+.builder-card ol{padding-left:22px;margin:4px 0 24px}
+.builder-card li{padding-left:4px;margin:12px 0;line-height:1.55}
+.builder-card code{white-space:normal;overflow-wrap:anywhere}
+.builder-card .native-notice{color:var(--muted);font-size:.9rem}
+.builder-card .command{list-style:none;margin-left:-22px;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;font-size:.85rem}
+.builder-actions{margin-top:auto;display:flex;align-items:flex-start;flex-direction:column;gap:16px}
+.next-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;padding-left:22px}
+.next-steps li{padding-left:4px}
+.next-steps li::marker{color:var(--accent);font-weight:bold}
+.next-steps h3{font-size:1.1rem}
+.program-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:24px 0}
+.program-progress>div{padding:18px;background:var(--accent-soft);border-radius:8px}
+.program-progress h3{font-size:1rem}.program-progress p{margin:10px 0 0}.program-progress strong{font-size:1.8rem;display:block;line-height:1.2}.program-progress span{display:block;color:var(--muted)}
+.manual{padding:24px;border:1px solid var(--line);border-radius:12px;margin:32px 0}.builder-home .manual h2{font-size:1.3rem}
+.builder-footer{margin-top:32px;font-size:.9rem}
+.builder-actions a:not(.btn){display:inline-flex;align-items:center;min-height:44px}
+header.top>span:last-child{display:flex;gap:18px;flex-wrap:wrap}
+@media(max-width:640px){.builder-grid,.next-steps{grid-template-columns:1fr}.program-progress{grid-template-columns:repeat(2,minmax(0,1fr))}.builder-grid .builder-card{padding:22px}.builder-home section{margin-bottom:36px}.builder-hero{padding-top:20px}.next-steps{gap:16px}}
+</style>
+
+<script>// Multipart transport stays identical after assembly, including companion files and notes.
+// Hash only one 64 MiB slice at a time; never hash a whole bundle in browser memory.
+window.portalUpload = async function (url, data, options = {}) {
+  const threshold = 90 * 1000 * 1000;
+  const partSize = 64 * 1024 * 1024;
+  const signal = options.signal;
+  function send(target, body, headers, offset, total) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const abort = () => xhr.abort();
+      if (signal?.aborted) { reject(new Error('Canceled. Retry to send this item again.')); return; }
+      xhr.open('POST', target);
+      xhr.setRequestHeader('Accept', 'application/json');
+      for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
+      signal?.addEventListener('abort', abort, {once: true});
+      xhr.upload.onprogress = event => {
+        if (event.lengthComputable) options.progress?.(offset + event.loaded, total || event.total);
+      };
+      xhr.onload = () => {
+        signal?.removeEventListener('abort', abort);
+        if (!xhr.status) { reject(new Error('Network error. Retry the upload.')); return; }
+        resolve(new Response(xhr.responseText, {status: xhr.status, headers: {'Content-Type': xhr.getResponseHeader('Content-Type') || 'text/plain'}}));
+      };
+      xhr.onerror = () => { signal?.removeEventListener('abort', abort); reject(new Error('Network error. Check your connection and retry.')); };
+      xhr.onabort = () => { signal?.removeEventListener('abort', abort); reject(new Error('Canceled. Retry to send this item again.')); };
+      xhr.send(body);
+    });
+  }
+  const size = Array.from(data.values()).reduce((sum, value) => sum + (value instanceof Blob ? value.size : String(value).length), 0);
+  if (size <= threshold) return send(url, data, {}, 0, 0);
+  // A Blob made from File references stays sliceable without reading a whole bundle.
+  const boundary = '----fixture' + crypto.randomUUID().replaceAll('-', '');
+  const quote = value => String(value).replaceAll('\r', '%0D').replaceAll('\n', '%0A').replaceAll('"', '%22');
+  const fields = [];
+  for (const [name, value] of data.entries()) {
+    let head = '--' + boundary + '\r\nContent-Disposition: form-data; name="' + quote(name) + '"';
+    if (value instanceof Blob) {
+      head += '; filename="' + quote(value.name || 'blob') + '"\r\nContent-Type: application/octet-stream';
+    }
+    fields.push(head + '\r\n\r\n', value, '\r\n');
+  }
+  fields.push('--' + boundary + '--\r\n');
+  const contentType = 'multipart/form-data; boundary=' + boundary;
+  const blob = new Blob(fields);
+  const id = crypto.randomUUID();
+  const total = Math.ceil(blob.size / partSize);
+  for (let index = 0; index < total; index++) {
+    if (signal?.aborted) throw new Error('Canceled. Retry to send this item again.');
+    const offset = index * partSize;
+    const part = blob.slice(offset, offset + partSize);
+    const digest = await crypto.subtle.digest('SHA-256', await part.arrayBuffer());
+    const sha = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+    const response = await send(url + '/part', part, {
+      'Content-Type': contentType, 'X-Upload-Id': id, 'X-Upload-Index': String(index),
+      'X-Upload-Total': String(total), 'X-Upload-Size': String(blob.size), 'X-Upload-SHA256': sha
+    }, offset, blob.size);
+    if (!response.ok || index === total - 1) return response;
+    const result = await response.json();
+    if (!result.partial) throw new Error('Unexpected chunk response. Retry the upload.');
+  }
+};
+</script><style>
+:root{--bg:#f6f7f5;--panel:#fff;--fg:#1d2321;--muted:#5b6662;--line:#d9dfdb;--accent:#1f6f5c;--accent-soft:#e2efe9;
+--warn:#8a5a00;--warn-soft:#fbf1dc;--redo:#6b3fa0;--redo-soft:#efe7f8;--bad:#a3341f;--bad-soft:#fbe5df;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;--display:"Archivo",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 64px;overflow-wrap:break-word}
+h1,h2,h3{overflow-wrap:anywhere}
+footer.foot{margin-top:32px;padding:12px 0 8px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}footer.foot a{color:var(--muted)}
+header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+header.top a{color:var(--accent);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;min-height:44px;padding:0 4px}
+h1{font-family:var(--display);font-weight:800;font-size:1.8rem;line-height:1.15;margin:6px 0 10px}
+h2{font-family:var(--display);font-weight:600;font-size:1.25rem;margin:28px 0 8px}
+h3{font-size:1rem;margin:18px 0 6px;color:var(--accent)}
+p{margin:8px 0;max-width:70ch}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+.mono,code{font-family:var(--mono);font-size:.92em}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+.how{color:var(--muted);font-size:.95em}
+.note{background:var(--warn-soft);border-left:3px solid var(--warn);padding:10px 14px;margin:12px 0;border-radius:0 8px 8px 0}
+.ok{background:var(--accent-soft);border-left:3px solid var(--accent);padding:10px 14px;margin:12px 0;border-radius:0 8px 8px 0}
+.bad{background:var(--bad-soft);border-left:3px solid var(--bad);padding:10px 14px;margin:12px 0;border-radius:0 8px 8px 0}
+.do{font-size:1.1rem}
+.do b{font-family:var(--mono)}
+button,.btn{font:inherit;font-weight:600;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:9px 16px;min-height:40px;cursor:pointer;text-decoration:none;display:inline-block}
+button.ghost,.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent);min-height:44px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],textarea,select{font:inherit;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg)}
+textarea{min-height:90px}
+label{display:block;margin:10px 0 4px;font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.meter{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0}
+.meter i{display:block;height:100%;background:var(--accent)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:7px 8px;border-bottom:1px solid var(--line)}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:.85rem;font-family:var(--mono);text-decoration:none;color:var(--fg);background:var(--panel)}
+a.chip{display:inline-flex;align-items:center;min-height:40px;padding:2px 12px}
+.chip.done{background:var(--accent-soft);border-color:var(--accent)}
+.chip.attn{background:var(--bad-soft);border-color:var(--bad)}
+.chip.skip{background:var(--warn-soft);border-color:var(--warn)}
+.chip.notneeded{background:var(--panel);border-color:var(--muted);border-style:dotted;color:var(--muted)}
+.chip.unchecked{background:#eef2f6;border-color:#9aa8b6}
+.chip.here{outline:2px solid var(--fg)}
+.chip.locked{opacity:.45;border-style:dashed}
+.chip.redo{background:var(--redo-soft);border-color:var(--redo)}
+.msg{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:var(--panel)}
+.msg .who{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.msg img{max-width:100%;border-radius:6px;margin-top:6px}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:12px 0}
+.figs.one{grid-template-columns:1fr}
+.figs{justify-items:start}
+figure{margin:0;max-width:560px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+figure svg{display:block;width:100%;height:auto}
+figure svg text{font-family:var(--body);font-size:12px;fill:#1d2321}
+figure svg text.b{font-weight:600}
+figure svg text.w{fill:#8a5a00}
+figure svg text.a{fill:#1f6f5c}
+figcaption{font-size:.88rem;color:var(--muted);margin-top:6px}
+figcaption b{color:var(--fg)}
+.fig{font-family:var(--mono);font-size:.85em;color:var(--accent);white-space:nowrap}
+.booklet{margin:6px 0 12px}
+.prio-panel{border-left:5px solid var(--warn)}
+.apphead{font-size:1.15rem}
+.years{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0 10px}
+.yearbox{margin:0;font-variant-numeric:tabular-nums}
+.yeardetail[hidden]{display:none}
+.capp{margin:14px 0 0}.capp h3{margin:0 0 8px;font-size:1.05rem}.capp h3 .muted{font-weight:400;font-size:.9rem;margin-left:6px}
+.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.ctile{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel);display:flex;flex-direction:column;gap:3px;font-size:.88rem}
+.ctile b{font-size:1rem;font-variant-numeric:tabular-nums}
+.ctile.wanted{border-style:dashed;background:transparent;color:var(--muted)}
+.ctile.mine,.capp.mine .cset{outline:2px solid var(--accent);outline-offset:-1px}
+.cbar{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.cbar i{display:block;height:100%;background:var(--accent)}
+.cnum{font-size:.8rem;color:var(--muted)}
+.cset{display:grid;grid-template-columns:70px 1fr 90px;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;margin:6px 0;background:var(--panel);font-size:.9rem}
+.cset .clabel{font-weight:600}.cset .cnum{text-align:right}
+.cnote{font-size:.88rem;color:var(--muted);margin:6px 0 0}
+table.activity td.when{white-space:nowrap}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}
+.kpi b{font-family:var(--display);font-size:2rem;line-height:1.1}.kpi span{color:var(--muted);font-size:.9rem}
+.kpi.hot{border-color:var(--accent);background:var(--accent-soft)}
+.needs ul{margin:0;padding-left:0;list-style:none}.needs li{padding:6px 0;border-top:1px solid var(--line)}.needs li:first-child{border-top:0}
+.vcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.vcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.vcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.vhead{display:flex;align-items:center;gap:8px}.vhead b{font-size:1.08rem}.vstate{margin-left:auto;font-size:.85rem}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}.dot.on{background:#2e9e62;box-shadow:0 0 0 3px #d4f0df}.dot.today{background:#d9a62e}.dot.away{background:#b9c2be}
+.vstage{margin:0;font-size:.9rem;color:var(--muted)}
+.vset{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:8px;font-size:.88rem}.vapp{font-weight:600}
+.vbadges{display:flex;flex-wrap:wrap;gap:6px}.vb{font-size:.78rem;padding:1px 8px;border-radius:999px;background:var(--line)}
+.vb.chat,.vb.q{background:var(--warn-soft);color:var(--warn);font-weight:600}.vb.redo{background:var(--redo-soft)}.vb.attn{background:var(--bad-soft)}.vb.plain{background:transparent;border:1px solid var(--line)}
+.vlast{margin:0;font-size:.85rem}
+.ovcols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start}
+@media (max-width:1100px){.ovcols{grid-template-columns:1fr}}
+.feed{list-style:none;margin:0;padding:0}.feed li{display:grid;grid-template-columns:62px 110px 92px 1fr;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--line);font-size:.88rem}
+.feed li:first-child{border-top:0}.feed time{color:var(--muted);font-variant-numeric:tabular-nums}.feed .ev{justify-self:start}
+.tests{margin:10px 0}.tests summary{cursor:pointer;color:var(--muted)}
+.ovtime{font-size:.8rem;margin-top:10px}
+.ev{display:inline-block;padding:0 8px;border-radius:999px;font-size:.8rem;background:var(--line);white-space:nowrap}
+.ev-upload{background:var(--accent-soft)}.ev-chat,.ev-question{background:var(--warn-soft)}.ev-reply,.ev-redo{background:var(--redo-soft)}.ev-sign-in,.ev-sign-out{background:#e8eef7}.ev-preview{background:transparent;border:1px dashed var(--line)}
+.howlist{margin:6px 0;padding-left:22px}.howlist li{margin:6px 0}
+.dropcol .dropzone.vcheck{border-style:solid;border-color:var(--warn);background:var(--warn-soft)}
+.vcheck p{max-width:42ch}
+.vform{display:flex;flex-wrap:wrap;gap:8px;align-items:end;justify-content:center}
+.vform label{width:100%;text-align:center;margin:0}
+.vform input{width:200px}
+#ic{position:fixed;right:20px;bottom:20px;z-index:51;font-size:15px}
+#ic-btn{border-radius:999px;padding:12px 18px;box-shadow:0 6px 20px rgba(0,0,0,.18);background:var(--redo);border-color:var(--redo)}
+.ic-badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--bad);color:#fff;font-size:.8rem;line-height:20px;text-align:center}
+.ic-badge[hidden]{display:none}
+#ic-panel{position:absolute;right:0;bottom:60px;width:400px;max-width:calc(100vw - 32px);height:min(620px,calc(100vh - 110px));background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden}
+#ic-panel[hidden]{display:none}
+.ic-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;background:var(--redo);color:#fff}
+.ic-head b{display:inline}.ic-head small{opacity:.9}
+.ic-head button{background:transparent;border:0;color:#fff;font-size:1.4rem;padding:0 6px;line-height:1}
+.ic-head button.ic-notify{font-size:.8rem;border:1px solid rgba(255,255,255,.7);border-radius:999px;padding:3px 10px;margin-right:4px}
+#ic-list,.ic-thread{flex:1;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ic-thread{max-width:760px;overflow:visible}
+.ic-msg{max-width:85%;padding:8px 11px;border-radius:12px;background:var(--redo-soft);align-self:flex-start;overflow-wrap:anywhere}
+.ic-msg.me{align-self:flex-end;background:#e2efe9}
+.ic-msg ul{margin:4px 0;padding-left:18px}.ic-msg code{font-family:var(--mono);font-size:.9em;background:rgba(0,0,0,.06);padding:0 3px;border-radius:3px}
+.ic-meta{font-size:.75rem;color:var(--muted);margin-top:3px}.ic-file{margin-top:4px;font-size:.9rem}
+.ic-note{margin:0 12px;font-size:.85rem;color:var(--warn)}
+#ic-form{border-top:1px solid var(--line);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+#ic-form textarea{width:100%;min-height:64px;resize:vertical}
+.ic-row{display:flex;align-items:center;gap:8px}.ic-row button{margin-left:auto}
+.ic-attach{margin:0;font-weight:600;color:var(--accent);cursor:pointer}.ic-err{color:var(--bad);font-size:.85rem}
+#ic-fname{font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.only{display:inline-block;font-size:.8rem;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 6px;margin-right:6px;white-space:nowrap}
+.step-label,.prio{display:inline-block;font-size:.8rem;font-weight:600;color:#fff;background:var(--warn);border-radius:4px;padding:0 6px;margin-right:6px;white-space:nowrap}
+.step-label{color:var(--muted);background:var(--bg);border:1px solid var(--line)}
+.plan>li.current{border-left:3px solid var(--accent);padding-left:8px}
+.plan>li.done>b{color:var(--accent)}
+.tfile{flex-wrap:wrap}
+.drawing{font-size:.9rem}
+.drawing a,.chips>a:not(.chip),p.booklet a,p.linkrow a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;min-width:40px}
+.tfiles>.drawing{margin:0 8px 6px}
+
+.rules{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:12px 0}
+.rule{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.rule b{display:block;margin-bottom:2px}
+details summary{cursor:pointer;color:var(--accent);font-weight:600;padding:8px 0}
+.lede{font-size:1.08rem}
+.landing p{max-width:none}
+.steps3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0}
+figure.art{max-width:none;display:flex;flex-direction:column}
+figure.art svg{max-width:240px;margin:0 auto}
+figure.art figcaption{color:#1d2321;font-size:.95rem}
+figure.art figcaption b{display:block;font-size:1.02rem;margin-bottom:2px}
+figure.art svg text.lbl{font-size:12px;fill:#1d2321}
+figure.art svg text.acc{fill:#1f6f5c;font-weight:600;font-size:14px}
+figure.art svg text.mono-t{font-family:var(--mono);font-size:12px;fill:#1d2321}
+label.check{display:flex;gap:10px;align-items:flex-start;font-weight:400;margin:14px 0;min-height:44px}
+label.check input{margin-top:5px;width:18px;height:18px;flex:none;accent-color:var(--accent)}
+ul{padding-left:1.2em;margin:6px 0}
+.appcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 16px 12px;margin:10px 0}
+.appcard:has(input[type=checkbox]:checked){border-color:var(--accent)}
+.appcard:not(.yearcard):has(input[type=checkbox]:not(:checked)) .appfields{display:none}
+.yearcard:not(:has(input[data-year]:checked)) .appfields{display:none}
+.appfields{padding-left:28px}
+label.check.big{font-weight:600;font-size:1.1rem;margin:8px 0}
+.rulebox{display:grid;gap:10px;margin:10px 0}
+.rrow{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.rrow svg{width:120px;height:auto;background:#fff;border-radius:8px}
+.rrow b{font-size:1.02rem}
+.rrow p{margin:4px 0 0}
+.rrow svg text{font-family:var(--mono);text-anchor:middle;fill:#1d2321}
+.rrow svg text.g{font-size:12px;font-weight:600}
+.rrow svg text.gs{font-size:12px;fill:#1f6f5c;font-family:var(--body);font-weight:600}
+.rrow svg text.gw{font-size:13px;font-weight:600;fill:#fff}
+@media (max-width:480px){.rrow{grid-template-columns:84px 1fr;gap:10px}.rrow svg{width:84px}}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141816;--panel:#1d2321;--fg:#e8ecea;--muted:#a3ada9;--line:#323a37;--accent:#5fbf9f;--accent-soft:#1f3a31;--warn:#e0b05a;--warn-soft:#3a2f1a;--bad:#f08a72;--bad-soft:#3d221c}
+figure{background:#fff}figure figcaption{color:#5b6662}figure figcaption b{color:#1d2321}button,.btn{color:#0d1110}}
+
+body.wide .wrap{max-width:none;padding:10px 22px 0}
+body.wide header.top{margin-bottom:10px}
+.stephead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.stephead h1{margin:0;font-size:2rem}
+.stephead .where{color:var(--muted)}
+.stephead .spacer{flex:1}
+.stephead form{display:inline}
+.stepgrid{display:grid;grid-template-columns:minmax(340px,1.15fr) minmax(320px,1fr) minmax(320px,.95fr);gap:18px;height:calc(100vh - 118px);min-height:560px}
+.stepgrid.nofig{grid-template-columns:minmax(380px,1.3fr) minmax(340px,1fr)}
+.col{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.card2{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.goal{font-size:1.12rem;margin:0}
+.bigsteps{list-style:none;counter-reset:st;padding:0;margin:4px 0 0}
+.bigsteps li{counter-increment:st;position:relative;padding:8px 0 8px 46px;font-size:1.12rem;line-height:1.45;border-top:1px solid var(--line)}
+.bigsteps li:first-child{border-top:0}
+.bigsteps li::before{content:counter(st);position:absolute;left:0;top:7px;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.bigsteps li.drop::before{background:var(--fg)}
+.coords{font-size:.88rem;color:var(--muted);margin:0}
+.figcol figure{max-width:none;flex:1 1 0;min-height:0;display:flex;flex-direction:column;margin:0}
+.figcol figure svg{flex:1 1 0;min-height:0;width:100%;height:100%}
+.dropcol{gap:10px;padding-bottom:62px}
+.dropzone{flex:1 1 auto;min-height:220px;border:3px dashed #9aa8a2;border-radius:16px;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;transition:background .15s,border-color .15s}
+.dropzone .big{font-size:1.35rem;font-weight:700}
+.dropzone .name{font-family:var(--mono);font-size:1.5rem;font-weight:600}
+.dropzone svg{width:64px;height:64px}
+body.dragging .dropzone,.dropzone.over{border-color:var(--accent);background:var(--accent-soft)}
+.dropzone.busy{border-style:solid;border-color:var(--accent)}
+.dropzone .err{color:var(--bad);font-weight:600}
+.dropzone.locked{border-style:solid;border-color:var(--line);background:#f0f2f1}
+.dropzone.locked p{max-width:36ch;font-size:1.05rem}
+.pick{font-size:.95rem}
+.pick input{font-size:.9rem}
+#dragveil{position:fixed;inset:0;background:rgba(31,111,92,.12);border:6px solid var(--accent);pointer-events:none;display:none;z-index:40}
+body.dragging #dragveil{display:block}
+.result{border-radius:12px;padding:12px 14px}
+.result.ok{background:var(--accent-soft);border:2px solid var(--accent)}
+.result.bad{background:var(--bad-soft);border:2px solid var(--bad)}
+.result.neutral{background:var(--panel);border:2px solid var(--line)}
+.result.note{background:var(--warn-soft);border:2px solid var(--warn)}
+.result.redo{background:var(--redo-soft);border:2px solid var(--redo)}
+.earlier{font-size:.88rem;margin:0}
+.redo-panel{border-left:4px solid var(--redo)}
+.redolist{margin:6px 0 10px;padding-left:22px}.redolist li{margin:6px 0}
+.plan{list-style:none;margin:6px 0 4px;padding-left:0}.plan>li{margin:10px 0}.planrow{margin:6px 0}.planrow>b{display:inline-block;min-width:5.5em}
+.result ul{margin:6px 0}
+.btn.next{font-size:1.1rem;padding:12px 20px}
+@media (max-width:1100px){.stepgrid,.stepgrid.nofig{grid-template-columns:minmax(0,1fr);height:auto}.col{overflow:visible}.figcol figure svg{height:auto}.dropzone{min-height:200px}}
+.tocsections{display:flex;flex-direction:column;gap:18px}
+.tocsec h3{margin:6px 0 8px;font-size:1.1rem;color:var(--fg)}
+.tset{margin:6px 0}
+.tset.root{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:8px 10px}
+.tkids{margin:4px 0 0 10px;padding-left:12px;border-left:2px solid var(--line)}
+.tkids .tset{padding-top:4px}
+.thead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tid{font-family:var(--mono);color:var(--muted);font-size:.9rem}
+.tag{font-size:.75rem;border:1px solid var(--line);border-radius:999px;padding:0 8px;color:var(--muted);background:var(--bg)}
+.tfiles{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.tfile{display:flex;gap:8px;align-items:center;text-decoration:none;color:var(--fg);padding:3px 8px;min-height:40px;border-radius:6px;border:1px solid transparent;min-width:0}
+.tfile:hover{background:var(--accent-soft)}
+.tfile::before{content:"";flex:none;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--muted);background:transparent}
+.tfile.done::before{background:var(--accent);border-color:var(--accent)}
+.tfile.unchecked::before{background:#9aa8b6;border-color:#9aa8b6}
+.tfile.attn::before{background:var(--bad);border-color:var(--bad)}
+.tfile.skip::before{background:var(--warn);border-color:var(--warn)}
+.tfile.redo::before{background:var(--redo);border-color:var(--redo)}
+.tfile.locked{opacity:.45}
+.tfile.locked::before{border-style:dashed}
+.tfile.here{border-color:var(--fg);background:var(--accent-soft)}
+.tfile .fid{font-family:var(--mono);font-weight:600;min-width:3.4em}
+.tfile .tdesc{color:var(--muted);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tlegend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0 12px}
+.tlegend .tfile{padding:0;min-height:0}
+.tlegend .fid{font-family:var(--body);font-weight:400;font-size:.88rem;min-width:0;color:var(--muted)}
+#tocd{position:fixed;top:0;bottom:0;left:0;width:min(480px,94vw);background:var(--bg);box-shadow:8px 0 30px rgba(0,0,0,.2);z-index:60;overflow:auto;padding:14px 16px}
+#tocd[hidden],#tocback[hidden]{display:none}
+#tocd{overflow-x:hidden}
+.tocsec,.tset,.tfiles,.tkids{min-width:0}
+#tocback{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:55}
+.tochead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.tochead b{flex:1;font-size:1.1rem}
+.tochead button{padding:2px 10px;font-size:1.2rem}
+#toc-open{padding:6px 12px}
+#hw{position:fixed;right:20px;bottom:20px;z-index:50;font-size:15px}
+#hw-btn{border-radius:999px;padding:12px 18px;box-shadow:0 6px 20px rgba(0,0,0,.18);position:relative}
+#hw-btn .dot{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:var(--bad);border:2px solid #fff;display:none}
+#hw.unread #hw-btn .dot{display:block}
+#hw-panel{position:absolute;right:0;bottom:60px;width:380px;max-width:calc(100vw - 32px);height:min(600px,calc(100vh - 110px));background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden}
+#hw-panel[hidden]{display:none}
+.hw-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--accent);color:#fff}
+.hw-head b{display:inline}
+.hw-head small{opacity:.9}
+.hw-head button{background:transparent;border:0;color:#fff;font-size:1.4rem;padding:0 6px;line-height:1}
+#hw-thread{flex:1;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+#hw-thread .msg{margin:0;font-size:.95rem}
+#hw-thread .msg img{max-height:160px;width:auto;max-width:100%;display:block}
+#hw-thread .msg.me{background:var(--accent-soft);align-self:flex-end;max-width:90%}
+#hw-thread .empty{color:var(--muted);font-size:.92rem}
+#hw-form{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+#hw-text{min-height:64px;max-height:140px;resize:vertical}
+#hw-drop{border:2px dashed var(--line);border-radius:10px;padding:8px;text-align:center;font-size:.85rem;color:var(--muted)}
+#hw-drop.over{border-color:var(--accent);background:var(--accent-soft)}
+#hw-drop.has{border-style:solid;border-color:var(--accent);color:var(--fg)}
+#hw-form .row{margin:0;justify-content:space-between}
+#hw-form .err{color:var(--bad);font-size:.88rem}
+#hw.inline{position:static;z-index:auto;display:flex;flex-direction:column;gap:6px;font-size:inherit}
+#hw.inline #hw-panel{position:static;width:auto;max-width:none;height:min(380px,50vh);box-shadow:none;border-radius:12px}
+#hw.inline #hw-panel[hidden]{display:none}
+#hw.inline .hw-head{display:none}
+#hw.inline #hw-text{min-height:44px}
+#hw.inline .hw-toggle{align-self:flex-start;background:transparent;border:0;border-radius:0;padding:4px 0;color:var(--accent);font-weight:600;box-shadow:none;position:relative}
+.hw-toggle .dot{position:absolute;top:2px;right:-14px;width:10px;height:10px;border-radius:50%;background:var(--bad);display:none}
+#hw.inline.unread .hw-toggle .dot{display:block}
+#hw-drop{border:0;padding:0;text-align:left;font-size:.88rem}
+#hw-drop .pick{display:inline}
+#hw-drop.over{outline:2px dashed var(--accent);outline-offset:4px;background:transparent}
+#hw-drop.has{color:var(--fg)}
+.dz-actions{display:flex;gap:8px;align-items:center;justify-content:center}
+.pick{font-weight:600;color:var(--accent);cursor:pointer;margin:0}
+label.pick{display:inline-flex;align-items:center;min-height:40px}
+.linkish{background:transparent;border:0;padding:0;color:var(--accent);font-weight:600;cursor:pointer;font-size:inherit}
+#cad-note{width:min(420px,100%)}
+.redo-line{margin:0 0 10px;padding:8px 12px;border-left:4px solid var(--redo);background:var(--redo-soft);border-radius:6px}
+.redo-line .muted{font-size:.88rem}
+.how-note{margin:8px 0 0;padding-top:8px;border-top:1px solid var(--line);font-size:.95rem;color:var(--muted)}
+.how-note b{color:var(--fg)}
+.expect-line{margin:8px 0 0;padding-top:8px;border-top:1px solid var(--line);font-size:.95rem}
+.figcol .coords{margin-top:auto}
+</style></head><body class=""><div class="wrap"><header class="top"><span><b>CAD Fixture Recipes</b> <span class="muted">· portal</span></span><span><a href="/builders/">Fixture Builders</a></span></header>
+<main class="builders"><p><a href="/builders/">← All Fixture Builders</a></p><nav class="downloads" aria-label="Builder downloads"><a class="btn" href="/builders/freecad/build_freecad.py" download="build_freecad.py">Download build_freecad.py</a></nav><h1>Run the Fixture Builder in FreeCAD</h1><p>FreeCAD is free, so you can run this yourself on any machine with FreeCAD 1.0 or newer (built and tested on 1.1.4). Sheet metal (family S) also needs the free <strong>SheetMetal</strong> add-on, see below. You do not need the FreeCAD window: the script runs headless with <code>FreeCADCmd</code> and builds the booklet recipes FreeCAD can make, with real PartDesign, Sketcher and Assembly features. Recipes it cannot make are listed with a reason, not silently left out.</p><h2>Install the SheetMetal add-on (for family S)</h2><p>FreeCAD 1.1.4 has no sheet-metal workbench of its own. The builder calls the free <a href="https://github.com/shaise/FreeCAD_SheetMetal">SheetMetal</a> add-on (LGPL) for the bent features; it does not copy any of its code. The builder is tested with <strong>SheetMetal 0.8.27, commit <code>c505f5ea60f5e627bc3930ad846f7ba5a1edbb27</code></strong>; each S result in <code>results.json</code> names the add-on version it ran with, and an older or newer version may build slightly different bends.</p><ol><li>Download that commit: <code>https://github.com/shaise/FreeCAD_SheetMetal/archive/c505f5ea60f5e627bc3930ad846f7ba5a1edbb27.tar.gz</code> (or install SheetMetal from FreeCAD&#39;s Addon Manager and check its version).</li><li>Unpack it so the folder is <code>SheetMetal</code> inside FreeCAD&#39;s user Mod folder (FreeCAD prints it with <code>FreeCAD.getUserAppDataDir()</code>; on macOS <code>~/Library/Application Support/FreeCAD/v1-1/Mod/SheetMetal</code>), or unpack it anywhere and set <code>FIXTURE_SHEETMETAL</code> to that folder.</li><li>Check it: <code>FreeCADCmd -c &quot;import SheetMetalCmd&quot;</code> prints no error.</li></ol><p>Without the add-on every S design is <code>not_scripted</code> with that reason; the other families do not need it.</p><h2>Download and run</h2><ol><li>Download <a href="https://fixtures.dutchmancad.xyz/builders/freecad/build_freecad.py">build_freecad.py</a>.</li><li>Run it with FreeCAD&#39;s command-line program: <code>FreeCADCmd build_freecad.py</code> (on macOS the program is <code>FreeCAD.app/Contents/Resources/bin/freecadcmd</code>; on Windows <code>FreeCADCmd.exe</code> in the <code>bin</code> folder). A full batch takes a few minutes.</li><li>Look in <code>C:\Users\Public\FixtureOut</code> (Windows) or <code>FixtureBuilder/out</code> inside your home folder (macOS, Linux) for the new <code>build_freecad-FreeCAD-&lt;builder version&gt;</code> folder; the last line the script prints and the first line of <code>run.log</code> give its full path.</li></ol><p>Choices, as environment variables: <code>FIXTURE_OUTPUT</code> picks the parent folder (default <code>C:\Users\Public\FixtureOut</code> on Windows, <code>~/FixtureBuilder/out</code> on macOS and Linux; a folder whose path has your user name or OneDrive is refused before anything is built); <code>FIXTURE_FILTER=P01a,P02a</code> builds only those designs.</p><p>Downloads come from <strong>fixtures.dutchmancad.xyz/builders/</strong>.</p><h2>What it makes</h2><p>Every run creates a brand-new folder; an existing folder is never reused, emptied or overwritten. Inside it, per part or assembly design: <code>&lt;id&gt;.FCStd</code> (the native FreeCAD document with its feature tree) and <code>&lt;id&gt;.step</code> (AP214); per drawing: <code>&lt;id&gt;.FCStd</code> and <code>&lt;id&gt;.pdf</code> (plus the DXF where the recipe asks), plus <code>results.json</code>, <code>run.log</code> (one <code>START &lt;id&gt;</code> line per design), and a zip named <code>FreeCAD-&lt;version&gt;-&lt;build&gt;.zip</code> of the files.</p><p><code>results.json</code> rows: <code>{id, status, error, files, app: &quot;FreeCAD&quot;, version, build, seconds, output_folder}</code>. <code>status</code> is <code>ok</code>, <code>failed</code> (with FreeCAD&#39;s own error text, or a geometry check against the recipe&#39;s expected volume and bounding box) or <code>not_scripted</code> (with the reason). A design is only <code>ok</code> when its shape passes the recipe&#39;s expected volume and bounding box.</p><h2>Which families it scripts</h2><p>The builder chooses recipes from its own capability table (<code>builders/gen/emit_freecad.py</code>), not from the booklet&#39;s program lists.</p><ul><li><strong>P, X, E (parts):</strong> sketches (rectangle, circle, line, arc, spline, dimensioned), Pad, Pocket, Revolution, Hole (simple, counterbore, countersink), Fillet, variable-radius fillet (Part workbench), Chamfer, Thickness (shell), linear and polar patterns, Mirrored, Loft, Pipe (sweep), Helix (coil), datum planes, a spreadsheet parameter, an extra body combined with Boolean, Split Solid / Trim / Split Face and a surface body through the Part workbench (Slice, Cut, Extrusion), a flat spiral coil (Part Spiral swept with the profile), and a face color on one face (written into the FCStd&#39;s GuiDocument.xml, because FreeCADCmd has no view objects).</li><li><strong>A (assemblies):</strong> components are linked from the part bodies into an Assembly object and placed to satisfy the mate, flush, angle, insert and tangent recipes. A suppressed component uses FreeCAD 1.1&#39;s own Suppressed property. Model states and view representations do not exist in FreeCAD 1.1.4 and are not scripted.</li><li><strong>A11 to A26 (placements, nesting, joints with limits, patterns, links, configurations):</strong> instances are App::Link objects to one shared part body with a typed placement and turn; a subassembly is a nested Assembly object grounded (GroundedJoint) per level, placed or linked again as a second instance; the motion recipes use the real joint of that motion (Fixed, Revolute with angle limits, Slider and Cylindrical with length limits, Ball; the planar motion is the Distance joint between the touching faces); patterns of a subassembly are links at the pattern placements; a mirror is a Part::Mirroring feature, or a second part file for A20c; A23 links bodies from other <code>.FCStd</code> files (b: the link is broken into a local copy, c: the source file is edited and the link updated); A25 suppresses a component or one joint; A26 is a spreadsheet configuration that drives the pad height. After saving, each file is reopened and checked against the shared expectation (solids, bounding box, placements, probe points, the free motion measured with the solver, the stored limits). FreeCAD&#39;s static solver does not enforce joint limits (they are stored and used by simulation), the planar motion has no limit properties and the Ball joint has no cone limit, so those expectation keys are reported as not stored. A24 (flexible subassembly) is not scripted: FreeCAD 1.1 has no flexible subassembly state.</li><li><strong>S (sheet metal):</strong> the plate is a PartDesign Pad, and the SheetMetal add-on builds the bent features from the recipe&#39;s sheet rules (thickness, bend radius, K-factor): flanges on one or two edges, part-width flanges (offsets or width), flange angle, height measured to the outer or inner sharp, bend and corner reliefs (round and square), single, teardrop and rolled hems, contour flanges (a base wall from an open profile, or a wall from a profile on an edge), unfold and refold, flat pattern, and corner rounds, holes, patterns, mirrors and cuts through PartDesign. A mirrored flange is built again on the mirrored edge. A cut made while the part is flat is refolded with the add-on&#39;s Fold (bend on a line). A tear corner relief is built as the add-on&#39;s open corner and a double hem as two hems, each saying so under <code>observations</code>. Not scripted, each with its reason in <code>results.json</code>: the Face + Bend recipe (the add-on has no feature that bridges two separate faces) and a flange bend transition option (the add-on has none). Sizes a recipe leaves &quot;as they come&quot; use the add-on&#39;s defaults and say so under <code>observations</code>. A flat pattern is checked against the recipe&#39;s flat size.</li><li><strong>N (FreeCAD-specific, 62 designs; spec <code>builders/spec/recipes/freecad-n.json</code>, written by <code>builders/gen/freecad_n_spec.py</code>):</strong> N01-N09 sketch an ellipse, elliptical arc, B-spline (quadratic, elevated, periodic, clamped), hyperbola arc, parabola arc, circle and circle arc with exact coordinates, each fixed with Block; N10-N11 drive a Pad length and a sketch width from expressions (a sketch constraint, a spreadsheet alias); N12-N15 build Bodies inside App::Part containers, a document group (one Body hidden) and an App::Link and measure in global coordinates; N16-N17 mirror and pattern a boss (Mirrored, and Mirrored plus LinearPattern inside one MultiTransform); N18 builds a Body on a hidden SubShapeBinder; N30-N40 build constrained sketches (Coincident, Horizontal, Vertical, Parallel, Perpendicular, PointOnObject, Distance, DistanceX/Y, Angle, Tangent, Equal, Symmetric, Radius, Diameter, non-driving constraints, SnellsLaw, Weight on exposed B-spline poles, InternalAlignment on an ellipse). A design is <code>ok</code> only when its volume and bounding box (global coordinates) match values computed from the recipe&#39;s own formulas at 0.1 %, the sketch solver reports no conflict or redundancy (and, where the recipe pins everything, a fully constrained sketch), and the saved file, reopened, still has the container types, parents, link target, Visibility, placements and expressions the recipe is about. Not scripted: N36c (FreeCAD&#39;s Sketcher has no Lock constraint type).</li><li><strong>D (drawings):</strong> all 30 are scripted: the two model recipes (D04a, D06a), the 18 drawing recipes and the 10 drawing companions (D10a to D19a: a standard drawing of one part each, named by its id like the others, e.g. <code>D10a.FCStd</code>, <code>.pdf</code>, <code>.dxf</code>; each has a Front base view, Right and Top views, an isometric view at 1:2 as a TechDraw view of its own that no dimension is read from, 4 to 6 linear dimensions, a section A-A through the hole or pocket center for a part that has one, and a parts list for the F10a assembly; checked on stand-ins only, not yet on FreeCAD itself). Each drawing is a real TechDraw page in the <code>.FCStd</code> next to the model it shows (F01a, F04a, F10a, D04a, D06a, the D09 part are built inside the drawing file). The builder makes: a page from FreeCAD&#39;s own template (A4 landscape and A3 from the ISO set, A4 portrait ISO 5457, US Letter landscape; there is no A3 portrait template, so D01d is A3 landscape and says so), base views, projection groups (first angle, ISO), views at their own scale, section views, detail views, linear, aligned, radius and angle dimensions, a note with a leader, title-block fields, a parts list with balloons, center lines, and two sheets in one file. D05a also writes a <code>.dxf</code>; D07a writes <code>D07a.zip</code> with one DXF per sheet. D09b edits the part (Pad length) and updates the drawing; the views&#39; extent before and after is in the row&#39;s <code>observations</code>.</li><li><strong>Drawing check:</strong> a drawing is <code>ok</code> only when the saved <code>.FCStd</code>, reopened, has the sheets, the view types and counts, the dimensions (values read back from TechDraw) and the note, parts list or center lines the recipe asks for, and the PDF is not empty. <code>observations</code> lists each dimension value, and each view&#39;s center on its sheet and scale.</li><li><strong>The PDF:</strong> TechDraw&#39;s own PDF export needs FreeCAD&#39;s window (the <code>TechDrawGui</code> module cannot load under <code>FreeCADCmd</code>), so the builder writes the PDF itself: the template&#39;s lines and title block (with the filled fields), the views&#39; edges, dimensions, notes and tables as plain vector graphics. It is a faithful drawing but not TechDraw&#39;s exact line styles; the <code>.FCStd</code> is the master. Open the <code>.FCStd</code> in FreeCAD&#39;s TechDraw to print or export with its own styles.</li><li>Not scripted either: model states and view representations (FreeCAD 1.1.4 has neither).</li></ul><h2>Privacy</h2><p>FreeCAD stores author, company and account fields in <code>Document.xml</code> and in the STEP header; TechDraw templates add title-block fields (author, checked by, company). The builder sets those to <code>Fixture Builder</code> too, keeping only the values a recipe gives (D01h&#39;s title, number and designer). The builder sets the document creator and last editor to a neutral <code>Fixture Builder</code>, blanks company and comment, rewrites the STEP <code>FILE_NAME</code> and <code>FILE_DESCRIPTION</code>, then scans both files for your home folder, user name and machine name and fails the design if any remain. Error text in <code>results.json</code> has paths and names removed. The portal&#39;s own privacy scan still runs on upload.</p><p>Native CAD files (.FCStd…) carry your Windows user and computer name inside them; we keep native files private and publish only STEP and files we&#39;ve checked clean.</p><p>Open your private contributor page on the portal and use the <strong>bulk upload</strong> page for the generated zip, or send a Google Drive / Dropbox link to Dutchy in a DM. Say &quot;FreeCAD Fixture Builder&quot; and give the FreeCAD version from Help, About.</p><p><strong>Unattended runs.</strong> <code>FreeCADCmd</code> is headless: the script only prints the outcome and the next step (and writes them to <code>run.log</code>). It never opens a window, with or without <code>FIXTURE_UNATTENDED=1</code>.</p><p>Privacy: the builder writes your home folder, and everything below it, as <code>%USERPROFILE%\&lt;path&gt;</code> (Windows) or <code>~/&lt;path&gt;</code> in every log and JSON file inside the zip (a path in a shared <code>\\server\share</code>, <code>//server/share</code> or <code>smb://</code> form likewise; a path ends at the end of its line or at a quote, so a sentence after a path on the same line can be lost), sets the name properties of a saved document (CreatedBy, LastModifiedBy, Company, Author and so on) to &quot;Fixture Builder&quot;, sets the saved document&#39;s file name in each .FCStd to the bare name, gives the STEP header the bare file name and &quot;Fixture Builder&quot; as author and organization, and then scans every file in the run folder (also inside the zips and compressed streams) for your user folder path, your user name, your profile folder name, your computer name and OneDrive, as ASCII, UTF-8 and UTF-16. The scan looks for UTF-8 and UTF-16 only: both builders write UTF-8, and legacy ANSI code pages are not searched. A file that still has a hit, cannot be checked, or is too big to check in time (a binary part over 64 MB) is not kept: its row says &quot;a file still contains your user folder path; it was not kept&quot;, and the run goes on. An output folder whose path has your user name, profile folder name or OneDrive is refused before anything is built. An account display name such as &quot;John Smith&quot; is removed only from the document properties named above and from paths, not from anywhere else in a file.</p></main><footer class="foot">Fixtures, part of <a href="https://github.com/dutchman-cad">Dutchman CAD</a> · <a href="https://github.com/dutchman-cad/fixtures">About the project</a> · <a href="https://discord.gg/yTcseBEdeu">Discord</a></footer></div><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"6b4e8cc3e5ca497bbfe10b3dbeb167bd","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body></html>
