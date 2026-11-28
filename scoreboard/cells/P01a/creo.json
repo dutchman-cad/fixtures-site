@@ -24,44 +24,7 @@
   "explain": "SolidCraft refused the feature because its sketch has no closed profile.",
   "text": null
  },
- "others": [
-  {
-   "app": "creo-10",
-   "status": "Partial history",
-   "rebuilt": 1,
-   "total": 4
-  },
-  {
-   "app": "creo-11",
-   "status": "Partial history",
-   "rebuilt": 1,
-   "total": 4
-  },
-  {
-   "app": "creo-12",
-   "status": "Partial history",
-   "rebuilt": 1,
-   "total": 4
-  },
-  {
-   "app": "creo-13",
-   "status": "Partial history",
-   "rebuilt": 1,
-   "total": 4
-  },
-  {
-   "app": "creo-8",
-   "status": "Partial history",
-   "rebuilt": 1,
-   "total": 4
-  },
-  {
-   "app": "creo-9",
-   "status": "Partial history",
-   "rebuilt": 1,
-   "total": 4
-  }
- ],
+ "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P01a-creo",
  "downloads": []
 }
