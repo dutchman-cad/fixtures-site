@@ -128,7 +128,7 @@ Read the receipt again at "$PORTAL_LINK/bulk/<batch>" with the same Accept
 header. Without it, the response is an HTML table. Another private link cannot
 read this receipt. Keep the receipt private too.
 
-Limits: one zip up to 1.5 GiB (1536 MiB), 5000 entries, 4 GiB unpacked, 50 MiB
+Limits: one zip/request up to 500 MB (500,000,000 bytes including multipart framing), 5000 entries, 4 GiB unpacked, 50 MiB
 per recipe or post file, and 5 GiB total stored per contributor, including zips
 and repeated files. Zip reception and extraction stream to disk. Recipe
 files are read within the 50 MiB per-file limit. Unsafe paths, symlinks,
