@@ -18,10 +18,10 @@
   "index": null
  },
  "reason": {
-  "code": "parts-missing",
-  "owner": "builder",
-  "title": "Assembly parts not found",
-  "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
+  "code": "unclassified",
+  "owner": "unclassified",
+  "title": "Not classified yet",
+  "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
   "text": null
  },
  "others": [],

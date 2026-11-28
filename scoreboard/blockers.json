@@ -139,12 +139,6 @@
    "title": "No solids or surfaces read",
    "explain": "cadmpeg found no solid bodies or surfaces in this file that SolidCraft can import."
   },
-  "parts-missing": {
-   "code": "parts-missing",
-   "owner": "builder",
-   "title": "Assembly parts not found",
-   "explain": "The assembly was saved without its part files next to it, so none could be loaded."
-  },
   "parts-placed-only": {
    "code": "parts-placed-only",
    "owner": "Dutchman mapping",
@@ -292,12 +286,17 @@
     },
     {
      "rank": 2,
-     "code": "parts-missing",
-     "owner": "builder",
-     "title": "Assembly parts not found",
-     "explain": "The assembly was saved without its part files next to it, so none could be loaded.",
-     "cells": 7,
+     "code": "unclassified",
+     "owner": "unclassified",
+     "title": "Not classified yet",
+     "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
+     "cells": 8,
      "examples": [
+      {
+       "recipe": "S02e",
+       "cell": "cells/S02e/inventor.json",
+       "page": "#c-S02e-inventor"
+      },
       {
        "recipe": "A13a",
        "cell": "cells/A13a/inventor.json",
@@ -317,11 +316,6 @@
        "recipe": "A21c",
        "cell": "cells/A21c/inventor.json",
        "page": "#c-A21c-inventor"
-      },
-      {
-       "recipe": "A22a",
-       "cell": "cells/A22a/inventor.json",
-       "page": "#c-A22a-inventor"
       }
      ]
     },
@@ -477,21 +471,6 @@
        "recipe": "P11b",
        "cell": "cells/P11b/inventor.json",
        "page": "#c-P11b-inventor"
-      }
-     ]
-    },
-    {
-     "rank": 9,
-     "code": "unclassified",
-     "owner": "unclassified",
-     "title": "Not classified yet",
-     "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
-     "cells": 1,
-     "examples": [
-      {
-       "recipe": "S02e",
-       "cell": "cells/S02e/inventor.json",
-       "page": "#c-S02e-inventor"
       }
      ]
     }
@@ -2013,7 +1992,7 @@
   {
    "code": "unclassified",
    "owner": "unclassified",
-   "cells": 94
+   "cells": 101
   },
   {
    "code": "parts-placed-only",
@@ -2073,11 +2052,6 @@
   {
    "code": "body-reference-missing",
    "owner": "Dutchman mapping",
-   "cells": 7
-  },
-  {
-   "code": "parts-missing",
-   "owner": "builder",
    "cells": 7
   },
   {
