@@ -4,26 +4,17 @@
  "program": "inventor",
  "program_name": "Inventor",
  "app": "inventor-2016",
- "status": "Failing",
+ "status": "Full history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 0,
-  "total": 0
+  "rebuilt": 6,
+  "total": 6
  },
- "matches": null,
+ "matches": true,
  "wrong_bodies": null,
- "stopped": true,
- "first_stop": {
-  "kind": "conversion",
-  "index": null
- },
- "reason": {
-  "code": "unclassified",
-  "owner": "unclassified",
-  "title": "Not classified yet",
-  "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
-  "text": null
- },
+ "stopped": false,
+ "first_stop": null,
+ "reason": null,
  "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A13b-inventor",
  "downloads": []

@@ -246,8 +246,8 @@
   "inventor": {
    "name": "Inventor",
    "cells": 208,
-   "full": 130,
-   "stopped": 78,
+   "full": 137,
+   "stopped": 71,
    "blockers": [
     {
      "rank": 1,
@@ -286,41 +286,6 @@
     },
     {
      "rank": 2,
-     "code": "unclassified",
-     "owner": "unclassified",
-     "title": "Not classified yet",
-     "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
-     "cells": 8,
-     "examples": [
-      {
-       "recipe": "S02e",
-       "cell": "cells/S02e/inventor.json",
-       "page": "#c-S02e-inventor"
-      },
-      {
-       "recipe": "A13a",
-       "cell": "cells/A13a/inventor.json",
-       "page": "#c-A13a-inventor"
-      },
-      {
-       "recipe": "A13b",
-       "cell": "cells/A13b/inventor.json",
-       "page": "#c-A13b-inventor"
-      },
-      {
-       "recipe": "A21b",
-       "cell": "cells/A21b/inventor.json",
-       "page": "#c-A21b-inventor"
-      },
-      {
-       "recipe": "A21c",
-       "cell": "cells/A21c/inventor.json",
-       "page": "#c-A21c-inventor"
-      }
-     ]
-    },
-    {
-     "rank": 3,
      "code": "assembly-no-parts",
      "owner": "Dutchman mapping",
      "title": "Assembly places no parts",
@@ -350,7 +315,7 @@
      ]
     },
     {
-     "rank": 4,
+     "rank": 3,
      "code": "sc-replay-shape",
      "owner": "SolidCraft",
      "title": "Rebuilt body shape differs",
@@ -380,7 +345,7 @@
      ]
     },
     {
-     "rank": 5,
+     "rank": 4,
      "code": "sc-step-import-empty",
      "owner": "SolidCraft",
      "title": "SolidCraft imported no body",
@@ -410,7 +375,7 @@
      ]
     },
     {
-     "rank": 6,
+     "rank": 5,
      "code": "body-reference-missing",
      "owner": "Dutchman mapping",
      "title": "Body or topology reference missing",
@@ -435,7 +400,7 @@
      ]
     },
     {
-     "rank": 7,
+     "rank": 6,
      "code": "chamfer-unresolved",
      "owner": "Dutchman mapping",
      "title": "Chamfer not resolved",
@@ -455,7 +420,7 @@
      ]
     },
     {
-     "rank": 8,
+     "rank": 7,
      "code": "shape-differs",
      "owner": "unclassified",
      "title": "Every feature rebuilt, shape differs",
@@ -471,6 +436,21 @@
        "recipe": "P11b",
        "cell": "cells/P11b/inventor.json",
        "page": "#c-P11b-inventor"
+      }
+     ]
+    },
+    {
+     "rank": 8,
+     "code": "unclassified",
+     "owner": "unclassified",
+     "title": "Not classified yet",
+     "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
+     "cells": 1,
+     "examples": [
+      {
+       "recipe": "S02e",
+       "cell": "cells/S02e/inventor.json",
+       "page": "#c-S02e-inventor"
       }
      ]
     }
@@ -1992,7 +1972,7 @@
   {
    "code": "unclassified",
    "owner": "unclassified",
-   "cells": 101
+   "cells": 94
   },
   {
    "code": "parts-placed-only",
