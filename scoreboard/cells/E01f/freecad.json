@@ -4,17 +4,26 @@
  "program": "freecad",
  "program_name": "FreeCAD",
  "app": "freecad-1.1.4",
- "status": "Full history",
+ "status": "Partial history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 2,
+  "rebuilt": 1,
   "total": 2
  },
- "matches": true,
+ "matches": null,
  "wrong_bodies": null,
- "stopped": false,
- "first_stop": null,
- "reason": null,
+ "stopped": true,
+ "first_stop": {
+  "kind": "extrude, blind",
+  "index": 2
+ },
+ "reason": {
+  "code": "sc-replay-shape",
+  "owner": "SolidCraft",
+  "title": "Rebuilt body shape differs",
+  "explain": "SolidCraft's replay made a body whose size, volume or area differs from the original.",
+  "text": null
+ },
  "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-E01f-freecad",
  "downloads": []

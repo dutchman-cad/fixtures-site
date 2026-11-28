@@ -10,8 +10,8 @@
   "rebuilt": 4,
   "total": 5
  },
- "matches": false,
- "wrong_bodies": 6,
+ "matches": null,
+ "wrong_bodies": 0,
  "stopped": true,
  "first_stop": {
   "kind": "pattern",

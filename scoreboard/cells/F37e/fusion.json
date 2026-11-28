@@ -10,8 +10,8 @@
   "rebuilt": 5,
   "total": 6
  },
- "matches": null,
- "wrong_bodies": 0,
+ "matches": false,
+ "wrong_bodies": 1,
  "stopped": true,
  "first_stop": {
   "kind": "extrude, blind, start from a face",

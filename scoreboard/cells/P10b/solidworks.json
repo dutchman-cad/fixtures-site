@@ -3,7 +3,7 @@
  "recipe": "P10b",
  "program": "solidworks",
  "program_name": "SolidWorks",
- "app": "solidworks-2024",
+ "app": "solidworks-2021",
  "status": "Partial history",
  "numbers_only": true,
  "features": {
@@ -15,7 +15,7 @@
  "stopped": true,
  "first_stop": {
   "kind": "sweep",
-  "index": 2
+  "index": 3
  },
  "reason": {
   "code": "sweep-path",
@@ -26,21 +26,21 @@
  },
  "others": [
   {
-   "app": "solidworks-2021",
+   "app": "solidworks-2023",
    "status": "Partial history",
-   "rebuilt": 1,
+   "rebuilt": 2,
    "total": 3
   },
   {
-   "app": "solidworks-2023",
+   "app": "solidworks-2024",
    "status": "Partial history",
-   "rebuilt": 1,
+   "rebuilt": 2,
    "total": 3
   },
   {
    "app": "solidworks-2026",
    "status": "Partial history",
-   "rebuilt": 1,
+   "rebuilt": 2,
    "total": 3
   }
  ],

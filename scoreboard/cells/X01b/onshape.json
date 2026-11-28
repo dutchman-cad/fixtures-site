@@ -4,24 +4,24 @@
  "program": "onshape",
  "program_name": "Onshape",
  "app": "onshape",
- "status": "Partial history",
+ "status": "Failing",
  "numbers_only": true,
  "features": {
-  "rebuilt": 1,
-  "total": 2
+  "rebuilt": 0,
+  "total": 0
  },
  "matches": null,
  "wrong_bodies": null,
  "stopped": true,
  "first_stop": {
-  "kind": "native feature",
-  "index": 2
+  "kind": "conversion",
+  "index": null
  },
  "reason": {
-  "code": "native-not-mapped",
+  "code": "model-check-fails",
   "owner": "cadmpeg decode",
-  "title": "Native feature not read",
-  "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+  "title": "Read model fails its checks",
+  "explain": "cadmpeg read the file, but its model of it fails internal consistency checks.",
   "text": null
  },
  "others": [],

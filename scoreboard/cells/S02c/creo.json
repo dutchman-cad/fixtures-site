@@ -4,24 +4,24 @@
  "program": "creo",
  "program_name": "Creo",
  "app": "creo-7",
- "status": "Failing",
+ "status": "Geometry only",
  "numbers_only": true,
  "features": {
   "rebuilt": 0,
-  "total": 0
+  "total": 5
  },
  "matches": null,
- "wrong_bodies": null,
+ "wrong_bodies": 0,
  "stopped": true,
  "first_stop": {
-  "kind": "conversion",
-  "index": null
+  "kind": "sketch",
+  "index": 1
  },
  "reason": {
-  "code": "no-geometry-yet",
-  "owner": "cadmpeg decode",
-  "title": "Opens, but no geometry read",
-  "explain": "The file opens, but cadmpeg cannot read its geometry yet.",
+  "code": "unclassified",
+  "owner": "unclassified",
+  "title": "Not classified yet",
+  "explain": "Dutchman gave a reason that this table has no rule for yet; the cell is listed here until someone adds one.",
   "text": null
  },
  "others": [],

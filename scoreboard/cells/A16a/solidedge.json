@@ -3,35 +3,25 @@
  "recipe": "A16a",
  "program": "solidedge",
  "program_name": "Solid Edge",
- "app": "solidedge-dev-2f8263ad",
- "status": "Geometry only",
+ "app": "solid-edge-2026",
+ "status": "Awaiting reader",
  "numbers_only": true,
  "features": {
   "rebuilt": 0,
   "total": 0
  },
- "matches": true,
+ "matches": null,
  "wrong_bodies": null,
  "stopped": true,
- "first_stop": {
-  "kind": "conversion",
-  "index": null
- },
+ "first_stop": null,
  "reason": {
-  "code": "decode-feature-order",
+  "code": "no-reader",
   "owner": "cadmpeg decode",
-  "title": "Feature order not read",
-  "explain": "The file has feature objects but no readable feature list, so their order is not known.",
+  "title": "No reader for this file type",
+  "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
   "text": null
  },
- "others": [
-  {
-   "app": "solid-edge-2026",
-   "status": "Awaiting reader",
-   "rebuilt": 0,
-   "total": 0
-  }
- ],
+ "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A16a-solidedge",
  "downloads": []
 }

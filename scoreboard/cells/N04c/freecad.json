@@ -4,23 +4,17 @@
  "program": "freecad",
  "program_name": "FreeCAD",
  "app": "freecad-1.1.4",
- "status": "Partial history",
+ "status": "Full history",
  "numbers_only": true,
  "features": {
   "rebuilt": 2,
   "total": 2
  },
- "matches": null,
+ "matches": true,
  "wrong_bodies": null,
- "stopped": true,
+ "stopped": false,
  "first_stop": null,
- "reason": {
-  "code": "no-reference-shape",
-  "owner": "Dutchman mapping",
-  "title": "Original shape cannot be compared",
-  "explain": "The original geometry opens as empty shells, so the rebuilt shape cannot be checked against it.",
-  "text": null
- },
+ "reason": null,
  "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-N04c-freecad",
  "downloads": []

@@ -4,24 +4,24 @@
  "program": "freecad",
  "program_name": "FreeCAD",
  "app": "freecad-1.1.4",
- "status": "Failing",
+ "status": "Partial history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 0,
-  "total": 0
+  "rebuilt": 4,
+  "total": 5
  },
  "matches": null,
  "wrong_bodies": null,
  "stopped": true,
  "first_stop": {
-  "kind": "conversion",
-  "index": null
+  "kind": "extrude, two sides, blind and blind",
+  "index": 5
  },
  "reason": {
-  "code": "model-check-fails",
-  "owner": "cadmpeg decode",
-  "title": "Read model fails its checks",
-  "explain": "cadmpeg read the file, but its model of it fails internal consistency checks.",
+  "code": "extrude-unsupported",
+  "owner": "Dutchman mapping",
+  "title": "Extrude kind not supported",
+  "explain": "This extrude end, face or profile region is not mapped or could not be confirmed yet.",
   "text": null
  },
  "others": [],

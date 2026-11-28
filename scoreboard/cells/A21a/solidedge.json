@@ -3,8 +3,8 @@
  "recipe": "A21a",
  "program": "solidedge",
  "program_name": "Solid Edge",
- "app": "solidedge-dev-2f8263ad",
- "status": "Failing",
+ "app": "solid-edge-2026",
+ "status": "Awaiting reader",
  "numbers_only": true,
  "features": {
   "rebuilt": 0,
@@ -13,25 +13,15 @@
  "matches": null,
  "wrong_bodies": null,
  "stopped": true,
- "first_stop": {
-  "kind": "conversion",
-  "index": null
- },
+ "first_stop": null,
  "reason": {
-  "code": "assembly-no-parts",
-  "owner": "Dutchman mapping",
-  "title": "Assembly places no parts",
-  "explain": "The assembly has no placed parts, so there is nothing to rebuild.",
+  "code": "no-reader",
+  "owner": "cadmpeg decode",
+  "title": "No reader for this file type",
+  "explain": "Dutchman cannot open this kind of file yet, so no feature was even tried.",
   "text": null
  },
- "others": [
-  {
-   "app": "solid-edge-2026",
-   "status": "Awaiting reader",
-   "rebuilt": 0,
-   "total": 0
-  }
- ],
+ "others": [],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-A21a-solidedge",
  "downloads": []
 }

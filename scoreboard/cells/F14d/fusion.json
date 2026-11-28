@@ -18,10 +18,10 @@
   "index": 2
  },
  "reason": {
-  "code": "primitive-unplaced",
-  "owner": "Dutchman mapping",
-  "title": "Primitive without a placement",
-  "explain": "A primitive solid has no placement to build it at.",
+  "code": "sc-replay-shape",
+  "owner": "SolidCraft",
+  "title": "Rebuilt body shape differs",
+  "explain": "SolidCraft's replay made a body whose size, volume or area differs from the original.",
   "text": null
  },
  "others": [],

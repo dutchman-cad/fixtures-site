@@ -3,63 +3,63 @@
  "recipe": "P01a",
  "program": "creo",
  "program_name": "Creo",
- "app": "creo-10",
- "status": "Failing",
+ "app": "creo-7",
+ "status": "Partial history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 0,
-  "total": 0
+  "rebuilt": 1,
+  "total": 3
  },
  "matches": null,
  "wrong_bodies": null,
  "stopped": true,
  "first_stop": {
-  "kind": "conversion",
-  "index": null
+  "kind": "extrude, blind",
+  "index": 2
  },
  "reason": {
-  "code": "no-geometry-yet",
-  "owner": "cadmpeg decode",
-  "title": "Opens, but no geometry read",
-  "explain": "The file opens, but cadmpeg cannot read its geometry yet.",
+  "code": "sc-refused-profile",
+  "owner": "SolidCraft",
+  "title": "SolidCraft: no closed profile",
+  "explain": "SolidCraft refused the feature because its sketch has no closed profile.",
   "text": null
  },
  "others": [
   {
+   "app": "creo-10",
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 4
+  },
+  {
    "app": "creo-11",
-   "status": "Failing",
-   "rebuilt": 0,
-   "total": 0
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 4
   },
   {
    "app": "creo-12",
-   "status": "Failing",
-   "rebuilt": 0,
-   "total": 0
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 4
   },
   {
    "app": "creo-13",
-   "status": "Failing",
-   "rebuilt": 0,
-   "total": 0
-  },
-  {
-   "app": "creo-7",
-   "status": "Failing",
-   "rebuilt": 0,
-   "total": 0
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 4
   },
   {
    "app": "creo-8",
-   "status": "Failing",
-   "rebuilt": 0,
-   "total": 0
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 4
   },
   {
    "app": "creo-9",
-   "status": "Failing",
-   "rebuilt": 0,
-   "total": 0
+   "status": "Partial history",
+   "rebuilt": 1,
+   "total": 4
   }
  ],
  "page": "https://progress.dutchmancad.xyz/scoreboard/#c-P01a-creo",

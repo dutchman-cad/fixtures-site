@@ -8,7 +8,7 @@
  "numbers_only": true,
  "features": {
   "rebuilt": 1,
-  "total": 8
+  "total": 2
  },
  "matches": null,
  "wrong_bodies": null,
@@ -29,7 +29,7 @@
    "app": "solidworks-2023",
    "status": "Partial history",
    "rebuilt": 1,
-   "total": 8
+   "total": 2
   },
   {
    "app": "solidworks-2026",

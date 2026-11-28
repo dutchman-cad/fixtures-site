@@ -18,10 +18,10 @@
   "index": null
  },
  "reason": {
-  "code": "no-geometry-yet",
+  "code": "no-solids",
   "owner": "cadmpeg decode",
-  "title": "Opens, but no geometry read",
-  "explain": "The file opens, but cadmpeg cannot read its geometry yet.",
+  "title": "No solids or surfaces read",
+  "explain": "cadmpeg found no solid bodies or surfaces in this file that SolidCraft can import.",
   "text": null
  },
  "others": [],

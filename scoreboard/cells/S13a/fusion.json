@@ -7,21 +7,21 @@
  "status": "Partial history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 2,
+  "rebuilt": 3,
   "total": 4
  },
  "matches": null,
  "wrong_bodies": null,
  "stopped": true,
  "first_stop": {
-  "kind": "native feature",
-  "index": 2
+  "kind": "hole, simple drilled, through all",
+  "index": 4
  },
  "reason": {
-  "code": "native-not-mapped",
-  "owner": "cadmpeg decode",
-  "title": "Native feature not read",
-  "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
+  "code": "hole-unresolved",
+  "owner": "Dutchman mapping",
+  "title": "Hole placement not resolved",
+  "explain": "The hole's face, end or placement cannot be resolved against the model.",
   "text": null
  },
  "others": [],

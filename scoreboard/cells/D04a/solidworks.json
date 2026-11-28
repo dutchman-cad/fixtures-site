@@ -7,40 +7,40 @@
  "status": "Partial history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 3,
+  "rebuilt": 4,
   "total": 5
  },
  "matches": null,
  "wrong_bodies": 0,
  "stopped": true,
  "first_stop": {
-  "kind": "extrude, blind",
-  "index": 2
+  "kind": "hole, simple, blind",
+  "index": 5
  },
  "reason": {
-  "code": "sc-refused-profile",
-  "owner": "SolidCraft",
-  "title": "SolidCraft: no closed profile",
-  "explain": "SolidCraft refused the feature because its sketch has no closed profile.",
+  "code": "face-unresolved",
+  "owner": "Dutchman mapping",
+  "title": "Face not resolved",
+  "explain": "The feature's face cannot be resolved against the rebuilt model.",
   "text": null
  },
  "others": [
   {
    "app": "solidworks-2023",
    "status": "Partial history",
-   "rebuilt": 3,
+   "rebuilt": 4,
    "total": 5
   },
   {
    "app": "solidworks-2024",
    "status": "Partial history",
-   "rebuilt": 3,
+   "rebuilt": 4,
    "total": 5
   },
   {
    "app": "solidworks-2026",
    "status": "Partial history",
-   "rebuilt": 3,
+   "rebuilt": 4,
    "total": 5
   }
  ],

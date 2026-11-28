@@ -18,8 +18,8 @@
  "others": [
   {
    "app": "fusion-2706.1.17",
-   "status": "Partial history",
-   "rebuilt": 1,
+   "status": "Full history",
+   "rebuilt": 2,
    "total": 2
   }
  ],

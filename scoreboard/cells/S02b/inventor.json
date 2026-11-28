@@ -3,36 +3,27 @@
  "recipe": "S02b",
  "program": "inventor",
  "program_name": "Inventor",
- "app": "inventor-2016",
- "status": "Partial history",
+ "app": "inventor-2025",
+ "status": "Full history",
  "numbers_only": true,
  "features": {
-  "rebuilt": 3,
-  "total": 6
+  "rebuilt": 4,
+  "total": 4
  },
- "matches": null,
- "wrong_bodies": null,
- "stopped": true,
- "first_stop": {
-  "kind": "native feature",
-  "index": 4
- },
- "reason": {
-  "code": "native-not-mapped",
-  "owner": "cadmpeg decode",
-  "title": "Native feature not read",
-  "explain": "This program's own feature type has no neutral form in cadmpeg yet.",
-  "text": null
- },
+ "matches": true,
+ "wrong_bodies": 0,
+ "stopped": false,
+ "first_stop": null,
+ "reason": null,
  "others": [
   {
-   "app": "inventor-2025",
+   "app": "inventor-2027",
    "status": "Partial history",
-   "rebuilt": 3,
-   "total": 6
+   "rebuilt": 4,
+   "total": 5
   },
   {
-   "app": "inventor-2027",
+   "app": "inventor-2016",
    "status": "Partial history",
    "rebuilt": 3,
    "total": 6
